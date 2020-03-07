@@ -1142,26 +1142,15 @@ class AOProtocol(asyncio.Protocol):
                 zip(['defense', 'prosecutor', 'judge', 'juror', 'stenographer', 'witness'], args[1:])
                 if q == '1']
             msg += ', '.join(lookingfor) + '.\r\n=================='
-
-<<<<<<< HEAD
             self.client.server.send_all_cmd_pred('CASEA', msg, args[1],
                                                  args[2], args[3], args[4],
-                                                 args[5], '1')
+                                                 args[5], args[6] '1')
 
             self.client.set_case_call_delay()
 
             log_data = {k: v for k, v in \
-                zip(('message', 'def', 'pro', 'jud', 'jur', 'steno'), args)}
+                zip(('message', 'def', 'pro', 'jud', 'jur', 'steno','wit'), args)}
             database.log_room('case', self.client, self.client.area, message=log_data)
-=======
-            self.client.server.send_all_cmd_pred('CASEA', msg, args[1], args[2], args[3], args[4], args[5], args[6], '1')
-
-            self.client.set_case_call_delay()
-
-            logger.log_server('[{}][{}][CASE_ANNOUNCEMENT]{}, DEF: {}, PRO: {}, JUD: {}, JUR: {}, STENO: {}, WIT: {}.'.format(
-                self.client.area.abbreviation, self.client.get_char_name(), args[0], args[1], args[2], args[3], args[4], args[5], args[6]),
-                self.client)
->>>>>>> 50489f8166cf219e3db1b85ef16a98b4c2bca0bd
         else:
             self.client.send_ooc(
                 'You cannot announce a case in an area where you are not a CM!'
