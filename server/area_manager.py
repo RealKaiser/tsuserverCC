@@ -56,7 +56,6 @@ class AreaManager:
             self.background = background
             self.bg_lock = bg_lock
             self.server = server
-            self.music_looper = None
             self.next_message_time = 0
             self.hp_def = 10
             self.hp_pro = 10
@@ -83,6 +82,14 @@ class AreaManager:
             self.hidden = False
             self.password = ''
             self.allowmusic = True
+            self.shadow_status = {}
+
+            """
+            #debug
+            self.evidence_list.append(Evidence("WOW", "desc", "1.png"))
+            self.evidence_list.append(Evidence("wewz", "desc2", "2.png"))
+            self.evidence_list.append(Evidence("weeeeeew", "desc3", "3.png"))
+            """
 
             self.is_locked = self.Locked.FREE
             self.blankposting_allowed = True
@@ -216,99 +223,6 @@ class AreaManager:
                         return False
             return not self.server.char_emotes[char].validate(preanim, anim, sfx)
 
-        def add_jukebox_vote(self, client, music_name, length=-1, showname=''):
-            """
-            Cast a vote on the jukebox.
-            :param music_name: track name
-            :param length: length of track (Default value = -1)
-            :param showname: showname of voter (?) (Default value = '')
-            """
-            if not self.jukebox:
-                return
-            if length <= 0:
-                self.remove_jukebox_vote(client, False)
-            else:
-                self.remove_jukebox_vote(client, True)
-                self.jukebox_votes.append(
-                    self.JukeboxVote(client, music_name, length, showname))
-                client.send_ooc('Your song was added to the jukebox.')
-                if len(self.jukebox_votes) == 1:
-                    self.start_jukebox()
-
-        def remove_jukebox_vote(self, client, silent):
-            """
-            Removes a vote on the jukebox.
-            :param client: client whose vote should be removed
-            :param silent: do not notify client
-
-            """
-            if not self.jukebox:
-                return
-            for current_vote in self.jukebox_votes:
-                if current_vote.client.id == client.id:
-                    self.jukebox_votes.remove(current_vote)
-            if not silent:
-                client.send_ooc(
-                    'You removed your song from the jukebox.')
-
-        def get_jukebox_picked(self):
-            """Randomly choose a track from the jukebox."""
-            if not self.jukebox:
-                return
-            if len(self.jukebox_votes) == 0:
-                return None
-            elif len(self.jukebox_votes) == 1:
-                return self.jukebox_votes[0]
-            else:
-                weighted_votes = []
-                for current_vote in self.jukebox_votes:
-                    i = 0
-                    while i < current_vote.chance:
-                        weighted_votes.append(current_vote)
-                        i += 1
-                return random.choice(weighted_votes)
-
-        def start_jukebox(self):
-            """Initialize jukebox mode if needed and play the next track."""
-            # There is a probability that the jukebox feature has been turned off since then,
-            # we should check that.
-            # We also do a check if we were the last to play a song, just in case.
-            if not self.jukebox:
-                if self.current_music_player == 'The Jukebox' and self.current_music_player_ipid == 'has no IPID':
-                    self.current_music = ''
-                return
-
-            vote_picked = self.get_jukebox_picked()
-
-            if vote_picked is None:
-                self.current_music = ''
-                return
-
-            if vote_picked.client.char_id != self.jukebox_prev_char_id or vote_picked.name != self.current_music or len(
-                    self.jukebox_votes) > 1:
-                self.jukebox_prev_char_id = vote_picked.client.char_id
-                if vote_picked.showname == '':
-                    self.send_command('MC', vote_picked.name,
-                                      vote_picked.client.char_id)
-                else:
-                    self.send_command('MC', vote_picked.name,
-                                      vote_picked.client.char_id,
-                                      vote_picked.showname)
-            else:
-                self.send_command('MC', vote_picked.name, -1)
-
-            self.current_music_player = 'The Jukebox'
-            self.current_music_player_ipid = 'has no IPID'
-            self.current_music = vote_picked.name
-
-            for current_vote in self.jukebox_votes:
-                # Choosing the same song will get your votes down to 0, too.
-                # Don't want the same song twice in a row!
-                if current_vote.name == vote_picked.name:
-                    current_vote.chance = 0
-                else:
-                    current_vote.chance += 1
-
             if self.music_looper:
                 self.music_looper.cancel()
             self.music_looper = asyncio.get_event_loop().call_later(
@@ -401,6 +315,7 @@ class AreaManager:
                                 return
                             else:
                                 index += 1
+>>>>>>> 50489f8166cf219e3db1b85ef16a98b4c2bca0bd
 
         def can_send_message(self, client):
             """
@@ -547,6 +462,12 @@ class AreaManager:
             if len(msg) > 2:
                 msg = msg[:-2]
             return msg
+        def get_mods(self):
+            mods = []
+            for client in self.clients:
+                if client.is_mod:
+                    mods.append(client)
+            return mods
 
         class JukeboxVote:
             """Represents a single vote cast for the jukebox."""
@@ -675,3 +596,9 @@ class AreaManager:
         for area in self.areas:
             lock_list.append(area.is_locked.name)
         self.server.send_arup(lock_list)
+        
+    def mods_online(self):
+        num = 0
+        for area in self.areas:
+            num += len(area.get_mods())
+        return num

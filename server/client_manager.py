@@ -20,6 +20,7 @@
 
 import re
 import time
+import random
 from heapq import heappop, heappush
 
 from server import database
@@ -35,9 +36,10 @@ class ClientManager:
 
         Clients may only belong to a single room.
         """
-        def __init__(self, server, transport, user_id, ipid):
+        def __init__(self, server, transport, user_id, ipid, real_ip):
             self.is_checked = False
             self.transport = transport
+            self.real_ip = real_ip
             self.hdid = ''
             self.id = user_id
             self.char_id = -1
@@ -54,6 +56,7 @@ class ClientManager:
             self.evi_list = []
             self.disemvowel = False
             self.shaken = False
+            self.gimp = False
             self.charcurse = []
             self.muted_global = False
             self.muted_adverts = False
@@ -217,7 +220,7 @@ class ClientManager:
             """Disconnect the client gracefully."""
             self.transport.close()
 
-        def change_character(self, char_id, force=False):
+        def change_character(self, char_id, force=False, switch=False):
             """
             Change the client's character or force the character selection
             screen to appear for the client.
@@ -242,13 +245,11 @@ class ClientManager:
             old_char = self.char_name
             self.char_id = char_id
             self.pos = ''
-            self.send_command('PV', self.id, 'CID', self.char_id)
-            self.area.send_command('CharsCheck',
-                                   *self.get_available_char_list())
-
-            new_char = self.char_name
-            database.log_room('char.change', self, self.area,
-                message={'from': old_char, 'to': new_char})
+            self.area.shadow_status[self.char_id] = [self.ipid, self.hdid]
+            self.send_command('PV', self.id, 'CID', self.char_id, switch)
+            self.area.send_command('CharsCheck', *self.get_available_char_list())
+            logger.log_server('[{}]Changed character from {} to {}.'
+                              .format(self.area.abbreviation, old_char, self.get_char_name()), self)
 
         def change_music_cd(self):
             """
@@ -433,6 +434,7 @@ class ClientManager:
                 for c in self.followers:
                     c.change_area(area)
             self.area.send_command('CharsCheck', *self.get_available_char_list())
+            self.area.shadow_status[self.char_id] = [self.ipid, self.hdid]
             self.send_command('HP', 1, self.area.hp_def)
             self.send_command('HP', 2, self.area.hp_pro)
             self.send_command('BN', self.area.background)
@@ -637,6 +639,7 @@ class ClientManager:
                 self.mod_profile_name = matches[0]
                 return self.mod_profile_name
             else:
+                self.send_command("FAILEDLOGIN");
                 raise ClientError('Invalid password.')
 
         @property
@@ -691,6 +694,10 @@ class ClientManager:
             random.shuffle(parts)
             return ' '.join(parts)
 
+        def gimp_message(self, message):
+            message = self.server.gimp_list
+            return random.choice(message)
+
     def __init__(self, server):
         self.clients = set()
         self.server = server
@@ -714,16 +721,15 @@ class ClientManager:
         except IndexError:
             transport.write(b'BD#This server is full.#%')
             raise ClientError
-        c = self.Client(
-            self.server, transport, user_id,
-            database.ipid(transport.get_extra_info('peername')[0]))
+        c = self.Client(self.server, transport, heappop(self.cur_id),
+                        self.server.get_ipid(transport.get_extra_info('peername')[0]), transport.get_extra_info('peername')[0])
+
         self.clients.add(c)
         temp_ipid = c.ipid
         for client in self.server.client_manager.clients:
             if client.ipid == temp_ipid:
                 client.clientscon += 1
         return c
-
     def remove_client(self, client):
         """
         Remove a disconnected client from the client list.
