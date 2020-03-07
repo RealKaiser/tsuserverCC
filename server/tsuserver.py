@@ -38,7 +38,6 @@ from server.exceptions import ServerError
 from server.network.aoprotocol import AOProtocol
 from server.network.aoprotocol_ws import new_websocket_client
 from server.network.masterserverclient import MasterServerClient
-<<<<<<< HEAD
 import server.logger
 
 class TsuServerCC:
