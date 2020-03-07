@@ -134,8 +134,6 @@ class TsuServerCC:
             loop.run_forever()
         except KeyboardInterrupt:
             pass
-<<<<<<< HEAD
-
         database.log_misc('stop')
 
         self.stats_manager.save_alldata()
