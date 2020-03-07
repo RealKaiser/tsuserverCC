@@ -33,6 +33,7 @@ from server.database import Database
 from server import database
 from server.area_manager import AreaManager
 from server.client_manager import ClientManager
+from server.musiclist_manager import MusicListManager
 from server.emotes import Emotes
 from server.exceptions import ServerError
 from server.network.aoprotocol import AOProtocol
@@ -50,9 +51,11 @@ class TsuServerCC:
         self.client_manager = ClientManager(self)
         self.area_manager = AreaManager(self)
         self.software = 'tsuservercc'
-        self.release = 3
-        self.major_version = 2
-        self.minor_version = 0
+
+        self.release = 1
+        self.major_version = 1
+        self.minor_version = 1
+
         self.config = None
         self.allowed_iniswaps = []
         self.char_list = None
@@ -64,6 +67,7 @@ class TsuServerCC:
         self.backgrounds = None
         self.zalgo_tolerance = None
         self.is_poll = False
+        self.musiclist_manager = MusicListManager()
         self.poll = ''
         self.pollyay = []
         self.pollnay = []

@@ -22,6 +22,8 @@ __all__ = [
     'ooc_cmd_addmlist',
     'ooc_cmd_playl',
     'ooc_cmd_musiclist',
+    'ooc_cmd_storemlist',
+    'ooc_cmd_loadmlist',
     'ooc_cmd_clearmusiclist'
 ]
 
@@ -44,7 +46,30 @@ def ooc_cmd_addmlist(client, arg):
         client.area.cmusic_list[name] = length
         nname = name[7:]
         client.area.broadcast_ooc(f'{nname} added to the area music list.')
-        
+
+def ooc_cmd_storemlist(client, arg):
+    if client not in client.area.owners and not client.is_mod:
+        raise ClientError('You must be a CM.')
+    if len(arg) < 1:
+        raise ArgumentError('Your stored list requires a name!')
+    if len(arg) > 12:
+        raise ArgumentError('Keep the name of your list to 12 characters or below.')
+    if ' ' in arg:
+        raise ArgumentError('Try to use a name without spaces.')
+    if len(client.area.cmusic_list) == 0:
+        raise ArgumentError('No list to store!')
+    client.server.musiclist_manager.storelist(client, arg)
+
+def ooc_cmd_loadmlist(client, arg):
+    if client not in client.area.owners and not client.is_mod:
+        raise ClientError('You must be a CM.')
+    if len(arg) < 1:
+        raise ArgumentError('Your stored list requires a name!')
+    if len(arg) > 12:
+        raise ArgumentError('Keep the name of your list to 12 characters or below.')
+    if ' ' in arg:
+        raise ArgumentError('Try to use a name without spaces.')
+    client.server.musiclist_manager.loadlist(client, arg)
 
 def ooc_cmd_musiclist(client, arg):
     if len(arg) > 0:
@@ -277,7 +302,10 @@ def ooc_cmd_shuffle(client, arg):
     Play a track.
     Usage: /play <name>
     """
-    client.area.music_shuffle(arg, client)
+    if arg == 'musiclist':
+        client.area.musiclist_shuffle(client)
+    else:
+        client.area.music_shuffle(arg, client)
 
 @mod_only()
 def ooc_cmd_blockdj(client, arg):

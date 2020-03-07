@@ -316,6 +316,28 @@ class AreaManager:
                             else:
                                 index += 1
 
+        def musiclist_shuffle(self, client):
+            client = client
+            index = 0
+            for name, length in client.area.cmusic_list.items():
+                index += 1
+            if index == 0:
+                client.send_ooc('Area musiclist empty.')
+                return
+            else:
+                music_set = set(range(index))
+                trackid = random.choice(tuple(music_set))
+                index = 0
+                for name, length in client.area.cmusic_list.items():
+                    if index == trackid:
+                        self.play_music_shownamed(name, client.char_id, 'Custom Shuffle', -1)
+                        self.music_looper = asyncio.get_event_loop().call_later(length, lambda: self.musiclist_shuffle(client))
+                        self.add_music_playing(client, name)
+                        database.log_room('play', client, self, message=name)
+                        return
+                    else:
+                        index += 1
+
         def can_send_message(self, client):
             """
             Check if a client can send an IC message in this area.
