@@ -36,10 +36,9 @@ class ClientManager:
 
         Clients may only belong to a single room.
         """
-        def __init__(self, server, transport, user_id, ipid, real_ip):
+        def __init__(self, server, transport, user_id, ipid):
             self.is_checked = False
             self.transport = transport
-            self.real_ip = real_ip
             self.hdid = ''
             self.id = user_id
             self.char_id = -1
@@ -248,8 +247,9 @@ class ClientManager:
             self.area.shadow_status[self.char_id] = [self.ipid, self.hdid]
             self.send_command('PV', self.id, 'CID', self.char_id, switch)
             self.area.send_command('CharsCheck', *self.get_available_char_list())
-            logger.log_server('[{}]Changed character from {} to {}.'
-                              .format(self.area.abbreviation, old_char, self.get_char_name()), self)
+            new_char = self.char_name
+            database.log_room('char.change', self, self.area,
+                message={'from': old_char, 'to': new_char})
 
         def change_music_cd(self):
             """
@@ -721,9 +721,9 @@ class ClientManager:
         except IndexError:
             transport.write(b'BD#This server is full.#%')
             raise ClientError
-        c = self.Client(self.server, transport, heappop(self.cur_id),
-                        self.server.get_ipid(transport.get_extra_info('peername')[0]), transport.get_extra_info('peername')[0])
-
+        c = self.Client(
+            self.server, transport, user_id,
+            database.ipid(transport.get_extra_info('peername')[0]))
         self.clients.add(c)
         temp_ipid = c.ipid
         for client in self.server.client_manager.clients:

@@ -18,15 +18,13 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import sys
-import os
-from server import area_manager
 
 import logging
 import logging.handlers
 import time
 
 
-def setup_logger(debug, log_size, log_backups, areas):
+def setup_logger(debug):
     """
     Set up all loggers.
     :param debug: whether debug mode should be enabled
@@ -44,8 +42,8 @@ def setup_logger(debug, log_size, log_backups, areas):
     debug_log = logging.getLogger('debug')
     debug_log.setLevel(logging.DEBUG)
 
-    debug_handler = logging.handlers.RotatingFileHandler('logs/debug.log', maxBytes=log_size, backupCount=log_backups,
-                                                         encoding='utf-8')
+    debug_handler = logging.handlers.RotatingFileHandler('logs/debug.log',
+        maxBytes=1024 * 1024 * 4)
     debug_handler.setLevel(logging.DEBUG)
     debug_handler.setFormatter(debug_formatter)
     debug_log.addHandler(debug_handler)
@@ -64,19 +62,7 @@ def setup_logger(debug, log_size, log_backups, areas):
     else:
         debug_log.debug('Logger started')
 
-def log_serverpoll(msg, client=None):
-    msg = parse_client_info(client) + msg
-    print("SERVERPOLL: " + msg)
-    logging.getLogger('serverpoll').info(msg)
 
-def log_connect(msg, client=None):
-    msg = parse_client_info(client) + msg
-    print("CONNECT: " + msg)
-    logging.getLogger('connect').info(msg)
-    logging.getLogger('server').info(msg)
-
-    
-    
 def parse_client_info(client):
     """Prepend information about a client to a log entry."""
     if client is None:
@@ -84,5 +70,5 @@ def parse_client_info(client):
     ipid = client.ip
     prefix = f'[{ipid:<15}][{client.id:<3}][{client.name}]'
     if client.is_mod:
-        return '[{:<15}][{:<3}][{}][{}][{}][MOD]'.format(info, client.id, client.ipid, client.real_ip, client.name).replace(" ", "")
-    return '[{:<15}][{:<3}][{}][{}][{}]'.format(info, client.id, client.ipid, client.real_ip, client.name).replace(" ", "")
+        prefix += '[MOD]'
+    return prefix

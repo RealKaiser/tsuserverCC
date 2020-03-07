@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # tsuserverCC, an Attorney Online server.
 #
 # Copyright (C) 2020 Kaiser <kaiserkaisie@gmail.com>

@@ -49,10 +49,7 @@ class TsuServerCC:
         self.load_iniswaps()
         self.client_manager = ClientManager(self)
         self.area_manager = AreaManager(self)
-        self.ban_manager = BanManager()
-        self.serverpoll_manager = ServerpollManager(self)
-        self.software = 'tsuserver3'
-        self.version = 'casecafe'
+        self.software = 'tsuservercc'
         self.release = 3
         self.major_version = 2
         self.minor_version = 0
@@ -83,7 +80,6 @@ class TsuServerCC:
             self.load_characters()
             self.load_music()
             self.load_backgrounds()
-            self.load_ids()
             self.load_gimps()
             self.load_data()
         except yaml.YAMLError as exc:
@@ -133,15 +129,9 @@ class TsuServerCC:
             loop.run_forever()
         except KeyboardInterrupt:
             pass
+
         database.log_misc('stop')
 
-        self.stats_manager.save_alldata()
-        print("Saved all data.")
-        logger.log_debug('Server shutting down.')
-        for c in self.client_manager.clients:
-            c.send_command('KK', 'Server shutting down')
-            c.disconnect()
-        self.runner = False
         ao_server.close()
         loop.run_until_complete(ao_server.wait_closed())
         loop.close()
@@ -160,7 +150,7 @@ class TsuServerCC:
         return f'{self.release}.{self.major_version}.{self.minor_version}'
     def get_version_string(self):
         return str(self.release) + '.' + str(self.major_version) + '.' + str(self.minor_version)
-	"""redundant so I don't break anything"""
+    """redundant so I don't break anything"""
 
     def new_client(self, transport):
         """

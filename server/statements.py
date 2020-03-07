@@ -19,7 +19,7 @@
 
 class Statement:
 
-	def __init__(self, msg_type, pre, folder, anim, msg, pos, sfx, anim_type, cid, sfx_delay, button, evidence, flip, ding, color, showname, charid_pair, other_folder, other_emote, offset_pair, other_offset, other_flip, nonint_pre):
+	def __init__(self, msg_type, pre, folder, anim, msg, pos, sfx, anim_type, cid, sfx_delay, button, evidence, flip, ding, color, showname, charid_pair, other_folder, other_emote, offset_pair, other_offset, other_flip, nonint_pre, looping_sfx, screenshake, frame_screenshake, frame_realization, frame_sfx):
 		self.msg_type = msg_type
 		self.pre = pre
 		self.folder = folder
@@ -43,5 +43,10 @@ class Statement:
 		self.other_offset = other_offset
 		self.other_flip = other_flip
 		self.nonint_pre = nonint_pre
+		self.looping_sfx = looping_sfx
+		self.screenshake = screenshake
+		self.frame_screenshake = frame_screenshake
+		self.frame_realization = frame_realization
+		self.frame_sfx = frame_sfx
 
 		self.id = 0

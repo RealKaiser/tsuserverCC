@@ -315,7 +315,6 @@ class AreaManager:
                                 return
                             else:
                                 index += 1
->>>>>>> 50489f8166cf219e3db1b85ef16a98b4c2bca0bd
 
         def can_send_message(self, client):
             """
