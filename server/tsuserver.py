@@ -20,8 +20,8 @@
 import sys
 import os
 import importlib
-
 import asyncio
+import hashlib
 import websockets
 
 import json
@@ -29,7 +29,7 @@ import yaml
 
 import logging
 logger = logging.getLogger('debug')
-
+from server.database import Database
 from server import database
 from server.area_manager import AreaManager
 from server.client_manager import ClientManager
@@ -38,16 +38,25 @@ from server.exceptions import ServerError
 from server.network.aoprotocol import AOProtocol
 from server.network.aoprotocol_ws import new_websocket_client
 from server.network.masterserverclient import MasterServerClient
+<<<<<<< HEAD
 import server.logger
 
 class TsuServerCC:
     """The main class for tsuserver3 server software."""
     def __init__(self):
-        self.software = 'tsuservercc'
-        self.release = 1
-        self.major_version = 1
+        self.config = None
+        self.allowed_iniswaps = None
+        self.load_config()
+        self.load_iniswaps()
+        self.client_manager = ClientManager(self)
+        self.area_manager = AreaManager(self)
+        self.ban_manager = BanManager()
+        self.serverpoll_manager = ServerpollManager(self)
+        self.software = 'tsuserver3'
+        self.version = 'casecafe'
+        self.release = 3
+        self.major_version = 2
         self.minor_version = 0
-
         self.config = None
         self.allowed_iniswaps = []
         self.char_list = None
@@ -63,16 +72,21 @@ class TsuServerCC:
         self.pollyay = []
         self.pollnay = []
         self.parties = []
-
+        self.district_client = None
         self.ms_client = None
+        self.rp_mode = False
+        self.runner = False
+        self.runtime = 0
 
         try:
             self.load_config()
             self.area_manager = AreaManager(self)
-            self.load_iniswaps()
             self.load_characters()
             self.load_music()
             self.load_backgrounds()
+            self.load_ids()
+            self.load_gimps()
+            self.load_data()
         except yaml.YAMLError as exc:
             print('There was a syntax error parsing a configuration file:')
             print(exc)
@@ -85,10 +99,10 @@ class TsuServerCC:
         self.client_manager = ClientManager(self)
         server.logger.setup_logger(debug=self.config['debug'])
 
+
     def start(self):
         """Start the server."""
         loop = asyncio.get_event_loop()
-
         bound_ip = '0.0.0.0'
         if self.config['local']:
             bound_ip = '127.0.0.1'
@@ -120,12 +134,23 @@ class TsuServerCC:
             loop.run_forever()
         except KeyboardInterrupt:
             pass
+<<<<<<< HEAD
 
         database.log_misc('stop')
 
+        self.stats_manager.save_alldata()
+        print("Saved all data.")
+        logger.log_debug('Server shutting down.')
+        for c in self.client_manager.clients:
+            c.send_command('KK', 'Server shutting down')
+            c.disconnect()
+        self.runner = False
         ao_server.close()
         loop.run_until_complete(ao_server.wait_closed())
         loop.close()
+        
+    def get_version_string(self):
+        return str(self.release) + '.' + str(self.major_version) + '.' + str(self.minor_version)
 
     async def schedule_unbans(self):
         while True:
@@ -136,6 +161,9 @@ class TsuServerCC:
     def version(self):
         """Get the server's current version."""
         return f'{self.release}.{self.major_version}.{self.minor_version}'
+    def get_version_string(self):
+        return str(self.release) + '.' + str(self.major_version) + '.' + str(self.minor_version)
+	"""redundant so I don't break anything"""
 
     def new_client(self, transport):
         """
@@ -202,6 +230,10 @@ class TsuServerCC:
             self.music_list = yaml.safe_load(music)
         self.build_music_pages_ao1()
         self.build_music_list_ao2()
+        
+    def load_gimps(self):
+        with open('config/gimp.yaml', 'r', encoding='utf-8') as cfg:
+            self.gimp_list = yaml.load(cfg)
 
     def load_backgrounds(self):
         """Load the backgrounds list from a YAML file."""
@@ -264,10 +296,21 @@ class TsuServerCC:
         for area in self.area_manager.areas:
             self.music_list_ao2.append(area.name)
             # then add music
+        self.music_list_ao2.append("===MUSIC START===.mp3") #>lol lets just have the music and area lists be the same fucking thing, the mp3 is there for older clients who aren't looking for this to determine the start of the music list
         for item in self.music_list:
             self.music_list_ao2.append(item['category'])
-            for song in item['songs']:
-                self.music_list_ao2.append(song['name'])
+            try:
+                if not item['mod'] == 1:
+                    for song in item['songs']:
+                        if not song['mod'] == 1:
+                            self.music_list_ao2.append(song['name'])
+            except KeyError:
+                for song in item['songs']:
+                    try:
+                        if not song['mod'] == 1:
+                            self.music_list_ao2.append(song['name'])
+                    except KeyError:
+                        self.music_list_ao2.append(song['name'])
 
     def is_valid_char_id(self, char_id):
         """
@@ -299,13 +342,16 @@ class TsuServerCC:
         """
         for item in self.music_list:
             if item['category'] == music:
-                return item['category'], -1
+                return item['category'], -1, -1
             for song in item['songs']:
                 if song['name'] == music:
                     try:
-                        return song['name'], song['length']
+                        return song['name'], song['length'], song['mod']
                     except KeyError:
-                        return song['name'], -1
+                        try:
+                            return song['name'], song['length'], -1
+                        except KeyError:
+                            return song['name'], -1, -1
         raise ServerError('Music not found.')
 
     def send_all_cmd_pred(self, cmd, *args, pred=lambda x: True):
@@ -457,3 +503,11 @@ class TsuServerCC:
         import server.commands
         importlib.reload(server.commands)
         server.commands.reload()
+
+    def load_data(self):
+        with open('config/data.yaml', 'r') as data:
+            self.data = yaml.load(data)
+
+    def save_data(self):
+        with open('config/data.yaml', 'w') as data:
+            json.dump(self.data, data)
