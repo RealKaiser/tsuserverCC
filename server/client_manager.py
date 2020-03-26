@@ -331,6 +331,7 @@ class ClientManager:
                         area.invite_list[self.id] = None
             if area.is_locked == area.Locked.LOCKED and not self.is_mod and not self.id in area.invite_list:
                 if area.password != '':
+                    self.send_command('AP', area)
                     raise ClientError('That area is locked with a password! Use /area <id> <password> to enter.')
                 else:
                     raise ClientError('That area is locked!')
