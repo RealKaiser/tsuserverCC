@@ -1,19 +1,152 @@
+import random
+import asyncio
+import shlex
+
 from server import database
 from server.constants import TargetType
 from server.exceptions import ClientError, ServerError, ArgumentError
+from server.constants import TargetType
 
 from . import mod_only
 
 __all__ = [
     'ooc_cmd_currentmusic',
-    'ooc_cmd_jukebox_toggle',
-    'ooc_cmd_jukebox_skip',
+    'ooc_cmd_music',
+    'ooc_cmd_jukeboxtoggle',
+    'ooc_cmd_jukeboxskip',
     'ooc_cmd_jukebox',
     'ooc_cmd_play',
+    'ooc_cmd_playrandom',
+    'ooc_cmd_shuffle',
     'ooc_cmd_blockdj',
-    'ooc_cmd_unblockdj'
+    'ooc_cmd_unblockdj',
+    'ooc_cmd_addmlist',
+    'ooc_cmd_playl',
+    'ooc_cmd_musiclist',
+    'ooc_cmd_storemlist',
+    'ooc_cmd_loadmlist',
+    'ooc_cmd_clearmusiclist'
 ]
 
+
+def ooc_cmd_addmlist(client, arg):
+    if not client.area.name.startswith('Custom'):
+        if client not in client.area.owners and not client.is_mod:
+            raise ClientError('You must be a CM.')
+    args = shlex.split(arg)
+    if len(args) < 2:
+        raise ArgumentError('Not enough arguments. Use /addmlist "name" "length in seconds".')
+    elif len(args) == 2:
+        name = 'custom/'
+        name += args[0]
+        length = args[1]
+        try:
+            length = int(args[1])
+        except ValueError:
+            raise ClientError(f'{length} does not look like a valid length.')
+        client.area.cmusic_list[name] = length
+        nname = name[7:]
+        client.area.broadcast_ooc(f'{nname} added to the area music list.')
+
+def ooc_cmd_storemlist(client, arg):
+    if client not in client.area.owners and not client.is_mod:
+        raise ClientError('You must be a CM.')
+    if len(arg) < 1:
+        raise ArgumentError('Your stored list requires a name!')
+    if len(arg) > 12:
+        raise ArgumentError('Keep the name of your list to 12 characters or below.')
+    if ' ' in arg:
+        raise ArgumentError('Try to use a name without spaces.')
+    if len(client.area.cmusic_list) == 0:
+        raise ArgumentError('No list to store!')
+    client.server.musiclist_manager.storelist(client, arg)
+
+def ooc_cmd_loadmlist(client, arg):
+    if client not in client.area.owners and not client.is_mod:
+        raise ClientError('You must be a CM.')
+    if len(arg) < 1:
+        raise ArgumentError('Your stored list requires a name!')
+    if len(arg) > 12:
+        raise ArgumentError('Keep the name of your list to 12 characters or below.')
+    if ' ' in arg:
+        raise ArgumentError('Try to use a name without spaces.')
+    client.server.musiclist_manager.loadlist(client, arg)
+
+def ooc_cmd_musiclist(client, arg):
+    if len(arg) > 0:
+        raise ArgumentError('This command takes no arguments.')
+    if len(client.area.cmusic_list) == 0:
+        raise ArgumentError('Music list is empty.')
+    msg = 'Music List:'
+    index = 1
+    for name, length in client.area.cmusic_list.items():
+        nname = name[7:]
+        msg += f' \n{index}: {nname} - {length} seconds.\n'
+        msg += f'-------------------'
+        index += 1
+    client.send_ooc(msg)
+
+def ooc_cmd_clearmusiclist(client, arg):
+    if not client.area.name.startswith('Custom'):
+        if client not in client.area.owners and not client.is_mod:
+            raise ClientError('You must be a CM.')
+    if len(arg) > 0:
+        raise ArgumentError('This command takes no arguments.')
+    client.area.cmusic_list.clear()
+    client.send_ooc(f'Area music list cleared.')
+
+def ooc_cmd_playl(client, arg):
+    if not client.area.name.startswith('Custom'):
+        if client not in client.area.owners and not client.is_mod:
+            raise ClientError('You must be a CM.')
+    if len(arg) == 0:
+        raise ArgumentError('Choose a number to play from /musiclist.')
+    try:
+        trackno = int(arg)
+    except ValueError:
+        raise ClientError(f'{arg} does not look like a valid length.')
+    index = 1
+    if len(client.area.cmusic_list) != 0:
+        for name, length in client.area.cmusic_list.items():
+            if trackno == index:
+                client.area.play_music(name, client.char_id, length)
+                client.area.add_music_playing(client, name)
+                database.log_room('play', client, client.area, message=name)
+                return
+            else:
+                index += 1
+        raise ClientError('Track not found!')
+    else:
+        raise ClientError('Nothing to play in the music list.')
+
+def ooc_cmd_play(client, arg):
+    """
+    Play a track.
+    Usage: /play <name>
+    """
+    if not client.area.name.startswith('Custom'):
+        if client not in client.area.owners and not client.is_mod:
+            raise ClientError('You must be a CM.')
+    args = shlex.split(arg)
+    if len(args) < 1:
+        raise ArgumentError('Not enough arguments. Use /play "name" "length in seconds".')
+    elif len(args) == 2:
+        name = 'custom/'
+        name += args[0]
+        length = args[1]
+        try:
+            length = int(args[1])
+        except ValueError:
+            raise ClientError(f'{length} does not look like a valid length.')
+    elif len(args) == 1:
+        name = 'custom/'
+        name += args[0]
+        length = -1
+    else:
+        raise ArgumentError('Too many arguments. Use /play "name" "length in seconds".')
+    client.area.play_music(name, client.char_id, length)
+    client.area.add_music_playing(client, args[0])
+    database.log_room('play', client, client.area, message=name)
 
 def ooc_cmd_currentmusic(client, arg):
     """
@@ -35,8 +168,14 @@ def ooc_cmd_currentmusic(client, arg):
                 client.area.current_music, client.area.current_music_player))
 
 
-@mod_only(area_owners=True)
-def ooc_cmd_jukebox_toggle(client, arg):
+def ooc_cmd_music(client, arg):
+    """
+    Show the current music playing.
+    Usage: /music
+    """
+    ooc_cmd_currentmusic(client, arg)
+
+def ooc_cmd_jukeboxtoggle(client, arg):
     """
     Toggle jukebox mode. While jukebox mode is on, all music changes become
     votes for the next track, rather than changing the track immediately.
@@ -44,6 +183,8 @@ def ooc_cmd_jukebox_toggle(client, arg):
     """
     if len(arg) != 0:
         raise ArgumentError('This command has no arguments.')
+    if client not in client.area.owners and not client.is_mod:
+        raise ClientError('You must be a CM.')
     client.area.jukebox = not client.area.jukebox
     client.area.jukebox_votes = []
     client.area.broadcast_ooc('{} [{}] has set the jukebox to {}.'.format(
@@ -52,8 +193,7 @@ def ooc_cmd_jukebox_toggle(client, arg):
         message=client.area.jukebox)
 
 
-@mod_only(area_owners=True)
-def ooc_cmd_jukebox_skip(client, arg):
+def ooc_cmd_jukeboxskip(client, arg):
     """
     Skip the current track.
     Usage: /jukebox_skip
@@ -63,8 +203,9 @@ def ooc_cmd_jukebox_skip(client, arg):
     if not client.area.jukebox:
         raise ClientError('This area does not have a jukebox.')
     if len(client.area.jukebox_votes) == 0:
-        raise ClientError(
-            'There is no song playing right now, skipping is pointless.')
+        raise ClientError('There is no song playing right now, skipping is pointless.')
+    if client not in client.area.owners and not client.is_mod:
+        raise ClientError('You must be a CM.')
     client.area.start_jukebox()
     if len(client.area.jukebox_votes) == 1:
         client.area.broadcast_ooc(
@@ -129,19 +270,43 @@ def ooc_cmd_jukebox(client, arg):
         client.send_ooc(
             f'The jukebox has the following songs in it:{message}')
 
+def ooc_cmd_playrandom(client, arg):
+    """
+    Plays a random track.
+    Usage: /playrandom
+    """
+    if len(arg) > 0:
+        raise ArgumentError('This command takes no arguments.')
+    index = 0
+    for item in client.server.music_list:
+        for song in item['songs']:
+            index += 1
+    if index == 0:
+        raise ServerError(
+                'No music found.')
+    else:
+        music_set = set(range(index))
+        trackid = random.choice(tuple(music_set))
+        index = 1
+        for item in client.server.music_list:
+            for song in item['songs']:
+                if index == trackid:
+                    client.area.play_music(song['name'], client.char_id, song['length'])
+                    client.area.add_music_playing(client, song['name'])
+                    database.log_room('play', client, client.area, message=song['name'])
+                    return
+                else:
+                    index += 1
 
-@mod_only()
-def ooc_cmd_play(client, arg):
+def ooc_cmd_shuffle(client, arg):
     """
     Play a track.
     Usage: /play <name>
     """
-    if len(arg) == 0:
-        raise ArgumentError('You must specify a song.')
-    client.area.play_music(arg, client.char_id, -1)
-    client.area.add_music_playing(client, arg)
-    database.log_room('play', client, client.area, message=arg)
-
+    if arg == 'musiclist':
+        client.area.musiclist_shuffle(client)
+    else:
+        client.area.music_shuffle(arg, client)
 
 @mod_only()
 def ooc_cmd_blockdj(client, arg):
@@ -163,10 +328,7 @@ def ooc_cmd_blockdj(client, arg):
         target.send_ooc(
             'A moderator muted you from changing the music.')
         database.log_room('blockdj', client, client.area, target=target)
-        target.area.remove_jukebox_vote(target, True)
-    client.send_ooc('blockdj\'d {}.'.format(
-        targets[0].char_name))
-
+        client.send_ooc('blockdj\'d {}.'.format(target.char_name))
 
 @mod_only()
 def ooc_cmd_unblockdj(client, arg):

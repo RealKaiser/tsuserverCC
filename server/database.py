@@ -1,3 +1,22 @@
+# tsuserverCC, an Attorney Online server.
+#
+# Copyright (C) 2020 Kaiser <kaiserkaisie@gmail.com>
+#
+# Derivative of tsuserver3, an Attorney Online server. Copyright (C) 2016 argoneus <argoneuscze@gmail.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 
 import asyncio
@@ -115,7 +134,6 @@ class Database:
                         INSERT INTO ip_bans(ipid, ban_id)
                         VALUES (?, ?)
                         '''), (ipid, ban_id))
-
             logger.debug('Migration to v1 complete')
 
     def migrate(self):
@@ -142,11 +160,13 @@ class Database:
             ipid = conn.execute(dedent('''
                 SELECT ipid FROM ipids WHERE ip_address = ?
                 '''), (ip, )).fetchone()['ipid']
+            event_logger.info(f'IPID for {ip}: {ipid}')
             return ipid
 
     def add_hdid(self, ipid, hdid):
         """Associate an HDID with an IPID."""
         with self.db as conn:
+            event_logger.info(f'Associated {ipid} with {hdid}')
             conn.execute(dedent('''
                 INSERT OR IGNORE INTO hdids(hdid, ipid) VALUES (?, ?)
                 '''), (hdid, ipid))

@@ -15,9 +15,62 @@ __all__ = [
     'ooc_cmd_charcurse',
     'ooc_cmd_uncharcurse',
     'ooc_cmd_charids',
-    'ooc_cmd_reload'
+    'ooc_cmd_reload',
+    'ooc_cmd_visible',
+    'ooc_cmd_narrator',
+    'ooc_cmd_nopairoffset',
+    'ooc_cmd_areapair',
+	'ooc_cmd_kickother'
 ]
 
+def ooc_cmd_areapair(client, arg):
+    if arg == 'left':
+        client.areapair = 'left'
+        client.send_ooc('You are now area-paired to the left.')
+    elif arg == 'right':
+        client.areapair = 'right'
+        client.send_ooc('You are now area-paired to the right.')
+    elif arg == 'middle':
+        client.areapair = 'middle'
+        client.send_ooc('You are no longer area-paired.')
+    else:
+        raise ArgumentError('Invalid argument.')
+
+def ooc_cmd_nopairoffset(client, arg):
+    if len(arg) == 0:
+        raise ArgumentError('Requires an offset as argument.')
+    try:
+        arg = int(arg)
+    except:
+        raise ArgumentError('That doesn\'t look like a valid number.')
+    if arg > 100:
+        raise ArgumentError('Can\'t set your offset higher than 100!')
+    if arg < -100:
+        raise ArgumentError('Can\'t set your offset lower than -100!')
+    client.offset = arg
+    client.send_ooc(f'Your offset was set to {client.offset}.') 
+
+def ooc_cmd_narrator(client, arg):
+    if len(arg) > 0:
+        raise ArgumentError('This command takes no arguments.')
+    if client not in client.area.owners and not client.is_mod:
+        raise ClientError('You must be a CM.')
+    if client.narrator:
+        client.narrator = False
+        client.send_ooc('You are no longer speaking as Narrator.')
+    else:
+        client.narrator = True
+        client.send_ooc('You are now speaking as Narrator.')
+
+def ooc_cmd_visible(client, arg):
+    if len(arg) > 0:
+        raise ArgumentError('This command takes no arguments.')
+    if client.visible:
+        client.visible = False
+        client.send_ooc('You are no longer visible, your emotes won\'t be shown.')
+    else:
+        client.visible = True
+        client.send_ooc('You are now visible, your emotes will be shown.')
 
 def ooc_cmd_switch(client, arg):
     """
@@ -56,7 +109,6 @@ def ooc_cmd_pos(client, arg):
         client.send_ooc('Position changed.')
 
 
-@mod_only(area_owners=True)
 def ooc_cmd_forcepos(client, arg):
     """
     Set the place another character resides in the room.
@@ -64,7 +116,9 @@ def ooc_cmd_forcepos(client, arg):
     """
     args = arg.split()
 
-    if len(args) < 1:
+    if client not in client.area.owners:
+        raise ClientError ('You are not a CM.')
+    elif len(args) < 1:
         raise ArgumentError(
             'Not enough arguments. Use /forcepos <pos> <target>. Target should be ID, OOC-name or char-name. Use /getarea for getting info like "[ID] char-name".'
         )
@@ -242,3 +296,18 @@ def ooc_cmd_reload(client, arg):
     except ClientError:
         raise
     client.send_ooc('Character reloaded.')
+
+def ooc_cmd_kickother(client, arg):
+    targets = client.server.client_manager.get_targets(client, TargetType.IPID, client.ipid, False)
+    for target in targets:
+        if target != client:
+            target.disconnect()
+    temp = set()
+    for c in client.server.client_manager.clients:
+        temp.add(c)
+    for c in temp:
+        if c.ipid == client.ipid and c != client:
+            client.server.client_manager.clients.remove(c)
+        elif c.hdid == client.hdid and c != client:
+            client.server.client_manager.clients.remove(c)
+    client.send_ooc('Kicked other instances of client.')

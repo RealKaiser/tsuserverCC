@@ -7,14 +7,14 @@ from server import database
 from server.constants import TargetType
 from server.exceptions import ClientError, ServerError, ArgumentError
 
-from . import mod_only, list_commands
+from . import mod_only
 
 __all__ = [
     'ooc_cmd_motd',
     'ooc_cmd_help',
     'ooc_cmd_kick',
     'ooc_cmd_ban',
-    'ooc_cmd_banhdid',
+	'ooc_cmd_banhdid',
     'ooc_cmd_unban',
     'ooc_cmd_mute',
     'ooc_cmd_unmute',
@@ -23,12 +23,128 @@ __all__ = [
     'ooc_cmd_online',
     'ooc_cmd_mods',
     'ooc_cmd_unmod',
-    'ooc_cmd_ooc_mute',
-    'ooc_cmd_ooc_unmute',
+    'ooc_cmd_oocmute',
+    'ooc_cmd_oocunmute',
     'ooc_cmd_bans',
-    'ooc_cmd_baninfo'
+    'ooc_cmd_permit',
+    'ooc_cmd_baninfo',
+    'ooc_cmd_setserverpoll',
+    'ooc_cmd_serverpoll',
+    'ooc_cmd_clearserverpoll',
+    'ooc_cmd_allowmusic',
+    'ooc_cmd_ghost'
 ]
 
+def ooc_cmd_allowmusic(client, arg):
+    if client not in client.area.owners and not client.is_mod:
+        raise ClientError('You are not a CM!')
+    if client.area.allowmusic:
+        client.area.allowmusic = False
+        client.area.broadcast_ooc('Music changes have been disallowed in this area!')
+    else:
+        client.area.allowmusic = True
+        client.area.broadcast_ooc('Music changes have been allowed in this area.')
+
+def ooc_cmd_setserverpoll(client, arg):
+    if not client.is_mod:
+        raise ClientError('You are not authorized.')
+    client.server.poll = f'=== Server Poll ===\n{arg}\n===================\nVote "yay" or "nay" with /serverpoll.'
+    client.server.pollyay = []
+    client.server.pollnay = []
+    for a in client.server.area_manager.areas:
+        for c in a.clients:
+            c.send_ooc('A new server poll has been set. Check /serverpoll.')
+
+def ooc_cmd_serverpoll(client, arg):
+    poll = client.server.poll
+    yay = client.server.pollyay
+    nay = client.server.pollnay
+    if poll == '':
+        raise ClientError('There is currently no server poll running.')
+    if len(yay) == 0:
+        if len(nay) != 0:
+            poll += f'\n===================\nThere are currently no yays and {len(nay)} nays.\nThe nays have a majority of {len(nay)} vote(s).'
+    elif len(nay) == 0:
+        if len(yay) != 0:
+            poll += f'\n===================\nThere are currently {len(yay)} yays and no nays.\nThe yays have a majority of {len(yay)} vote(s).'
+    else:
+        if len(nay) > len(yay):
+            majority = len(nay) - len(yay)
+            poll += f'\n===================\nThere are currently {len(yay)} yays and {len(nay)} nays.\nThe nays have a majority of {majority} vote(s).'
+        if len(nay) < len(yay):
+            majority = len(yay) - len(nay)
+            poll += f'\n===================\nThere are currently {len(yay)} yays and {len(nay)} nays.\nThe yays have a majority of {majority} vote(s).'
+        if len(nay) == len(yay):
+            poll += f'\n===================\nThere are currently {len(yay)} yays and {len(nay)} nays.\nThe yays and the nays are tied.'
+    hdid = client.hdid
+    ipid = client.ipid
+    if len(arg) == 0:
+        client.send_ooc(poll)
+    elif arg == 'yay':
+        if hdid in yay:
+            raise ClientError('You have already voted yay on this poll.')
+        elif hdid in nay:
+            yay.append(hdid)
+            nay.remove(hdid)
+            client.send_ooc('You switched your vote from nay to yay.')
+        else:
+            yay.append(hdid)
+            client.send_ooc('You voted yay on the server poll.')
+    elif arg == 'nay':
+        if hdid in nay:
+            raise ClientError('You have already voted nay on this poll.')
+        elif hdid in yay:
+            nay.append(hdid)
+            yay.remove(hdid)
+            client.send_ooc('You switched your vote from yay to nay.')
+        else:
+            nay.append(hdid)
+            client.send_ooc('You voted nay on the server poll.')
+    else:
+        raise ArgumentError('Vote either "yay" or"nay". Check the server poll by using no argument.')
+
+def ooc_cmd_clearserverpoll(client, arg):
+    if not client.is_mod:
+        raise ClientError('You are not authorized.')
+    client.server.poll = ''
+    client.server.pollyay = []
+    client.server.pollnay = []
+    for a in client.server.area_manager.areas:
+        for c in a.clients:
+            c.send_ooc('The server poll was cleared.')
+
+def ooc_cmd_ghost(client, arg):
+    if not client.is_mod:
+        raise ClientError('You are not authorized.')
+    elif client.ghost:
+        client.ghost = False
+        client.send_ooc('You are no longer a ghost.')
+    else:
+        client.ghost = True
+        client.send_ooc('You are now a ghost.')
+
+def ooc_cmd_permit(client, arg):
+    if not client.is_mod:
+        raise ClientError('You are not authorized.')
+    else:
+        if len(arg) > 0:
+            arg = arg.split(' ')
+        for id in arg:
+            try:
+                id = int(id)
+                c = client.server.client_manager.get_targets(client, TargetType.ID, id, False)[0]
+                if c.permission == False:
+                    c.permission = True
+                    client.send_ooc(f'{c.char_name} has been granted permission.')
+                    c.send_ooc('You have been granted special permissions.')
+                    return
+                else:
+                    c.permission = False
+                    client.send_ooc(f'{c.char_name}\'s permissions have been revoked.')
+                    c.send_ooc('Your special permissions have been revoked.')
+                    return
+            except:
+                client.send_ooc(f'{id} does not look like a valid ID.')
 
 def ooc_cmd_motd(client, arg):
     """
@@ -45,21 +161,11 @@ def ooc_cmd_help(client, arg):
     Show help for a command, or show general help.
     Usage: /help
     """
-    import inspect
-    msg = inspect.cleandoc('''
-    Welcome to tsuserver3! You can use /help <command> on any known
-    command to get up-to-date help on it.
-
-    If you don't understand a specific core feature, check the official
-    repository for more information:
-
-    https://github.com/AttorneyOnline/tsuserver3
-
-    Commands:
-    ''')
-    msg += '\n'
-    msg += list_commands()
-    client.send_ooc(msg)
+    if len(arg) != 0:
+        raise ArgumentError('This command has no arguments.')
+    help_url = 'https://github.com/RealKaiser/tsuserverCC'
+    help_msg = f'The commands available on this server can be found here: {help_url}'
+    client.send_ooc(help_msg)
 
 
 @mod_only()
@@ -292,11 +398,11 @@ def ooc_cmd_refresh(client, arg):
     else:
         try:
             client.server.refresh()
+
             database.log_misc('refresh', client)
             client.send_ooc('You have reloaded the server.')
         except ServerError:
             raise
-
 
 def ooc_cmd_online(client, _):
     """
@@ -311,8 +417,14 @@ def ooc_cmd_mods(client, arg):
     Show a list of moderators online.
     Usage: /mods
     """
-    client.send_area_info(-1, True)
-
+    if client.is_mod:
+        client.send_area_info(-1, True)
+    else:
+        mods = client.server.area_manager.mods_online()
+        if mods != 0:
+            client.send_ooc(f'There are currently {mods} moderators online.')
+        else:
+            client.send_ooc('There are no moderators online.')
 
 def ooc_cmd_unmod(client, arg):
     """
@@ -327,19 +439,18 @@ def ooc_cmd_unmod(client, arg):
 
 
 @mod_only()
-def ooc_cmd_ooc_mute(client, arg):
+def ooc_cmd_oocmute(client, arg):
     """
     Prevent a user from talking out-of-character.
     Usage: /ooc_mute <ooc-name>
     """
     if len(arg) == 0:
         raise ArgumentError(
-            'You must specify a target. Use /ooc_mute <OOC-name>.')
-    targets = client.server.client_manager.get_targets(client,
-                                                       TargetType.OOC_NAME,
-                                                       arg, False)
+            'You must specify a target. Use /ooc_mute <ID>.')
+    targets = client.server.client_manager.get_targets(client, TargetType.ID,
+                                                     int(arg), False)
     if not targets:
-        raise ArgumentError('Targets not found. Use /ooc_mute <OOC-name>.')
+        raise ArgumentError('Targets not found. Use /ooc_mute <ID>.')
     for target in targets:
         target.is_ooc_muted = True
         database.log_room('ooc_mute', client, client.area, target=target)
@@ -348,17 +459,18 @@ def ooc_cmd_ooc_mute(client, arg):
 
 
 @mod_only()
-def ooc_cmd_ooc_unmute(client, arg):
+def ooc_cmd_oocunmute(client, arg):
     """
     Allow an OOC-muted user to talk out-of-character.
     Usage: /ooc_unmute <ooc-name>
     """
     if len(arg) == 0:
         raise ArgumentError(
-            'You must specify a target. Use /ooc_unmute <OOC-name>.')
-    targets = client.server.client_manager.get_ooc_muted_clients()
+            'You must specify a target. Use /ooc_unmute <ID>.')
+    targets = client.server.client_manager.get_targets(client, TargetType.ID,
+                                                     int(arg), False)
     if not targets:
-        raise ArgumentError('Targets not found. Use /ooc_unmute <OOC-name>.')
+        raise ArgumentError('Targets not found. Use /ooc_unmute <ID>.')
     for target in targets:
         target.is_ooc_muted = False
         database.log_room('ooc_unmute', client, client.area, target=target)
