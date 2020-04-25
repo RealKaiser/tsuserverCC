@@ -1,6 +1,8 @@
-# tsuserver3, an Attorney Online server
+# tsuserverCC, an Attorney Online server.
 #
-# Copyright (C) 2016 argoneus <argoneuscze@gmail.com>
+# Copyright (C) 2020 Kaiser <kaiserkaisie@gmail.com>
+#
+# Derivative of tsuserver3, an Attorney Online server. Copyright (C) 2016 argoneus <argoneuscze@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -18,8 +20,8 @@
 import sys
 import os
 import importlib
-
 import asyncio
+import hashlib
 import websockets
 
 import geoip2.database
@@ -29,10 +31,12 @@ import yaml
 
 import logging
 logger = logging.getLogger('debug')
-
+from server.database import Database
 from server import database
 from server.area_manager import AreaManager
 from server.client_manager import ClientManager
+from server.musiclist_manager import MusicListManager
+from server.friend_manager import FriendManager
 from server.emotes import Emotes
 from server.exceptions import ClientError,ServerError
 from server.network.aoprotocol import AOProtocol
@@ -40,13 +44,22 @@ from server.network.aoprotocol_ws import new_websocket_client
 from server.network.masterserverclient import MasterServerClient
 import server.logger
 
-class TsuServer3:
-    """The main class for tsuserver3 server software."""
+class TsuServerCC:
+    """The main class for tsuserverCC server software."""
     def __init__(self):
-        self.software = 'tsuserver3'
-        self.release = 3
-        self.major_version = 3
-        self.minor_version = 0
+        self.config = None
+        self.allowed_iniswaps = None
+        self.load_config()
+        self.load_iniswaps()
+        self.client_manager = ClientManager(self)
+        self.area_manager = AreaManager(self)
+        self.musiclist_manager = MusicListManager(self)
+        self.friend_manager = FriendManager(self)
+        self.software = 'tsuservercc'
+
+        self.release = 1
+        self.major_version = 2
+        self.minor_version = 1
 
         self.config = None
         self.allowed_iniswaps = []
@@ -70,16 +83,24 @@ class TsuServer3:
             self.useGeoIp = False
             pass
 
+        self.is_poll = False
+        self.poll = ''
+        self.pollyay = []
+        self.pollnay = []
+        self.parties = []
+        self.district_client = None
         self.ms_client = None
+        self.rp_mode = False
+        self.runner = False
+        self.runtime = 0
 
         try:
             self.load_config()
-            self.area_manager = AreaManager(self)
-            self.load_iniswaps()
             self.load_characters()
             self.load_music()
             self.load_backgrounds()
             self.load_ipranges()
+            self.load_gimps()
         except yaml.YAMLError as exc:
             print('There was a syntax error parsing a configuration file:')
             print(exc)
@@ -92,10 +113,10 @@ class TsuServer3:
         self.client_manager = ClientManager(self)
         server.logger.setup_logger(debug=self.config['debug'])
 
+
     def start(self):
         """Start the server."""
         loop = asyncio.get_event_loop()
-
         bound_ip = '0.0.0.0'
         if self.config['local']:
             bound_ip = '127.0.0.1'
@@ -133,6 +154,9 @@ class TsuServer3:
         ao_server.close()
         loop.run_until_complete(ao_server.wait_closed())
         loop.close()
+        
+    def get_version_string(self):
+        return str(self.release) + '.' + str(self.major_version) + '.' + str(self.minor_version)
 
     async def schedule_unbans(self):
         while True:
@@ -143,6 +167,9 @@ class TsuServer3:
     def version(self):
         """Get the server's current version."""
         return f'{self.release}.{self.major_version}.{self.minor_version}'
+    def get_version_string(self):
+        return str(self.release) + '.' + str(self.major_version) + '.' + str(self.minor_version)
+    """redundant so I don't break anything"""
 
     def new_client(self, transport):
         """
@@ -192,8 +219,11 @@ class TsuServer3:
     @property
     def player_count(self):
         """Get the number of non-spectating clients."""
-        return len([client for client in self.client_manager.clients
-            if client.char_id != -1])
+        cnt = 0
+        for area in self.area_manager.areas:
+            for client in area.clients:
+                cnt += 1
+        return cnt
 
     def load_config(self):
         """Load the main server configuration from a YAML file."""
@@ -218,8 +248,6 @@ class TsuServer3:
 
         if isinstance(self.config['modpass'], str):
             self.config['modpass'] = {'default': {'password': self.config['modpass']}}
-        if 'multiclient_limit' not in self.config:
-            self.config['multiclient_limit'] = 16
 
     def load_characters(self):
         """Load the character list from a YAML file."""
@@ -234,6 +262,10 @@ class TsuServer3:
             self.music_list = yaml.safe_load(music)
         self.build_music_pages_ao1()
         self.build_music_list_ao2()
+        
+    def load_gimps(self):
+        with open('config/gimp.yaml', 'r', encoding='utf-8') as cfg:
+            self.gimp_list = yaml.safe_load(cfg)
 
     def load_backgrounds(self):
         """Load the backgrounds list from a YAML file."""
@@ -305,10 +337,21 @@ class TsuServer3:
         for area in self.area_manager.areas:
             self.music_list_ao2.append(area.name)
             # then add music
+        #self.music_list_ao2.append("===MUSIC START===.mp3") #>lol lets just have the music and area lists be the same fucking thing, the mp3 is there for older clients who aren't looking for this to determine the start of the music list
         for item in self.music_list:
             self.music_list_ao2.append(item['category'])
-            for song in item['songs']:
-                self.music_list_ao2.append(song['name'])
+            try:
+                if not item['mod'] == 1:
+                    for song in item['songs']:
+                        if not song['mod'] == 1:
+                            self.music_list_ao2.append(song['name'])
+            except KeyError:
+                for song in item['songs']:
+                    try:
+                        if not song['mod'] == 1:
+                            self.music_list_ao2.append(song['name'])
+                    except KeyError:
+                        self.music_list_ao2.append(song['name'])
 
     def is_valid_char_id(self, char_id):
         """
@@ -340,13 +383,16 @@ class TsuServer3:
         """
         for item in self.music_list:
             if item['category'] == music:
-                return item['category'], -1
+                return item['category'], -1, -1
             for song in item['songs']:
                 if song['name'] == music:
                     try:
-                        return song['name'], song['length']
+                        return song['name'], song['length'], song['mod']
                     except KeyError:
-                        return song['name'], -1
+                        try:
+                            return song['name'], song['length'], -1
+                        except KeyError:
+                            return song['name'], -1, -1
         raise ServerError('Music not found.')
 
     def send_all_cmd_pred(self, cmd, *args, pred=lambda x: True):
@@ -389,6 +435,17 @@ class TsuServer3:
                                        name)
         self.send_all_cmd_pred('CT', ooc_name, msg, pred=lambda x: x.is_mod)
 
+    def send_partychat(self, client, msg):
+        """
+        Send an OOC message to all mods.
+        :param client: sender
+        :param msg: message
+
+        """
+        name = client.name
+        ooc_name = '{}[{}]'.format(f'<dollar>[{client.party.name}]', name)
+        self.send_all_cmd_pred('CT', ooc_name, msg, pred=lambda x: x.is_mod or x.party == client.party)
+
     def broadcast_need(self, client, msg):
         """
         Broadcast an OOC "need" message to all clients who do not
@@ -410,7 +467,7 @@ class TsuServer3:
 
     def send_arup(self, args):
         """Update the area properties for 2.6 clients.
-
+        
         Playercount:
             ARUP#0#<area1_p: int>#<area2_p: int>#...
         Status:
@@ -420,7 +477,8 @@ class TsuServer3:
         Lockedness:
             ARUP#3##<area1_l: string>##<area2_l: string>#...
 
-        :param args:
+
+        :param args: 
 
         """
         if len(args) < 2:
@@ -435,7 +493,7 @@ class TsuServer3:
                     _sanitised = int(part_arg)
                 except:
                     return
-        elif args[0] in (1, 2, 3):
+        elif args[0] in (1, 2, 3, 4):
             for part_arg in args[1:]:
                 try:
                     _sanitised = str(part_arg)
@@ -488,3 +546,11 @@ class TsuServer3:
         import server.commands
         importlib.reload(server.commands)
         server.commands.reload()
+
+    def load_data(self):
+        with open('config/data.yaml', 'r') as data:
+            self.data = yaml.load(data)
+
+    def save_data(self):
+        with open('config/data.yaml', 'w') as data:
+            json.dump(self.data, data)

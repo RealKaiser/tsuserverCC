@@ -1,6 +1,8 @@
-# tsuserver3, an Attorney Online server
+# tsuserverCC, an Attorney Online server.
 #
-# Copyright (C) 2016 argoneus <argoneuscze@gmail.com>
+# Copyright (C) 2020 Kaiser <kaiserkaisie@gmail.com>
+#
+# Derivative of tsuserver3, an Attorney Online server. Copyright (C) 2016 argoneus <argoneuscze@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -15,11 +17,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+
 from enum import Enum
 
 
 class TargetType(Enum):
-    # possible keys: ip, OOC, id, cname, ipid, hdid, afk
+    # possible keys: ip, OOC, id, cname, ipid, hdid
     IP = 0
     OOC_NAME = 1
     ID = 2
@@ -27,4 +30,3 @@ class TargetType(Enum):
     IPID = 4
     HDID = 5
     ALL = 6
-    AFK = 7

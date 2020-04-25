@@ -18,9 +18,49 @@ __all__ = [
     'ooc_cmd_blockwtce',
     'ooc_cmd_unblockwtce',
     'ooc_cmd_judgelog',
-    'ooc_cmd_afk'
+    'ooc_cmd_woosh',
+    'ooc_cmd_testimony',
+    'ooc_cmd_cleartestimony'
 ]
 
+def ooc_cmd_testimony(client, arg):
+    if len(client.area.recorded_messages) == 0:
+        raise ArgumentError('No recorded testimony in this area.')
+    testimony = 'Testimony:'
+    testimonylength = len(client.area.recorded_messages) - 1
+    index = 0
+    statements = []
+    for statement in client.area.recorded_messages:
+        statements.append(index)
+        index += 1
+    for statement in client.area.recorded_messages:
+        statements[statement.id] = statement
+    index = 0
+    for n in statements:
+        statement = statements[index]
+        index += 1
+        if statement.id == 0:
+            testimony += f'\n{statement.msg}'
+        elif statement.id == testimonylength:
+            testimony += f'\n{statement.msg}'
+        else:
+            testimony += f'\n{statement.id}: {statement.msg}'
+    client.send_ooc(testimony)
+
+def ooc_cmd_woosh(client, arg):
+    """
+    Prevent a user from using Witness Testimony/Cross Examination buttons
+    as a judge.
+    Usage: /woosh
+    """
+    if len(arg) != 0:
+        raise ArgumentError('This command takes no arguments.')
+    if client.can_wtce:
+        client.can_wtce = False
+        client.send_ooc('You will no longer use judge signs.')
+    else:
+        client.can_wtce = True
+        client.send_ooc('You will now use judge signs again.')
 
 def ooc_cmd_doc(client, arg):
     """
@@ -36,6 +76,12 @@ def ooc_cmd_doc(client, arg):
             client.char_name))
         database.log_room('doc.change', client, client.area, message=arg)
 
+def ooc_cmd_cleartestimony(client, arg):
+    if client in client.area.owners:
+        client.area.recorded_messages.clear()
+        client.area.statement = 0
+        client.area.is_recording = False
+        client.send_ooc('Testimony cleared.')
 
 def ooc_cmd_cleardoc(client, arg):
     """
@@ -94,29 +140,52 @@ def ooc_cmd_cm(client, arg):
     Add a case manager for the current room.
     Usage: /cm <id>
     """
-    if 'CM' not in client.area.evidence_mod:
+    if 'CM' not in client.area.evidence_mod and not client.is_mod:
         raise ClientError('You can\'t become a CM in this area')
-    if len(client.area.owners) == 0:
-        if len(arg) > 0:
-            raise ArgumentError(
-                'You cannot \'nominate\' people to be CMs when you are not one.'
-            )
+    if len(client.area.owners) == 0 and len(arg) == 0:
         client.area.owners.append(client)
         if client.area.evidence_mod == 'HiddenCM':
             client.area.broadcast_evidence_list()
         client.server.area_manager.send_arup_cms()
-        client.area.broadcast_ooc('{} [{}] is CM in this area now.'.format(
-            client.char_name, client.id))
+        if not client.ghost:
+            client.area.broadcast_ooc('{} [{}] is CM in this area now.'.format(client.char_name, client.id))
+        else:
+            client.send_ooc('You are now ghost CM of this area.')
         database.log_room('cm.add', client, client.area, target=client, message='self-added')
-    elif client in client.area.owners:
+    elif not client.is_mod and len(client.area.owners) > 0 and len(arg) == 0:
+        notghost = False
+        for c in client.area.owners:
+            if not c.ghost:
+                notghost = True
+        if notghost == False:
+            client.area.owners.append(client)
+            if client.area.evidence_mod == 'HiddenCM': 
+                client.area.broadcast_evidence_list()
+            client.server.area_manager.send_arup_cms()
+            if not client.ghost: 
+                client.area.broadcast_ooc('{} [{}] is CM in this area now.'.format(client.char_name, client.id))
+            database.log_room('cm.add', client, client.area, target=client, message='self-added')
+    elif client.is_mod and len(arg) == 0:
+        client.area.owners.append(client)
+        if client.area.evidence_mod == 'HiddenCM':
+            client.area.broadcast_evidence_list()
+        client.server.area_manager.send_arup_cms()
+        if not client.ghost:
+            client.area.broadcast_ooc('{} [{}] is CM in this area now.'.format(client.char_name, client.id))
+        else:
+            client.send_ooc('You are now ghost CM of this area.')
+        database.log_room('cm.add', client, client.area, target=client, message='self-added')
+    elif client in client.area.owners or client.is_mod:
         if len(arg) > 0:
             arg = arg.split(' ')
+            if client not in client.area.owners and not client.is_mod:
+                raise ArgumentError('You can\'t nominate someone when you aren\'t the CM.')
         for id in arg:
             try:
                 id = int(id)
                 c = client.server.client_manager.get_targets(
                     client, TargetType.ID, id, False)[0]
-                if not c in client.area.clients:
+                if not c in client.area.clients and not client.is_mod:
                     raise ArgumentError(
                         'You can only \'nominate\' people to be CMs when they are in the area.'
                     )
@@ -139,14 +208,15 @@ def ooc_cmd_cm(client, arg):
     else:
         raise ClientError('You must be authorized to do that.')
 
-
-@mod_only(area_owners=True)
 def ooc_cmd_uncm(client, arg):
     """
     Remove a case manager from the current area.
     Usage: /uncm <id>
     """
-    if len(arg) > 0:
+    if client not in client.area.owners and not client.is_mod:
+	    raise ClientError(
+                'You must be a CM.')
+    elif len(arg) > 0:
         arg = arg.split(' ')
     else:
         arg = [client.id]
@@ -158,10 +228,18 @@ def ooc_cmd_uncm(client, arg):
             if c in client.area.owners:
                 client.area.owners.remove(c)
                 client.server.area_manager.send_arup_cms()
-                client.area.broadcast_ooc(
-                    '{} [{}] is no longer CM in this area.'.format(
-                        c.char_name, c.id))
+                if not client.ghost:
+                    client.area.broadcast_ooc('{} [{}] is no longer CM in this area.'.format(c.char_name, c.id))
+                else:
+                    client.send_ooc('You are no longer ghost CM of this area.')
                 database.log_room('cm.remove', client, client.area, target=c)
+                if len(client.area.owners) == 0:
+                    if client.area.is_restricted:
+                        client.area.is_restricted = False
+                        client.area.connections.clear()
+                    client.area.is_recording = False
+                    client.area.recorded_messages = []
+                    client.area.statement = 0
             else:
                 client.send_ooc(
                     'You cannot remove someone from CMing when they aren\'t a CM.'
@@ -169,7 +247,6 @@ def ooc_cmd_uncm(client, arg):
         except:
             client.send_ooc(
                 f'{id} does not look like a valid ID.')
-
 
 # LEGACY
 def ooc_cmd_setcase(client, arg):
@@ -305,6 +382,6 @@ def ooc_cmd_judgelog(client, arg):
         raise ServerError(
             'There have been no judge actions in this area since start of session.'
         )
-        
+
 def ooc_cmd_afk(client, arg):
     client.server.client_manager.toggle_afk(client)

@@ -15,51 +15,23 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-def submodules():
-    """Get all command-related submodules."""
-    import sys, inspect
+def reload():
+    """Reload all submodules."""
+    import sys, inspect, importlib
     me = sys.modules[__name__]
     for _, v in inspect.getmembers(me):
         if inspect.ismodule(v):
-            yield v
-
-
-def reload():
-    """Reload all submodules."""
-    import sys, importlib
-    me = sys.modules[__name__]
-    for module in submodules():
-        m = importlib.reload(module)
-        for f in m.__all__:
-            me.__dict__[f] = m.__dict__[f]
+            m = importlib.reload(v)
+            for f in m.__all__:
+                me.__dict__[f] = m.__dict__[f]
 
 
 def help(command):
-    import sys, inspect
+    import sys
     try:
-        doc = inspect.getdoc(getattr(sys.modules[__name__], command))
+        return getattr(sys.modules[__name__], command).__doc__
     except AttributeError:
-        doc = None
-    return doc or 'No help found for that command.'
-
-
-def list_commands():
-    """Lists all known commands."""
-    import inspect
-    cmds = ''
-    for module in submodules():
-        for func in module.__all__:
-            doc = inspect.getdoc(module.__dict__[func])
-            if doc is None:
-                doc = '(no docs)'
-            else:
-                # Find the first sentence (assuming it ends in a period).
-                doc = doc[:doc.find('.') + 1]
-            prefix = 'ooc_cmd_'
-            if func.startswith(prefix):
-                func = func[len(prefix):]
-            cmds += f'{func} - {doc}\n'
-    return cmds
+        return 'No help found for that command.'
 
 
 def mod_only(area_owners=False):
@@ -68,7 +40,7 @@ def mod_only(area_owners=False):
     def decorator(func):
         @functools.wraps(func)
         def wrapper_mod_only(client, arg, *args, **kwargs):
-            if not client.is_mod and (not area_owners or client not in client.area.owners):
+            if not client.is_mod and (not area_owners or not client in area_owners):
                 raise ClientError('You must be authorized to do that.')
             func(client, arg, *args, **kwargs)
         return wrapper_mod_only

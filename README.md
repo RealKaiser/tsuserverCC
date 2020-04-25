@@ -1,23 +1,26 @@
-# tsuserver3
+# tsuserverCC
 
-tsuserver3 is the official Python-based server for Attorney Online.
+A Python-based server for Attorney Online, forked from [AttorneyOnline/tsuserver3](https://github.com/AttorneyOnline/tsuserver3)
 
-## Easy setup instructions
+Requires Python 3.6+ and PyYAML.
 
-The server will not work out of the box. **You must follow these instructions.**
+### Changes/additions from tsuserver3
+* Fully-functional party system with Main Game features inbuilt,
+* Testimony recording/playback system,
+* Greatly extended support for custom content,
+* More options for area management, including:
+  - On-the-fly area renaming, creation, and destruction,
+  - Password locks,
+  - Ability to connect areas via 'exits,'
+  - and playercount hiding.
+* Serverside notepads,
+* Additional moderation features,
+* and a category-based music shuffle system.
 
-### Install Python
+## How to use
 
-* Install the [latest version of Python](https://www.python.org/downloads/). **Python 2 will not work**, as tsuserver3 depends on async/await, which can only be found on Python 3.7 and newer.
-  - If you run Windows, make sure to check the "Add Python to PATH" and install pip checkboxes in the installer
-  - If you run anything other than Windows, you should read "Advanced setup instructions" below.
-  
-### Download tsuserver3
-
-We recommend [Git](https://git-scm.com/downloads/guis) - it makes it very easy to update tsuserver. But we are power users and therefore inherently biased. You can instead download the latest zip of tsuserver with [this link](https://github.com/AttorneyOnline/tsuserver3/archive/master.zip). Extract it and put it wherever you want.
-
-### Install dependencies
-
+* Install the latest version of Python. **Python 2 will not work**, as tsuserver3 depends on async/await, which can only be found on Python 3.5 and newer.
+  - If your system supports it, it is recommended that you use a separate virtual environment, such as [Anaconda](https://www.continuum.io/downloads) for Windows, or [virtualenv](https://virtualenv.pypa.io/en/stable/) for everyone else (it runs itself using Python).
 * Open Command Prompt or your terminal, and change to the directory where you downloaded tsuserver3 to. You can do this in two ways:
   - Go up one folder above the tsuserver3 folder, Shift + right click the tsuserver3 folder, and click `Open command window here`. This is the easiest method.
   - Copy the path of the tsuserver3 folder, open the terminal, and type in `cd "[paste here]"`, excluding the brackes, but including the quotation marks if the path contains spaces.
@@ -30,317 +33,347 @@ We recommend [Git](https://git-scm.com/downloads/guis) - it makes it very easy t
   py -3 -m pip install --user -r requirements.txt
   ```
   This operation should not require administrator privileges, unless you decide to remove the `--user` option.
-  
-### Configure tsuserver
-
-* **Rename `config_sample` to `config`**.
-* Edit the values in the `.yaml` files to your liking. If you downloaded tsuserver from a zip and try to edit it from Notepad, the line breaks will be missing. That's because Notepad is stupid. Use [Notepad++](https://notepad-plus-plus.org/) instead like the pro you are.
-* Be sure to check your YAML file for syntax errors. Use this website: http://www.yamllint.com/
-  - *Use spaces only; do not use tabs.* That's another reason we recommend anything that isn't Notepad.
-* You don't need to copy characters into the `characters` folder *unless* you specifically chose to disable iniswapping in an area (in `areas.yaml`). In this case, all tsuserver needs to know is the `char.ini` of each character. It doesn't need sprites.
-* Don't forget to forward ports on your router. You will need to forward both the regular port and the webAO port.
-
-### Run
-
-* Run by either double-clicking `start_server.py` or typing in `py -3 start_server.py` if you use both Python 2 and 3. It is normal to not see any output once you start the server.
+* Rename `config_sample` to `config` and edit the values to your liking. Be sure to check your YAML file for syntax errors. *Use spaces only; do not use tabs.*
+* Run by either double-clicking `start_server.py` or typing in `python start_server.py`, or `py -3 start_server.py` if you use both Python 2 and 3. It is normal to not see any output once you start the server.
   - To stop the server, press Ctrl+C multiple times.
-
-## Advanced setup instructions
-
-For servers that are intended to run for an extended period of time, Linux is recommended. Linux distros have a significantly more consistent and sane environment compared to Windows and macOS. These days, Microsoft is trying to cater the operating system it happened to prepackage with Candy Crush to power users by sticking a successful kernel inside its failed Win32 kernel, so you can try [that abomination](https://docs.microsoft.com/en-us/windows/wsl/install-win10) ([or its successor](https://docs.microsoft.com/en-us/windows/wsl/wsl2-install)) if you want. Or you can just use [a darn virtual machine](https://www.virtualbox.org/) instead.
-
-I will just assume from now on that you have managed to produce an object that runs Linux.
-
-### Using Docker
-
-The easiest way to set up and start tsuserver is with the Dockerfile. You just [install Docker](https://get.docker.com/) and [install Docker Compose](https://docs.docker.com/compose/install/).
-
-Once you have everything configured, do `sudo docker-compose up`. It will build the image and start tsuserver up for you. If you accidentally restart the server, the container will automatically start back up. If you're not understanding why it's starting, try starting it up manually:
-
-```sh
-sudo docker run -it -d -v `pwd`/storage:/app/storage -v `pwd`/logs:/app/logs  -v `pwd`/config:/app/config -p 27018:27018 -p 27017:27017 --restart=unless-stopped tsuserver
-```
-
-Here is a breakdown of the command:
- * `-it` puts an *interactive* *terminal* so that the output of the command line can be reaped later with `docker logs`. Without these options, the output is closed and printing things to the log will then break Python.
- * `-d` starts the container in the background (`detached`).
- * `-v SOURCE:TARGET` mounts the SOURCE directory on the host filesystem into the container's virtual filesystem at the TARGET location, so that we can modify server files without having to rebuild the entire image. However, SOURCE can't be a relative path, so we make an absolute path with `pwd`.
- * `-p SOURCE:TARGET` exposes port SOURCE inside the container as port TARGET in the whole machine. This way, a port can be connected to by anyone, not just the machine which Docker is being run in.
- * `--restart=unless-stopped` sets the restart policy to always restart, even after reboot, unless the container is explicitly stopped with `docker stop`.
- * `tsuserver` is the name of the image to start a container from.
-
-Docker is a nifty tool, although I admit that setting it up and understanding how to use it can be tedious.
-
-### Alternative: Using `venv`
-
-`venv` is a tool built into Python to create a virtual Python environment to install packages in. It reduces the risk of mixing up Python versions and package versions. Sometimes, it's even necessary if `pip` installs require sudo privileges. (`sudo pip install` is highly frowned upon as it regularly causes conflicts with the system's own package manager. Don't do it, use `venv` instead!)
-
-Suppose you installed tsuserver in `/home/me/tsuserver` (protip: this path is the same as `~me/tsuserver`).
-
-You can create a venv with the following command:
-
-```sh
-python3 -m venv /home/me/tsuserver/.venv
-```
-
-Then activate the venv:
-
-```sh
-source /home/me/tsuserver/.venv/bin/activate
-```
-
-Install requirements:
-
-```sh
-cd /home/me/tsuserver
-pip install -r requirements.txt
-```
-
-Start the server:
-
-```sh
-python start_server.py
-```
-
-You will always need to activate the venv before starting the server.
-
-Refer to ["Creating Virtual Environments"](https://docs.python.org/3/library/venv.html#creating-virtual-environments) in the Python documentation for more information.
-
-To keep the server running even after closing the terminal:
- * Use a multiplexer, such as screen or tmux. These programs let you have multiple terminals open in a single window, and detach/reattach with them freely. They are extremely convenient.
- * Create a systemd service. Not for the faint of heart.
- * Use Docker instead.
 
 ## Commands
 
-Good-to-know commands are marked with a :star:.
+### User Commands
 
-### Administration
-
-* **motd**
-    - Show the message of the day.
-* :star: **help** [command]
-    - Show help for a command, or show general help.
-* :star: **kick** <ipid|*|**> [reason]
-    - Kick a player.
-    - Special cases:
-        - "*" kicks everyone in the current area.
-        - "**" kicks everyone in the server.
-* :star: **ban**
-    - Ban a user. If a ban ID is specified instead of a reason, then the IPID is added to an existing ban record.
-    - Ban durations are 6 hours by default.
-    - Usage 1: `/ban <ipid> "reason" ["<N> <minute|hour|day|week|month>(s)|perma"]`
-    - Usage 2: `/ban <ipid> <ban_id>`
-* **banhdid**
-    - Ban both a user's HDID and IPID.
-* **unban** <ban_id...>
-    - Unban a list of users.
-    - You need a ban ID to unban a user. Ban IDs are automatically included in ban reasons. Use `/baninfo <ban_id>` for more information about a ban.
-* **mute** <ipid>
-    - Prevent a user from speaking in-character.
-* **unmute** <ipid|"all">
-    - Unmute a user.
-* :star: **login** <password>
-    - Login as a moderator.
-* :star: **refresh**
-    - Reload all moderator credentials, server options, and commands without restarting the server.
-* **online**
-    - Show the number of players online.
+* **help**
+    - Links to this readme
+* **g** "message" 
+    - Sends a serverwide message
+* **toggleglobal** 
+    - Toggles global on and off
+* **need** "message" 
+    - Sends a serverwide advert
+* **toggleadverts** 
+    - Toggles adverts on and off
+* **area** "area ID" "password"
+    - Displays all areas when blank, swaps to area with ID
+    - Specify a password to join a password locked area. (If the password matches. Obviously.)
+* **getarea** 
+    - Shows the current characters in your area
+* **getareas** 
+    - Shows all characters in all areas
 * **mods**
-    - Show a list of moderators online.
-* **unmod**
-    - Log out as a moderator.
-* **ooc_mute** <ooc-name>
-    - Prevent a user from talking out-of-character.
-* **ooc_unmute** <ooc-name>
-    - Allow an OOC-muted user to talk out-of-character.
-* **bans**
-    - Get the 5 most recent bans.
-    - This can lag the server depending on the size of the database, so be judicious in its use.
-* :star: **baninfo** <id> ['ban_id'|'ipid'|'hdid']
-    - Get information about a ban.
-    - By default, id identifies a ban_id.
-
-### Area
-
-* **bg** <background>
-    - Set the background of a room.
-* **bglock**
-    - Toggle whether or not non-moderators are allowed to change the background of a room.
-* **allow_iniswap**
-    - Toggle whether or not users are allowed to swap INI files in character folders to allow playing as a character other than the one chosen in the character list.
-    - To enforce that no custom emotes at all are used, copy the character's char.ini file to the `characters` folder.
-    - Even if iniswap is forbidden, you can use `iniswaps.yaml` to configure iniswaps that are always allowed.
-* **allow_blankposting**
-    - Toggle whether or not in-character messages purely consisting of spaces are allowed.
-* **force_nonint_pres**
-    - Toggle whether or not all pre-animations lack a delay before a character begins speaking.
-* :star: **status** <idle|rp|casing|looking-for-players|lfp|recess|gaming>
-    - Show or modify the current status of a room.
-* **area** [id]
-    - List areas, or go to another area/room.
-* **getarea**
-    - Show information about the current area.
-* :star: **getareas**
-    - Show information about all areas.
-* **area_lock**
-    - Prevent users from joining the current area.
-* **area_spectate**
-    - Allow users to join the current area, but only as spectators.
-* **area_unlock**
-    - Allow anyone to freely join the current area.
-* **invite** <id>
-    - Allow a particular user to join a locked or spectator-only area.
-* **uninvite** <id>
-    - Revoke an invitation for a particular user.
-* **area_kick** <id> [destination]
-    - Remove a user from the current area and move them to another area.
-    - If the area is locked, this also removes the user from the invite list.
-    - If the user is using multiple clients, then this targets all of the clients in the current area.
-    - If the destination is not specified, the destination defaults to area 0.
-* **getafk** [all]
-    - Show currently AFK-ing players in the current area or in all areas.
-
-### Casing
-
-* **doc** [url]
-    - Show or change the link for the current case document.
-* **cleardoc**
-    - Clear the link for the current case document.
-* **evidence_mod** <FFA|Mods|CM|HiddenCM>
-    - Change the evidence privilege mode.
-    * **FFA**
-        - Everyone can add, edit and remove evidence.
-    * **Mods**
-        - Only moderators can add, edit or remove evidence.
-    * **CM**
-        - Only the CM (case-maker, look at /cm for more info) or moderators can add, edit or remove evidence.
-    * **HiddenCM**
-        - Same as CM, but every evidence has a preset "owner's position" which can be set by a CM or moderator, such that only one side/position of the court may see the evidence. After presenting the evidence, the position of the evidence changes to "all." Possible positions include def (defense), pro (prosecutor), wit (witness), jud (judge), pos (hidden from everyone), and all (everyone can see the evidence).
-* **evi_swap**  <id> <id>
-    - Swap the positions of two evidence items on the evidence list.
-    - The ID of each evidence is simply its ordinal number starting from 0.
-* :star: **cm** <id>
-    - Add a case manager for the current room.
-* **uncm** <id>
-    - Remove a case manager from the current area.
-* **setcase**
-    - Set the positions you are interested in taking for a case. (This command is used internally by the 2.6 client.)
-* **anncase** <message> <def> <pro> <jud> <jur> <steno>
-    - Announce that a case is currently taking place in this area,
-needing a certain list of positions to be filled up.
-* **blockwtce** <id>
-    - Prevent a user from using Witness Testimony/Cross Examination buttons as a judge.
-* **unblockwtce** <id>
-    - Allow a user to use WT/CE again.
-* **judgelog**
-    - List the last 10 uses of judge controls in the current area.
-* **afk**
-    - Sets your player as AFK in player listings.
-
-### Character
-
-* **switch** <name>
-    - Switch to another character. If you are a moderator and the specified character is currently being used, the current user of that character will be automatically reassigned a character.
-* **pos** <name>
-    - Set the place your character resides in the room.
-* **forcepos** <pos> <target>
-    - Set the place another character resides in the room.
-* **charselect** [id]
-    - Enter the character select screen, or force another user to select another character.
-* **randomchar**
-    - Select a random character.
-* **charcurse** <id> [charids...]
-    - Lock a user into being able to choose only from a list of characters.
-* **uncharcurse** <id>
-    - Remove the character choice restrictions from a user.
-* **charids**
-    - Show character IDs corresponding to each character name.
-* **reload**
-    - Reload a character to its default position and state.
-
-### Fun
-
-* **disemvowel** <id>
-    - Remove all vowels from a user's IC chat.
-* **undisemvowel** <id>
-    - Give back the freedom of vowels to a user.
-* **shake** <id>
-    - Scramble the words in a user's IC chat.
-* **unshake** <id>
-    - Give back the freedom of coherent grammar to a user.
-
-### Messaging
-
-* **a**  <area> <message>
-    - Send a message to an area that you are a CM in.
-* **s** <message>
-    - Send a message to all areas that you are a CM in.
-* **g** <message>
-    - Broadcast a message to all areas.
-* :star: **gm** <message>
-    - Broadcast a message to all areas, speaking officially.
-* **m** <message>
-    - Send a message to all online moderators.
-* :star: **lm** <message>
-    - Send a message to everyone in the current area, speaking officially.
-* :star: **announce** <message>
-    - Make a server-wide announcement.
-* **toggleglobal**
-    - Mute global chat.
-* **need** <message>
-    - Broadcast a need for a specific role in a case.
-* **toggleadverts**
-    - Mute advertisements.
-* **pm** <id|ooc-name|char-name> <message>
-    - Send a private message to another online user. These messages are not logged by the server owner.
-* **mutepm**
-    - Mute private messages.
-
-### Music
-
-* **currentmusic**
-    - Show the current music playing.
-* **jukebox_toggle**
-    - Toggle jukebox mode. While jukebox mode is on, all music changes become votes for the next track, rather than changing the track immediately.
-* **jukebox_skip**
-    - Skip the current track.
-* **jukebox**
-    - Show information about the jukebox's queue and votes.
-* **play** <name>
-    - Play a track.
-* **blockdj** <id>
-    - Prevent a user from changing music.
-* **unblockdj** <id>
-    - Unblock a user from changing music.
-
-### Roleplay
-
-* :star: **roll** [max value] [rolls]
-    - Roll a die. The result is shown publicly.
-* **rollp** [max value] [rolls]
-    - Roll a die privately.
-* **notecard** <message>
-    - Write a notecard that can only be revealed by a CM.
-* **notecard_clear**
-    - Erase a notecard.
-* **notecard_reveal**
-    - Reveal all notecards and their owners.
-* **rolla_reload**
-    - Reload ability dice sets from a configuration file.
-    - The configuration file is located in `config/dice.yaml`.
-* **rolla_set** <name>
-    - Choose the set of ability dice to roll.
-* **rolla**
-    - Roll a specially labeled set of dice (ability dice).
+    - Same as **getareas**, but only shows moderators
+* **doc** "url" 
+    - Gives the doc url if blank, updates the doc url
+* **cleardoc** 
+    - Clears the doc url
+* **status** "status" 
+    - Shows current areas status if blank, updates the status
+    - Statuses: 'idle', 'rp', 'casing', 'looking-for-players'/'lfp', 'recess', 'gaming'
+* **customstatus** "status"
+    - Same as /status, but uses user-defined status. Will use the same color as 'idle' as defined by client theme.
+* **pm** "target" "Message" 
+    - PMs the target. Targets client ID.
+* **pmmute**
+    - Disables all incoming PMs
+* **charselect** 
+    - Puts you back to char select screen
+* **reload** 
+    - Reloads your character ini
+* **switch** "character" 
+    - Quick switch to a character
+* **randomchar** 
+    - Randomly chooses a character
+* **pos** "position" 
+    - Changes your position in the court
+    - Positions: 'def', 'pro', 'hld', 'hlp', 'jud', 'wit', 'jur' 'sea'
+* **bg** "background" 
+    - Changes the current background
+* **custombg** "background"
+    - Changes the current background to a defined bg located in `backgrounds/custom`.
+* **currentbg**
+    - Gives user the name of the area's current background.
+* **roll** "max" 
+    - Rolls a 1D6 if blank
 * **coinflip**
-    - Flip a coin. The result is shown publicly.
-* **8ball** <question>
-    - Answers a question. The result is shown publicly.
-    - The answers depend on the `8ball` preset in `config/dice.yaml`.
+    - Flips a coin
+* **currentmusic** / **music**
+    - Displays the current music
+* **playrandom**
+    - Plays a random track from the server music list.
+* **shuffle** "category"
+    - Plays a random track, then plays another random track afterwards, etc.
+    - Will only play from a single category if one is specified.
+    - Shuffle will continue in original area if client switches areas, but will eventually stop once the client disconnects.
+* **eviswap** <id1> <id2>
+    - Swaps <id1> and <id2> evidence.
+* **addcustom** "link"
+    - Allows user to set a link for the custom character they are currently using.
+* **customlist**
+    - Shows a list of links and the respective custom.
+* **removecustom**
+    - Removes the link for user's custom from the list.
+* **clearcustomlist**
+    - Clears the custom list.
+* **notepad** "note"
+    - Adds note to user's notepad, or displays the current notepad if no note is given.
+    - Only persists as long as user's client is connected to server.
+* **clearnotepad**
+    - Clears user's notepad.
+* **connectlist**
+    - Shows all 'exits' for the current area.
+* **autopass**
+    - Toggles autopass. When enabled, an OOC broadcast will sound when the user switches areas.
+    - This broadcast is visible in the area the user leaves and the area they join and details which area the user is going to or coming from, respectively.
+* **musiclist**
+    - View the area's current music list.
+* **follow** "id"
+    - Follow another user. If that user changes areas, the follower will also change areas.
+    - Can be used with no arguments to check who the user is following.
+    - Works with **autopass**.
+* **unfollow**
+    - Stop following.
+* **followers**
+    - Check who is following you. Will also show your followers' followers.
+* **followable** "new"
+    - Toggle whether users can follow you.
+    - Use with argument "new" to disallow new followers without losing current followers.
+* **time**
+    - Show the current time and date according to the server's time.
+* **timer** "start/stop/continue"
+    - A stopwatch. Use without arguments to check current timer without stopping it.
+    - "start" will start a new timer, "stop" will stop the timer, and "continue" will start the timer where it was last stopped.
+* **create** "name"
+    - Create a new area with specified name.
+    - Area will be appended after Area 25 or any other custom area.
+    - Requires permission from staff.
+* **serverpoll** "yay/nay"
+    - View or vote on the current server poll.
+* **digitalroot** "number"
+    - Calculate the digital root of a given number.
+* **knock** "area ID"
+    - Broadcast a message in the selected area that the user is knocking on their door.
+* **cm**
+    - Makes you a CM of the current area.
+* **visible**
+    - Toggles whether you will speak with a 'blank' emote.
+* **nopairoffset** "-100 to 100"
+    - Sets offset without pairing
+* **areapair** "left/right/middle"
+    - Area-pairs you. If you are to the right, you will "pair" with anyone on the left in your position.
+* **friend** "id or no argument"
+    - Sends a friend request, accepts a friend request, or shows current friend requests if no arguments are given.
+* **friendlist**
+    - Shows current friends.
+### Party Commands
+* **party**
+    - Shows the user's current party.
+    - If the user is not in a party, shows all parties on the server.
+    - If the user is the leader of their party, shows party members' roles.
+* **parties**
+    - Shows all parties on the server.
+* **createparty** "name"
+    - Creates a party and makes user the leader.
+    - Created party will be private/locked by default.
+* **partyinvite** "id"
+    - Invites a user to your party. Party must be locked.
+* **joinparty** "party ID"
+    - Join a party. Party must either be public or the user must be invited.
+* **leaveparty**
+    - Leave the current party.
+* **p** "message"
+    - Same as **g**, but only visible to other members of your party.
+* **partynote** "note"
+    - Add a note to the party notepad.
+    - Show the party notepad instead if no arguments are given.
+* **mgvote** "subject"
+    - Vote on a subject. If user has extra 'voting power,' they may vote more than once.
+    - If used by party leader, show current vote tally.
+#### Party Leader-only Commands
+* **addrole "id" "role"**
+    - Adds a role a party member.
+* **rolesvisible**
+    - Toggles whether the roles are visible for everyone in the party.
+* **unlockparty**
+    - Makes current party public.
+* **lockparty**
+    - Makes current party private.
+* **clearpartynote**
+    - Clear the party notepad.
+* **partykick** "id"
+    - Kick the specified user from your party.
+* **destroyparty**
+    - Destroys the current party.
+* **mgroles** "opt. custom roles" 
+    - If there enough members in your party, randomly assign party members, excluding the leader, Main Game roles.
+    - For custom roles, syntax is as above. e.g. `/mgroles Imitator Wildcard Scapegoat`
+* **clearroles**
+    - Clears all party members' roles, and resets their 'voting power'.
+* **startmgvote** "subjects"
+    - Start a party vote on subjects provided, e.g. `/startmgvote Sara Sou Keiji`. Resets everyone's 'voting power'. 
+* **revealmgvote**
+    - Post the tally in current area's OOC and restore 'voting power'.
+* **mgvp** "id" "+/-"
+    - Check a party member's 'voting power' or increase/decrease it.
+    - Default voting power is 0 (one vote) except for the Sacrifice role, which is 1 (two votes).
+### CM Commands
+* **hide** "ID/*"
+    - Hides the target from /getarea and playercount.
+* **unhide** "ID/*"
+    - Unhides the target from /getarea and playercount, can be used by non-CM if no arguments are given.
+* **allowmusic**
+    - Toggles whether non-CMs are allowed to play music.
+* **narrator**
+    - Toggles whether you appear as if you are the Narrator character.
+* **lock** "password"
+    - Locks your area, preventing anyone outside of the invite list from joining.
+    - Optionally, specify a password to be used with **area**.
+* **unlock**
+    - Unlocks your area.
+* **iclock**
+    - If area is unlocked, make area spectatable and disallow everyone but CMs from speaking IC.
+    - If area is locked, disallow everyone from speaking without making area spectatable.
+* **areakick** "ID/*" [area]
+    - Kicks target and all of their multi-accs from your area to area 0 or specified [area] and removes them from invite-list should the area be locked.
+    - Use "*" to kick everyone who isn't a CM or you.
+* **invite** "ID"
+    - Adds target to the invite list of your area.
+* **uninvite** "ID"
+    - Removes target from invite list of your area.
+* **forcepos** "position" [target]
+    - Forcibly change [target]'s position. Leave blank to affect everyone in area.
+    - Positions: 'def', 'pro', 'hld', 'hlp', 'jud', 'wit'
+* **connect** "area ID"
+    - Sets an 'exit' for the current area. Clients can only leave the area through said 'exits'.
+* **biconnect** "area ID"
+    - Same as connect, but two-way.
+* **disconnect** "area ID"
+    - Removes an 'exit' from the current area.
+* **bidisconnect** "area ID"
+    - Same as disconnect, but two-way.
+* **clearconnect**
+    - Clears all 'exits' for the current area.
+* **play** "song file name incl. extension" "length in seconds"
+    - Plays a song from `music/custom`.
+    - Optionally, specify the length in seconds for the song to loop server-side.
+* **addmlist** "song file name incl. extension" "length in seconds"
+    - Adds tracks to the area music list that can be played with **playl**. Tracks must be located in `music/custom`.
+* **clearmusiclist**
+    - Clear the current area's music list.
+* **storemlist** "name"
+    - Store a music list on the server with the specified name.
+* **loadmlist** "name"
+    - Load a stored music list from the server with the specified name.
+* **playl** "track number"
+    - Plays the specified track from the area's music list. Will loop server-side according to the length provided by **addmlist**.
+* **hidecount**
+    - Hides the playercount for the current area.
+    - Note: player count is only hidden from clients outside the area.
+* **rename** "new name"
+    - Rename the current area. Will only be visible/joinable to clients after a relog.
+    - New name will be announced globally in OOC.
+* **destroy**
+    - Destroy the current area.
+    - Requires area to have been created with **create**.
+    - Requires permission from staff.
+* **shouts**
+    - Toggle shouts in the current area.
+* **hide** "id"
+    - Hide the specified client from /getarea and the server playercount.
+    - Use `*` instead of an ID to hide all players in the area.
+* **unhide** "id"
+    - Unhide the specified client.
+    - Use `*` instead of an ID to unhide all players in the area.
+    - This can be used by non-CMs with no arguments to unhide themselves.
+* **poslock** "pos/clear"
+    - Allow only the specified position(s) to be used.
+	- Use with no arguments to what positions the area is locked.
+    - Using "clear" as an argument clears the poslock.
+#### Testimony Recording
+* A new feature in tsuserverCC - you can now record testimonies and play them back with automatic formatting!
+* You can now record your testimonies by putting in IC `//[Your Testimony Title]`. Formatting works just as normal, and this will automatically do the WT woosh.
+* While recording, you can add new statements by putting in IC `+[Your Statement]`. These will show up as if you're just normally testifying for the first time. 
+    - If you're paired and want your partner to have a statement, have the pair add the statement instead. (Make sure they are also a CM.)
+* Once you're done recording your testimony, just do `/end`. After this, you can do `///` in IC to make the title appear again, this time with a CE woosh.
+* After all that, anyone in the area can say `>` in IC to move to the next statement or `<` for the previous statement, `=` is also available to use to see the current statement again. 
+* All the statements will be automatically displayed in green.
+* The CM can at this point also add 'substatements' by using +again, and then can also amend the current statement by using &[amended statement] in OOC.
+* If you want to clear the testimony, use /cleartestimony in OOC. For viewing the current testimony, simply do /testimony in OOC.
+
+### Mod Commands
+* **login** "Password"
+    - Grants the Guard checkbox, then checks if password is correct. If so, logs user in as a moderator.
+* **gm** "Message" 
+    - Sends a serverwide message with mod tag
+* **lm** "Message" 
+    - Sends an area OOC message with mod tag
+* **judgelog** 
+    - Displays the last judge actions in the current area
+* **announce** "Message" 
+    - Sends a serverwide announcement
+* **charselect** "ID"
+    - Kicks a player back to the character select screen. If no ID was entered then target yourself.
+* **kick** "IPID" 
+    - Kicks the targets with this IPID.
+* **ban** "IPID" "length"
+    - Bans the specified IPID for the specified length of time. If no time is specified, ban will default to six hours.
+    - All arguments must be wrapped in double quotes.
+    - Length syntax is as follows: `"[num] [seconds/minutes/hours/days/weeks] | perma"`.
+* **banhdid** "IPID" "length"
+    - "Old-style" HDID ban. This will ban both the specified IPID and the associated HDID.
+    - All arguments must be wrapped in double quotes.
+    - Length syntax is the same as ||ban||.
+* **unban** "ban ID" 
+    - Unbans the specified ban ID.
+* **mute** "Target" 
+    - Mutes the target from all IC actions, targets IPID.
+* **unmute** "Target","all" 
+    - Unmutes the target, "all" will unmute all muted clients
+* **oocmute** "Target" 
+    - Mutes the target from all OOC actions via ID.
+* **oocunmute** "Target" 
+    - Unmutes the target.
+* **bans**
+    - Returns the five most recent bans.
+* **baninfo** "ban id" "['ban_id'|'ipid'|'hdid']"
+    - Returns requested information about the specified Ban ID from the database.
+* **permit** "id"
+    - Toggles granting specified client special permissions.
+* **setserverpoll** "poll"
+    - Set the current server poll, and announce it globally.
+* **setserverpoll** "poll"
+    - Clear the current server poll, and announce it globally.
+* **bglock** 
+    - Toggles the background lock in the current area
+* **disemvowel** "Target"
+    - Removes the vowels from everything said by the target
+* **undisemvowel** "Target"
+    - Lifts the disemvowel curse from the target
+* **blockdj** "target"
+    - Mutes the target from changing music. 
+* **unblockdj** "target"
+    - Undo previous command.
+* **blockwtce** "target"
+    - Blocks the target from using Witness Testimony/Cross Examination signs.
+* **unblockwtce** "target"
+    - Undo previous command.
+* **evidencemod** <MOD>
+    - Changes evidence_mod in this area. Possible values: FFA, CM, HiddenCM, Mods
+        * **FFA**
+            - Everyone can add, edit and remove evidence.
+        * **Mods**
+            - Only moderators can add, edit or remove evidence.
+        * **CM**
+            - Only CM (case-maker, look at /cm for more info) or moderators can add, edit or remove evidence.
+        * **HiddenCM**
+            - Same as CM, but every evidence has a preset "owner's position" which can be set by a CM or moderator, such that only one side/position of the court may see the evidence. After presenting the evidence, the position of the evidence changes to "all." Possible positions include def (defense), pro (prosecutor), wit (witness), jud (judge), pos (hidden from everyone), and all (everyone can see the evidence).
+* **allowiniswap**
+    - Toggle allow_iniswap var in this area. 
+    - Even if iniswap at all is forbidden you can configure all-time allowed iniswaps in *iniswaps.yaml*
+* **ghost**
+    - Toggles whether the moderator is visible in /getarea and playercount.
+* **unmod**
+    - Revokes moderator credentials from the user.
 
 ## License
 
-This server is licensed under the AGPLv3 license. In short, if you use a modified version of tsuserver3, you *must* distribute its source licensed under the AGPLv3 as well, and notify your users where the modified source may be found. The main difference between the AGPL and the GPL is that for the AGPL, network use counts as distribution. If you do not accept these terms, you should use [serverD](https://github.com/Attorney-Online-Engineering-Task-Force/serverD), which uses GPL rather than AGPL.
+This server is licensed under the AGPLv3 license. In short, if you use a modified version of tsuserverCC, you *must* distribute its source licensed under the AGPLv3 as well, and notify your users where the modified source may be found. The main difference between the AGPL and the GPL is that for the AGPL, network use counts as distribution. If you do not accept these terms, you should use [serverD](https://github.com/Attorney-Online-Engineering-Task-Force/serverD), which uses GPL rather than AGPL.
 
 See the [LICENSE](LICENSE.md) file for more information.

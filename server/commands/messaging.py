@@ -11,11 +11,13 @@ __all__ = [
     'ooc_cmd_gm',
     'ooc_cmd_m',
     'ooc_cmd_lm',
+    'ooc_cmd_p',
     'ooc_cmd_announce',
     'ooc_cmd_toggleglobal',
     'ooc_cmd_need',
     'ooc_cmd_toggleadverts',
     'ooc_cmd_pm',
+    'ooc_cmd_ppm',
     'ooc_cmd_mutepm'
 ]
 
@@ -31,8 +33,6 @@ def ooc_cmd_a(client, arg):
 
     try:
         area = client.server.area_manager.get_area_by_id(int(arg[0]))
-    except ValueError:
-        raise ArgumentError('The first argument must be an area ID.')
     except AreaError:
         raise
 
@@ -76,6 +76,20 @@ def ooc_cmd_g(client, arg):
     client.server.broadcast_global(client, arg)
     database.log_room('chat.global', client, client.area, message=arg)
 
+def ooc_cmd_p(client, arg):
+    """
+    Broadcast a message to all areas.
+    Usage: /g <message>
+    """
+    if client.muted_global:
+        raise ClientError('Global chat toggled off.')
+    if not client.in_party:
+        raise ClientError('Not in a party.')
+    if len(arg) == 0:
+        raise ArgumentError("You can't send an empty message.")
+    client.server.send_partychat(client, arg)
+    database.log_room('chat.mod', client, client.area, message=arg)
+
 
 @mod_only()
 def ooc_cmd_gm(client, arg):
@@ -106,7 +120,7 @@ def ooc_cmd_m(client, arg):
 @mod_only()
 def ooc_cmd_lm(client, arg):
     """
-    Send a message to everyone in the current area, speaking officially.
+    Send a message to all moderators in the current area.
     Usage: /lm <message>
     """
     if len(arg) == 0:
@@ -177,7 +191,7 @@ def ooc_cmd_pm(client, arg):
     Send a private message to another online user. These messages are not
     logged by the server owner.
     Usage: /pm <id|ooc-name|char-name> <message>
-    """
+    
     args = arg.split()
     key = ''
     msg = None
@@ -225,7 +239,38 @@ def ooc_cmd_pm(client, arg):
                 client.char_name, msg))
         client.send_ooc('PM sent to {}. Message: {}'.format(
             args[0], msg))
+    """
+    args = arg.split()
+    if len(args) < 2:
+        raise ArgumentError('Not enough arguments. use /pm <target> <message>. Target should be ID, OOC-name or char-name. Use /getarea for getting info like "[ID] char-name".')
+    msg = ' '.join(args[1:])
+    try:
+        c = client.server.client_manager.get_targets(client, TargetType.ID,int(args[0]), False)[0]
+        if c.is_mod:
+            c.send_ooc('PM from {} (ID: {}, IPID: {}) in {} ({}): {}'.format(client.name, client.id, client.ipid, client.area.name, client.char_name, msg))
+        else:
+            c.send_ooc('PM from {} (ID: {}) in {} ({}): {}'.format(client.name, client.id, client.area.name, client.char_name, msg))
+        client.send_ooc('PM sent to {}. Message: {}'.format(args[0], msg))
+    except:
+        raise ClientError('You must specify a target. Use /pm <id> <message')
 
+def ooc_cmd_ppm(client, arg):
+    if not client.in_party:
+        raise ClientError('You aren\'t in a party.')
+    args = arg.split()
+    if len(args) < 2:
+        raise ArgumentError('Not enough arguments. use /pm <target> <message>. Target should be ID, OOC-name or char-name. Use /getarea for getting info like "[ID] char-name".')
+    msg = ' '.join(args[1:])
+    id = int(args[0])
+    for c in client.party.users:
+        if id == c.id:
+            if c.is_mod:
+                c.send_ooc('PM from {} (ID: {}, IPID: {}) in {} ({}): {}'.format(client.name, client.id, client.ipid, client.area.name, client.char_name, msg))
+            else:
+                c.send_ooc('PM from {} (ID: {}) in {} ({}): {}'.format(client.name, client.id, client.area.name, client.char_name, msg))
+            client.send_ooc('PM sent to {}. Message: {}'.format(args[0], msg))
+            return
+    raise ClientError('You must specify a target. Use /pm <id> <message')
 
 def ooc_cmd_mutepm(client, arg):
     """

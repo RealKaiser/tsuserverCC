@@ -1,6 +1,8 @@
-# tsuserver3, an Attorney Online server
+# tsuserverCC, an Attorney Online server.
 #
-# Copyright (C) 2016 argoneus <argoneuscze@gmail.com>
+# Copyright (C) 2020 Kaiser <kaiserkaisie@gmail.com>
+#
+# Derivative of tsuserver3, an Attorney Online server. Copyright (C) 2016 argoneus <argoneuscze@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -69,6 +71,7 @@ class MasterServerClient:
                     if cmd != 'CHECK' and cmd != 'PONG':
                         logger.debug(f'Incoming: {raw_msg}')
                     elif cmd == 'CHECK':
+                        logger.debug('Replying to CHECK#% with ping')
                         await self.send_raw_message('PING#%')
                     elif cmd == 'PONG':
                         ping_timeout = False
