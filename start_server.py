@@ -19,16 +19,19 @@
 
 
 # Install dependencies in case one is missing
+
 import sys
 import subprocess
 
 
 def check_deps():
+    import sys
     py_version = sys.version_info
     if py_version.major < 3 or (py_version.major == 3 and py_version.minor < 7):
         print("tsuserverCC requires at least Python 3.7! Your version: {}.{}"
                 .format(py_version.major, py_version.minor))
         sys.exit(1)
+		
     try:
         import geoip2
     except ModuleNotFoundError:

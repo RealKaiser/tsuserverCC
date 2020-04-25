@@ -500,58 +500,56 @@ class ClientManager:
                                     key=lambda x: x.char_name or '')
             for c in sorted_clients:
 
-            if self not in area.owners and self not in area.clients and not self.is_mod and area.hidden == True:
-                info += f'[{area.abbreviation}]: [Hidden][{area.status}]{lock[area.is_locked]}'
-                info += '\r\n'
-                info += 'This area\'s playercount is hidden.'
-            else:
-                index = 0
-                for client in area.clients:
-                    if not client.ghost and not client.hidden:
-                        index += 1
-                info += f'[{area.abbreviation}]: [{index} Users][{area.status}]{lock[area.is_locked]}'
-                sorted_clients = []
-                for client in area.clients:
-                    if self.is_mod:
-                        if (not mods) or client.is_mod:
-                            sorted_clients.append(client)
-                    elif self in area.owners and not client.ghost and client.hidden:
-                        if (not mods) or client.is_mod:
-                            sorted_clients.append(client)
-                    elif self == client and client.hidden:
-                        if (not mods) or client.is_mod:
-                            sorted_clients.append(client)
-                    elif not self.is_mod and not client.ghost and not client.hidden:
-                        if (not mods) or client.is_mod:
-                            sorted_clients.append(client)
-                for owner in area.owners:
-                    if not (mods or owner in area.clients):
-                        if not owner.ghost or self.is_mod:
-                            sorted_clients.append(owner)
-                if not sorted_clients:
-                    return ''
-                sorted_clients = sorted(sorted_clients, key=lambda x: x.char_name or '')
-                for c in sorted_clients:
+                if self not in area.owners and self not in area.clients and not self.is_mod and area.hidden == True:
+                    info += f'[{area.abbreviation}]: [Hidden][{area.status}]{lock[area.is_locked]}'
                     info += '\r\n'
-                    if c.hidden and self in area.owners:
-                        info += '[Hidden]'
-                    elif c.hidden and self == c:
-                        info += '[Hidden]'
-                    elif c.hidden and self.is_mod:
-                        info += '[Hidden]'
-                    if c in area.owners:
-                        if not c in area.clients:
-                            info += '[RCM]'
-                        else:
-                            info += '[CM]'
-                    info += f'[{c.id}] {c.char_name}'
-                    if self.is_mod:
-                        info += f' ({c.ipid}): {c.name}'
-                    if c.showname != '':
-                        info += f' ({c.showname})'
-                    
-
-            return info
+                    info += 'This area\'s playercount is hidden.'
+                else:
+                    index = 0
+                    for client in area.clients:
+                        if not client.ghost and not client.hidden:
+                            index += 1
+                    info += f'[{area.abbreviation}]: [{index} Users][{area.status}]{lock[area.is_locked]}'
+                    sorted_clients = []
+                    for client in area.clients:
+                        if self.is_mod:
+                            if (not mods) or client.is_mod:
+                                sorted_clients.append(client)
+                        elif self in area.owners and not client.ghost and client.hidden:
+                            if (not mods) or client.is_mod:
+                                sorted_clients.append(client)
+                        elif self == client and client.hidden:
+                            if (not mods) or client.is_mod:
+                                sorted_clients.append(client)
+                        elif not self.is_mod and not client.ghost and not client.hidden:
+                            if (not mods) or client.is_mod:
+                                sorted_clients.append(client)
+                    for owner in area.owners:
+                        if not (mods or owner in area.clients):
+                            if not owner.ghost or self.is_mod:
+                                sorted_clients.append(owner)
+                    if not sorted_clients:
+                        return ''
+                    sorted_clients = sorted(sorted_clients, key=lambda x: x.char_name or '')
+                    for c in sorted_clients:
+                        info += '\r\n'
+                        if c.hidden and self in area.owners:
+                            info += '[Hidden]'
+                        elif c.hidden and self == c:
+                            info += '[Hidden]'
+                        elif c.hidden and self.is_mod:
+                            info += '[Hidden]'
+                        if c in area.owners:
+                            if not c in area.clients:
+                                info += '[RCM]'
+                            else:
+                                info += '[CM]'
+                        info += f'[{c.id}] {c.char_name}'
+                        if self.is_mod:
+                            info += f' ({c.ipid}): {c.name}'
+                        if c.showname != '':
+                            info += f' ({c.showname})'
+                return info
 
         def send_area_info(self, area_id, mods):
             """
