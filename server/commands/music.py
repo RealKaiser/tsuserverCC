@@ -3,6 +3,7 @@ import asyncio
 import shlex
 
 from server import database
+from server.constants import TargetType
 from server.exceptions import ClientError, ServerError, ArgumentError
 from server.constants import TargetType
 

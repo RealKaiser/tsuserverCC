@@ -37,8 +37,6 @@ Requires Python 3.6+ and PyYAML.
 * Run by either double-clicking `start_server.py` or typing in `python start_server.py`, or `py -3 start_server.py` if you use both Python 2 and 3. It is normal to not see any output once you start the server.
   - To stop the server, press Ctrl+C multiple times.
 
-## 
-
 ## Commands
 
 ### User Commands

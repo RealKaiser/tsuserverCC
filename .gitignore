@@ -2,7 +2,8 @@
 # Sensitive data
 config/
 storage/**/*.json
-storage/db*
+storage/db.sqlite*
+storage/GeoLite*
 logs/**/*.log
 
 ### Python related

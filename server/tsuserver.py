@@ -24,6 +24,8 @@ import asyncio
 import hashlib
 import websockets
 
+import geoip2.database
+
 import json
 import yaml
 
@@ -36,7 +38,7 @@ from server.client_manager import ClientManager
 from server.musiclist_manager import MusicListManager
 from server.friend_manager import FriendManager
 from server.emotes import Emotes
-from server.exceptions import ServerError
+from server.exceptions import ClientError,ServerError
 from server.network.aoprotocol import AOProtocol
 from server.network.aoprotocol_ws import new_websocket_client
 from server.network.masterserverclient import MasterServerClient
@@ -69,6 +71,18 @@ class TsuServerCC:
         self.music_pages_ao1 = None
         self.backgrounds = None
         self.zalgo_tolerance = None
+        self.ipRange_bans = []
+        self.geoIpReader = None
+        self.useGeoIp = False
+
+        try:
+            self.geoIpReader = geoip2.database.Reader('./storage/GeoLite2-ASN.mmdb')
+            self.useGeoIp = True
+            # on debian systems you can use /usr/share/GeoIP/GeoIPASNum.dat if the geoip-database-extra package is installed
+        except FileNotFoundError:
+            self.useGeoIp = False
+            pass
+
         self.is_poll = False
         self.poll = ''
         self.pollyay = []
@@ -85,6 +99,7 @@ class TsuServerCC:
             self.load_characters()
             self.load_music()
             self.load_backgrounds()
+            self.load_ipranges()
             self.load_gimps()
         except yaml.YAMLError as exc:
             print('There was a syntax error parsing a configuration file:')
@@ -163,6 +178,29 @@ class TsuServerCC:
         :param transport: asyncio transport
         :returns: created client object
         """
+        peername = transport.get_extra_info('peername')[0]
+
+        if self.useGeoIp:
+            try:
+                geoIpResponse = self.geoIpReader.asn(peername)
+                asn = str(geoIpResponse.autonomous_system_number)
+            except geoip2.errors.AddressNotFoundError:
+                asn = "Loopback"
+                pass
+        else:
+            asn = "Loopback"
+
+        for line,rangeBan in enumerate(self.ipRange_bans):
+            if rangeBan != "" and peername.startswith(rangeBan) or asn == rangeBan:
+                msg =   'BD#'
+                msg +=  'Abuse\r\n'
+                msg += f'ID: {line}\r\n'
+                msg +=  'Until: N/A'
+                msg +=  '#%'
+
+                transport.write(msg.encode('utf-8'))
+                raise ClientError
+
         c = self.client_manager.new_client(transport)
         c.server = self
         c.area = self.area_manager.default_area()
@@ -242,6 +280,15 @@ class TsuServerCC:
                 self.allowed_iniswaps = yaml.safe_load(iniswaps)
         except:
             logger.debug('Cannot find iniswaps.yaml')
+
+    def load_ipranges(self):
+        """Load a list of banned IP ranges."""
+        try:
+            with open('config/iprange_ban.txt', 'r',
+                      encoding='utf-8') as ipranges:
+                self.ipRange_bans = ipranges.read().splitlines()
+        except:
+            logger.debug('Cannot find iprange_ban.txt')
 
     def build_char_pages_ao1(self):
         """
@@ -464,6 +511,7 @@ class TsuServerCC:
          - Music
          - Backgrounds
          - Commands
+         - Banlists
         """
         with open('config/config.yaml', 'r') as cfg:
             cfg_yaml = yaml.safe_load(cfg)
@@ -493,6 +541,7 @@ class TsuServerCC:
         self.load_iniswaps()
         self.load_music()
         self.load_backgrounds()
+        self.load_ipranges()
 
         import server.commands
         importlib.reload(server.commands)

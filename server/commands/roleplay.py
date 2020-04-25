@@ -945,7 +945,7 @@ def ooc_cmd_rolla(client, arg):
     client.area.broadcast_ooc('{} rolled a {} (out of {}): {}.'.format(
         client.char_name, roll, max_roll, ability))
     database.log_room('rolla', client, client.area,
-        message=f'{roll} out of {max_roll}: {ability}')
+                        message=f'{roll} out of {max_roll}: {ability}')
 
 
 def ooc_cmd_coinflip(client, arg):
