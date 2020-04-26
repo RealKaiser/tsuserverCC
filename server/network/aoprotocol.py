@@ -2065,9 +2065,10 @@ class AOProtocol(asyncio.Protocol):
 				pred=lambda c: c.is_mod)
 			self.client.set_mod_call_delay()
 			database.log_room('modcall', self.client, self.client.area)
-			w.modcall_webhook(message='[{}] {} ({}) in {} without reason (not using 2.6?)'.format(
-					current_time, self.client.char_name,
-					self.client.ip, self.client.area.name))
+			if self.server.config['webhooks_enabled']:
+				w.modcall_webhook(message='[{}] {} ({}) in {} without reason (not using 2.6?)'.format(
+						current_time, self.client.char_name,
+						self.client.ip, self.client.area.name))
 		else:
 			self.server.send_all_cmd_pred(
 				'ZZ',
@@ -2078,10 +2079,11 @@ class AOProtocol(asyncio.Protocol):
 				pred=lambda c: c.is_mod)
 			self.client.set_mod_call_delay()
 			database.log_room('modcall', self.client, self.client.area, message=args[0])
-			w.modcall_webhook(message='[{}] {} ({}) in {} with reason: {}'.format(
-					current_time, self.client.char_name,
-					self.client.ip, self.client.area.name,
-					args[0][:100]))
+			if self.server.config['webhooks_enabled']:
+				w.modcall_webhook(message='[{}] {} ({}) in {} with reason: {}'.format(
+						current_time, self.client.char_name,
+						self.client.ip, self.client.area.name,
+						args[0][:100]))
 
 	def net_cmd_opKICK(self, args):
 		"""
