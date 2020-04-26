@@ -1,6 +1,7 @@
 import random
 import asyncio
 import shlex
+import re
 
 from server import database
 from server.constants import TargetType
@@ -131,15 +132,23 @@ def ooc_cmd_play(client, arg):
     if len(args) < 1:
         raise ArgumentError('Not enough arguments. Use /play "name" "length in seconds".')
     elif len(args) == 2:
-        name = 'custom/'
+        if re.match(r"(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?", args[0]):
+            name = ''
+            length = -1
+        else:
+            name = 'custom/'
+            length = args[1]
         name += args[0]
-        length = args[1]
+        
         try:
             length = int(args[1])
         except ValueError:
             raise ClientError(f'{length} does not look like a valid length.')
     elif len(args) == 1:
-        name = 'custom/'
+        if re.match(r"(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?", args[0]):
+            name = ''
+        else:
+            name = 'custom/'
         name += args[0]
         length = -1
     else:
