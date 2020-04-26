@@ -75,3 +75,7 @@ multiclient_limit: 16
 
 # Maximum number of characters can a message contain
 max_chars: 256
+
+# Whether or not modcall webhooks are enabled, and if they are, the webhook URL to use.
+webhooks_enabled: false
+webhook_url: example.com

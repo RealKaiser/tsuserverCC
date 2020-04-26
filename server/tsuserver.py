@@ -245,6 +245,12 @@ class TsuServerCC:
 
         if 'zalgo_tolerance' not in self.config:
             self.config['zalgo_tolerance'] = 3
+        
+        if 'webhooks_enabled' not in self.config:
+            self.config['webhooks_enabled'] = False
+
+        if 'webhook_url' not in self.config:
+            self.config['webhook_url'] = "example.com"
 
         if isinstance(self.config['modpass'], str):
             self.config['modpass'] = {'default': {'password': self.config['modpass']}}
