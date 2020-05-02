@@ -33,7 +33,6 @@ import arrow
 from time import localtime, strftime
 
 from server import database
-from server.utils import Utilities
 from server.statements import Statement, AreaPairMessage
 from server.exceptions import ClientError, AreaError, ArgumentError, ServerError
 from server.fantacrypt import fanta_decrypt
@@ -2037,6 +2036,7 @@ class AOProtocol(asyncio.Protocol):
 		"""Sent on mod call.
 
 		"""
+		from server.webhooks import Webhooks
 		if not self.client.is_checked:
 			return
 
@@ -2055,7 +2055,7 @@ class AOProtocol(asyncio.Protocol):
 			return
 
 		current_time = strftime("%H:%M", localtime())
-		w = Utilities(self.server)
+		w = Webhooks(self.server)
 		if len(args) < 1:
 			self.server.send_all_cmd_pred(
 				'ZZ',
@@ -2065,10 +2065,7 @@ class AOProtocol(asyncio.Protocol):
 				pred=lambda c: c.is_mod)
 			self.client.set_mod_call_delay()
 			database.log_room('modcall', self.client, self.client.area)
-			if self.server.config['webhooks_enabled']:
-				w.modcall_webhook(message='[{}] {} ({}) in {} without reason (not using 2.6?)'.format(
-						current_time, self.client.char_name,
-						self.client.ip, self.client.area.name))
+			w.modcall(char=self.client.char_name, ipid=self.client.ip, area=self.client.area.name)
 		else:
 			self.server.send_all_cmd_pred(
 				'ZZ',
@@ -2079,11 +2076,7 @@ class AOProtocol(asyncio.Protocol):
 				pred=lambda c: c.is_mod)
 			self.client.set_mod_call_delay()
 			database.log_room('modcall', self.client, self.client.area, message=args[0])
-			if self.server.config['webhooks_enabled']:
-				w.modcall_webhook(message='[{}] {} ({}) in {} with reason: {}'.format(
-						current_time, self.client.char_name,
-						self.client.ip, self.client.area.name,
-						args[0][:100]))
+			w.modcall(char=self.client.char_name, ipid=self.client.ip, area=self.client.area.name, reason=args[0][:100])
 
 	def net_cmd_opKICK(self, args):
 		"""

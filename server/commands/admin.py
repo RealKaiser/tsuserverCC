@@ -4,6 +4,7 @@ import arrow
 import pytimeparse
 
 from server import database
+from server.webhooks import Webhooks
 from server.constants import TargetType
 from server.exceptions import ClientError, ServerError, ArgumentError
 
@@ -177,6 +178,7 @@ def ooc_cmd_kick(client, arg):
      - "*" kicks everyone in the current area.
      - "**" kicks everyone in the server.
     """
+    w = Webhooks(client.server)
     if len(arg) == 0:
         raise ArgumentError(
             'You must specify a target. Use /kick <ipid> [reason]')
@@ -203,6 +205,7 @@ def ooc_cmd_kick(client, arg):
             reason = 'N/A'
         for c in targets:
             database.log_misc('kick', client, target=c, data={'reason': reason})
+            w.kick(char=c.char_name, ipid=c.ipid, reason=reason)
             client.send_ooc("{} was kicked.".format(
                 c.char_name))
             c.send_command('KK', reason)
@@ -235,6 +238,7 @@ def ooc_cmd_banhdid(client, arg):
 @mod_only()
 def kickban(client, arg, ban_hdid):
     args = shlex.split(arg)
+    w = Webhooks(client.server)
     if len(args) < 2:
         raise ArgumentError('Not enough arguments.')
     elif len(args) == 2:
@@ -276,6 +280,9 @@ def kickban(client, arg, ban_hdid):
             for c in targets:
                 if ban_hdid:
                     database.ban(c.hdid, reason, ban_type='hdid', ban_id=ban_id)
+                    w.ban(char=c.char_name, ipid=c.ipid, ban_id=ban_id, reason=reason, hdid=c.hdid)
+                else:
+                    w.ban(char=c.char_name, ipid=c.ipid, ban_id=ban_id, reason=reason)
                 c.send_command('KB', reason)
                 c.disconnect()
                 database.log_misc('ban', client, target=c, data={'reason': reason})
@@ -289,6 +296,7 @@ def ooc_cmd_unban(client, arg):
     Unban a list of users.
     Usage: /unban <ban_id...>
     """
+    w = Webhooks(client.server)
     if len(arg) == 0:
         raise ArgumentError(
             'You must specify a target. Use /unban <ban_id...>')
@@ -297,6 +305,7 @@ def ooc_cmd_unban(client, arg):
     for ban_id in args:
         if database.unban(ban_id):
             client.send_ooc(f'Removed ban ID {ban_id}.')
+            w.unban(ban_id=ban_id)
         else:
             client.send_ooc(f'{ban_id} is not on the ban list.')
         database.log_misc('unban', client, data={'id': ban_id})
