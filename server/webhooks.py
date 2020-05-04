@@ -112,8 +112,20 @@ class Webhooks:
         message = f"{char} ({ipid}) was warned with reason: {reason} (Warn ID: {warn_id})"
         
         self.send_webhook(username=username, avatar_url=avatar_url, message=message)
+
+    def unwarn(self, client, warn_id):
+        is_enabled = self.server.config['unwarn_webhook']['enabled']
+        username = self.server.config['unwarn_webhook']['username']
+        avatar_url = self.server.config['unwarn_webhook']['avatar_url']
         
-    def unban(self, ban_id):
+        if not is_enabled:
+            return
+        
+        message = f"Warn entry with ID {warn_id} was revoked by IPID {client.ipid}."
+        
+        self.send_webhook(username=username, avatar_url=avatar_url, message=message)
+
+    def unban(self, client, ban_id):
         is_enabled = self.server.config['unban_webhook']['enabled']
         username = self.server.config['unban_webhook']['username']
         avatar_url = self.server.config['unban_webhook']['avatar_url']
@@ -121,7 +133,7 @@ class Webhooks:
         if not is_enabled:
             return
         
-        message = f"Ban ID {ban_id} was revoked."
+        message = f"Ban ID {ban_id} was revoked by IPID {client.ipid}."
         
         self.send_webhook(username=username, avatar_url=avatar_url, message=message)
 

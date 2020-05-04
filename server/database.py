@@ -215,7 +215,7 @@ class Database:
         return ban_id
     
     def warn(self,
-            target_id,
+            target,
             reason,
             warned_by=None,
             warn_id=None):
@@ -225,19 +225,16 @@ class Database:
         with self.db as conn:
             if warn_id is None:
                 event_logger.info(f'{warned_by.name} ({warned_by.ipid}) ' +
-                                  f'warned {target_id}: \'{reason}\'.')
+                                  f'warned {target.ipid}: \'{reason}\'.')
                 warn_id = conn.execute(dedent('''
                     INSERT INTO warns(reason, warned_by)
                     VALUES (?, ?)
                     '''), (reason, warned_by.ipid)).lastrowid
-            try:
-                conn.execute(dedent('''
-                    INSERT INTO ip_warns(ipid, warn_id) VALUES (?, ?)
-                    '''), (target_id, warn_id))
-            except sqlite3.IntegrityError as exc:
-                raise ServerError(f'Error inserting warn: {exc}'
-                                  ' (the IPID may not exist)')
-
+                warn_id_int = int(warn_id)
+                try:
+                    conn.execute("UPDATE warns SET ipid = ? WHERE warn_id = ?", (target.ipid, warn_id_int))
+                except sqlite3.IntegrityError as exc:
+                    raise ServerError(f'Error inserting warn: {exc}')
         return warn_id
 
     def last_known_name(self, ipid):
@@ -298,6 +295,7 @@ class Database:
     @dataclass
     class Warn:
         warn_id: int
+        ipid: int
         warn_date: datetime
         warned_by: int
         reason: str
@@ -311,7 +309,7 @@ class Database:
             with _database_singleton.db as conn:
                 return [row['ipid'] for row in
                     conn.execute(dedent('''
-                        SELECT ipid FROM ip_warns WHERE warn_id = ?
+                        SELECT * FROM warns WHERE warn_id = ?
                         '''), (self.warn_id,)).fetchall()
                 ]
 
@@ -360,45 +358,46 @@ class Database:
                 '''), (ban_id,)).rowcount
             return unbans > 0
         
-    def find_warn(self, ipid=None, warn_id=None):
-        """Check if an IPID and/or HDID are warned."""
+    def find_warn(self, warn_id):
+        """Get the warn entry matching the given warn ID."""
+        #TODO: this should not be a for loop
         with self.db as conn:
-            warn = conn.execute(dedent('''
-                SELECT *
-                FROM (
-                    SELECT warn_id FROM ip_warns WHERE ipid = ?
-                    UNION SELECT warn_id FROM warns WHERE warn_id = ?
-                )
-                JOIN warns USING (warn_id)
-                '''), (ipid, warn_id)).fetchone()
-            if warn is not None:
-                return Database.Warn(**warn)
-            else:
-                return None
+            return [Database.Warn(**row) for row in
+                conn.execute(dedent('''
+                SELECT * FROM warns WHERE warn_id = ?
+                '''), (warn_id,)).fetchall()]
     
-    def list_warns(self, ipid=None, warn_id=None):
+    def list_warns(self, query, count, lookup_type='ipid'):
         """
-        List warns for a given IPID.
+        List the last <count> warns for a given query.
         """
         with self.db as conn:
-            warn_list = conn.execute(dedent('''
-                SELECT *
-                FROM (
-                    SELECT warn_id FROM ip_warns WHERE ipid = ?
-                    UNION SELECT warn_id FROM warns WHERE warn_id = ?
-                )
-                JOIN warns USING (warn_id)
-                '''), (ipid, warn_id)).fetchone()
-            if warn_list is not None:
-                return Database.Warn(**warn)
-            else:
-                return None
+            if lookup_type == 'ipid':
+                return [Database.Warn(**row) for row in
+                    conn.execute(dedent('''
+                    SELECT *
+                    FROM (
+                        SELECT * FROM warns WHERE ipid = ?
+                        ORDER BY warn_date DESC LIMIT ?
+                    )
+                    ORDER BY warn_date ASC
+                    '''), (query,count)).fetchall()]
+            elif lookup_type == 'warned_by':
+                return [Database.Warn(**row) for row in
+                    conn.execute(dedent('''
+                    SELECT *
+                    FROM (
+                        SELECT * FROM warns WHERE warned_by = ?
+                        ORDER BY warn_date DESC LIMIT ?
+                    )
+                    ORDER BY warn_date ASC
+                    '''), (query,count)).fetchall()]
 
     def unwarn(self, warn_id):
         """Remove a warn entry."""
         event_logger.info(f'Unwarning {warn_id}')
         with self.db as conn:
-            unbans = conn.execute(dedent('''
+            unwarns = conn.execute(dedent('''
                 DELETE FROM warns WHERE warn_id = ?
                 '''), (warn_id,)).rowcount
             return unwarns > 0

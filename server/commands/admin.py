@@ -18,6 +18,7 @@ __all__ = [
 	'ooc_cmd_banhdid',
     'ooc_cmd_unban',
     'ooc_cmd_warn',
+    'ooc_cmd_unwarn',
     'ooc_cmd_mute',
     'ooc_cmd_unmute',
     'ooc_cmd_login',
@@ -28,7 +29,9 @@ __all__ = [
     'ooc_cmd_oocmute',
     'ooc_cmd_oocunmute',
     'ooc_cmd_bans',
+    'ooc_cmd_warninfo',
     'ooc_cmd_warns',
+    'ooc_cmd_warnsby',
     'ooc_cmd_permit',
     'ooc_cmd_baninfo',
     'ooc_cmd_setserverpoll',
@@ -210,7 +213,7 @@ def ooc_cmd_kick(client, arg):
             w.kick(char=c.char_name, ipid=c.ipid, reason=reason)
             client.send_ooc("{} was kicked.".format(
                 c.char_name))
-            c.send_command('KK', reason)
+            c.send_command('KK', 'Kicked: ' + reason)
             c.disconnect()
     else:
         client.send_ooc(
@@ -285,7 +288,7 @@ def kickban(client, arg, ban_hdid):
                     w.ban(char=c.char_name, ipid=c.ipid, ban_id=ban_id, reason=reason, hdid=c.hdid)
                 else:
                     w.ban(char=c.char_name, ipid=c.ipid, ban_id=ban_id, reason=reason)
-                c.send_command('KB', reason)
+                c.send_command('KB', 'Banned: ' + reason)
                 c.disconnect()
                 database.log_misc('ban', client, target=c, data={'reason': reason})
             client.send_ooc(f'{len(targets)} clients were kicked.')
@@ -307,7 +310,7 @@ def ooc_cmd_unban(client, arg):
     for ban_id in args:
         if database.unban(ban_id):
             client.send_ooc(f'Removed ban ID {ban_id}.')
-            w.unban(ban_id=ban_id)
+            w.unban(client=client, ban_id=ban_id)
         else:
             client.send_ooc(f'{ban_id} is not on the ban list.')
         database.log_misc('unban', client, data={'id': ban_id})
@@ -343,14 +346,35 @@ def ooc_cmd_warn(client, arg):
         if reason == '':
             reason = 'N/A'
         for c in targets:
-            warn_id = database.warn(ipid, reason, warned_by=client, warn_id=warn_id)
+            warn_id = database.warn(target=c, reason=reason, warned_by=client)
             w.warn(char=c.char_name, ipid=c.ipid, warn_id=warn_id, reason=reason)
             client.send_ooc("{} was warned. Warn ID: {}".format(
                 c.char_name, warn_id))
-            c.send_ooc(f"You were warned by a moderator. Reason: {reason}")
+            c.send_ooc(f"You were warned by a moderator. (ID: {warn_id}) Reason: {reason}")
+            c.send_command('BEEP')
     else:
         client.send_ooc(
             f'No targets with the IPID {ipid} were found.')
+
+@mod_only()
+def ooc_cmd_unwarn(client, arg):
+    """
+    Remove a list of warn entries from the database.
+    Usage: /unwarn <warn_id ...>
+    """
+    w = Webhooks(client.server)
+    if len(arg) == 0:
+        raise ArgumentError(
+            'You must specify a target. Use /unwarn <warn_id...>')
+    args = list(arg.split(' '))
+    client.send_ooc(f'Attempting to revoke {len(args)} warn(s)...')
+    for warn_id in args:
+        if database.unwarn(warn_id):
+            client.send_ooc(f'Removed warn entry with ID {warn_id}.')
+            w.unwarn(client=client,warn_id=warn_id)
+        else:
+            client.send_ooc(f'No entry exists for warn ID {warn_id}.')
+        database.log_misc('unwarn', client, data={'id': warn_id})
 
 @mod_only()
 def ooc_cmd_mute(client, arg):
@@ -577,34 +601,139 @@ def ooc_cmd_baninfo(client, arg):
             msg += 'Unban date: N/A'
         client.send_ooc(msg)
         
-@mod_only()
 def ooc_cmd_warns(client, arg):
     """
-    Get the warns for a given IPID.
-    Usage: /warns <ipid>
+    Get the warns for a given IPID. Returns the last 5 by default.
+    Use with no arguments to view warns for your own IPID (must not be logged in)
+    Usage: /warns [count] (logged out)
+           /warns <ipid> [count] (logged in)
+    """
+    args = arg.split(' ')
+    # TODO: Make this shorter.
+    # Or don't. I'm a TODO, not a cop.
+    raw_ipid = None
+    raw_count = None
+    if len(arg) == 0:
+        ipid = client.ipid
+        count = 5
+    elif len(args) == 1 and client.is_mod:
+        raw_ipid = args[0]
+        count = 5
+    else:
+        if client.is_mod:
+            raw_ipid = args[0]
+            raw_count = args[1]
+        else:
+            ipid = client.ipid
+            raw_count = args[0]
+    # if it applies, validate the raw input
+    if raw_ipid != None:
+        try:
+            ipid = int(raw_ipid)
+        except ValueError:
+            raise ClientError(f'{raw_ipid} does not look like a valid IPID.')
+    if raw_count != None:
+        try:
+            count = int(raw_count)
+        except ValueError:
+            client.send_ooc(f'Unable to parse \'{raw_count}\' as int, defaulting to 5.')
+            count = 5
+    # this is done to avoid exposing non-mod users to their own IPID
+    target = 'your IPID' if ipid == client.ipid and not client.is_mod else f'IPID \'{ipid}\''
+    warns = database.list_warns(query=ipid, count=count)
+    msg = f'Last {len(warns)} warning(s) for {target}:\n'
+    if not warns:
+        client.send_ooc(f'No warnings found for {target}. Either it does not exist, or it has never received a warning.')
+    else:
+        for warn in warns:
+            msg += f'------\n'
+            msg += f'Warn ID: {warn.warn_id}\n'
+            msg += f'Reason: "{warn.reason}"\n'
+            # just to be safe, don't expose the warned_by IPID to non-mods
+            if client.is_mod: warned_by = f'{warn.warned_by_name} ({warn.warned_by})'
+            else: warned_by = f'{warn.warned_by_name}'
+            msg += f'Issued by: {warned_by}\n'
+            warn_date = arrow.get(warn.warn_date)
+            msg += f'Warned on: {warn_date.format()} ({warn_date.humanize()})\n'
+        msg += f'------'
+        client.send_ooc(msg)
+        
+    
+@mod_only()
+def ooc_cmd_warnsby(client, arg):
+    """
+    Get a list of warns issued by the given IPID. Returns the last 5 by default.
+    In the interest of streamlining, "me" resolves to the IPID of the user.
+    Usage: /warnsby {ipid | me} [count]
+    """
+    args = arg.split(' ')
+    raw_ipid = None
+    raw_count = None
+    if len(arg) == 0:
+        raise ArgumentError('Not enough arguments - you must either specify an IPID or use "me" to view your own issued warns.')
+    elif len(args) == 1:
+        count = 5
+    else:
+        raw_count = args[1]
+
+    if args[0] == 'me':
+        ipid = client.ipid
+    else:
+        raw_ipid = args[0]
+        
+    # if it applies, validate the raw input
+    if raw_ipid != None:
+        try:
+            ipid = int(raw_ipid)
+        except ValueError:
+            raise ClientError(f'{raw_ipid} does not look like a valid IPID.')
+    if raw_count != None:
+        try:
+            count = int(raw_count)
+        except ValueError:
+            client.send_ooc(f'Unable to parse \'{raw_count}\' as int, defaulting to 5.')
+            count = 5
+
+    warns = database.list_warns(query=ipid, count=count, lookup_type='warned_by')
+    msg = f'Last {len(warns)} warning(s) issued by IPID \'{ipid}\':\n'
+    if not warns:
+        client.send_ooc(f'There are no warnings issued by IPID \'{ipid}\'. Either it does not exist, or it has never issued a warning.')
+    else:
+        for warn in warns:
+            msg += f'------\n'
+            msg += f'Warn ID: {warn.warn_id}\n'
+            msg += f'Reason: "{warn.reason}"\n'
+            msg += f'Issued by: {warn.warned_by_name} ({warn.warned_by})\n'
+            warn_date = arrow.get(warn.warn_date)
+            msg += f'Warned on: {warn_date.format()} ({warn_date.humanize()})\n'
+        msg += f'------'
+        client.send_ooc(msg)
+        
+@mod_only()
+def ooc_cmd_warninfo(client, arg):
+    """
+    Get information about a warn.
+    Usage: /warninfo <warn_id>
     """
     args = arg.split(' ')
     if len(arg) == 0:
         raise ArgumentError('You must specify an ID.')
-    elif len(args) == 1:
-        lookup_type = 'ipid'
-    else:
-        lookup_type = args[1]
 
-    if lookup_type not in ('ipid'):
-        raise ArgumentError('Incorrect lookup type.')
+    try:
+        warn_id = int(args[0])
+    except ValueError:
+        raise ClientError(f'{args[0]} does not look like a valid warn ID.')
 
-    msg = f'Warns for IPID {args[0]}:'
-    warn_list = database.list_warns(**{lookup_type: args[0]})
-    if warn_list is None:
-        client.send_ooc('No warns found for this IPID.')
+    warns = database.find_warn(warn_id)
+    if not warns:
+        client.send_ooc('No warnings found for this ID.')
     else:
-        for warn in warn_list:
-            msg += '------'
-            msg += f'Warn ID: {warn.warn_id}\n'
+        for warn in warns:
+            msg = f'Warn ID: {warn.warn_id}\n'
+            msg += f'IPID warned: {warn.ipid}\n'
             msg += f'Reason: "{warn.reason}"\n'
-            msg += f'Warned by: {warn.warned_by_name} ({warn.warned_by})\n'
+            msg += f'Issued by: {warn.warned_by_name} ({warn.warned_by})\n'
 
             warn_date = arrow.get(warn.warn_date)
-            msg += f'Warned on: {warn_date.format()} ({warn_date.humanize()})\n'
-        client.send_ooc(msg)
+            msg += f'Warned on: {warn_date.format()} ({warn_date.humanize()})'
+            client.send_ooc(msg)
