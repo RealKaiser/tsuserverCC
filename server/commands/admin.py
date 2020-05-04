@@ -213,7 +213,7 @@ def ooc_cmd_kick(client, arg):
             w.kick(char=c.char_name, ipid=c.ipid, reason=reason)
             client.send_ooc("{} was kicked.".format(
                 c.char_name))
-            c.send_command('KK', 'Kicked: ' + reason)
+            c.send_command('KK', f'Kicked: "{reason}"')
             c.disconnect()
     else:
         client.send_ooc(
@@ -288,7 +288,7 @@ def kickban(client, arg, ban_hdid):
                     w.ban(char=c.char_name, ipid=c.ipid, ban_id=ban_id, reason=reason, hdid=c.hdid)
                 else:
                     w.ban(char=c.char_name, ipid=c.ipid, ban_id=ban_id, reason=reason)
-                c.send_command('KB', 'Banned: ' + reason)
+                c.send_command('KB', f'Banned: "{reason}"')
                 c.disconnect()
                 database.log_misc('ban', client, target=c, data={'reason': reason})
             client.send_ooc(f'{len(targets)} clients were kicked.')
@@ -351,6 +351,7 @@ def ooc_cmd_warn(client, arg):
             client.send_ooc("{} was warned. Warn ID: {}".format(
                 c.char_name, warn_id))
             c.send_ooc(f"You were warned by a moderator. (ID: {warn_id}) Reason: {reason}")
+            c.send_command('WARN', f'"{reason}" (ID: {warn_id})')
             c.send_command('BEEP')
     else:
         client.send_ooc(
