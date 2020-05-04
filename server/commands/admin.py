@@ -587,7 +587,7 @@ def ooc_cmd_baninfo(client, arg):
     if ban is None:
         client.send_ooc('No ban found for this ID.')
     else:
-        msg = f'Ban ID: {ban.ban_id}\n'
+        msg = f'\nBan ID: {ban.ban_id}\n'
         msg += 'Affected IPIDs: ' + ', '.join([str(ipid) for ipid in ban.ipids]) + '\n'
         msg += 'Affected HDIDs: ' + ', '.join(ban.hdids) + '\n'
         msg += f'Reason: "{ban.reason}"\n'
@@ -647,7 +647,7 @@ def ooc_cmd_warns(client, arg):
         client.send_ooc(f'No warnings found for {target}. Either it does not exist, or it has never received a warning.')
     else:
         for warn in warns:
-            msg += f'------\n'
+            msg += f'\n------\n'
             msg += f'Warn ID: {warn.warn_id}\n'
             msg += f'Reason: "{warn.reason}"\n'
             # just to be safe, don't expose the warned_by IPID to non-mods
@@ -701,7 +701,7 @@ def ooc_cmd_warnsby(client, arg):
         client.send_ooc(f'There are no warnings issued by IPID \'{ipid}\'. Either it does not exist, or it has never issued a warning.')
     else:
         for warn in warns:
-            msg += f'------\n'
+            msg += f'\n------\n'
             msg += f'Warn ID: {warn.warn_id}\n'
             msg += f'Reason: "{warn.reason}"\n'
             msg += f'Issued by: {warn.warned_by_name} ({warn.warned_by})\n'
@@ -730,7 +730,7 @@ def ooc_cmd_warninfo(client, arg):
         client.send_ooc('No warnings found for this ID.')
     else:
         for warn in warns:
-            msg = f'Warn ID: {warn.warn_id}\n'
+            msg = f'\nWarn ID: {warn.warn_id}\n'
             msg += f'IPID warned: {warn.ipid}\n'
             msg += f'Reason: "{warn.reason}"\n'
             msg += f'Issued by: {warn.warned_by_name} ({warn.warned_by})\n'
