@@ -325,6 +325,16 @@ class Database:
                         SELECT * FROM warns WHERE warn_id = ?
                         '''), (self.warn_id,)).fetchall()
                 ]
+                
+        @property
+        def hdids(self):
+            """Find HDIDs affected by this warn."""
+            with _database_singleton.db as conn:
+                return [row['hdid'] for row in
+                    conn.execute(dedent('''
+                        SELECT * FROM warns WHERE warn_id = ?
+                        '''), (self.warn_id,)).fetchall()
+                ]
 
         @property
         def warned_by_name(self):
