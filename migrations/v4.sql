@@ -3,8 +3,10 @@ PRAGMA foreign_keys = OFF;
 CREATE TABLE warns(
 	warn_id INTEGER PRIMARY KEY,
 	ipid INTEGER,
+	hdid TEXT,
 	warn_date DATETIME DEFAULT CURRENT_TIMESTAMP,
 	warned_by INTEGER,
+	warn_type TEXT,
 	reason TEXT,
 	FOREIGN KEY (ipid) REFERENCES ipids(ipid)
 		ON DELETE CASCADE,

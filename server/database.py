@@ -217,22 +217,33 @@ class Database:
     def warn(self,
             target,
             reason,
+            warn_type='warn',
             warned_by=None,
             warn_id=None):
         """
-        Warn an IPID.
+        Warn an IPID/HDID.
+        HDID is stored in order to account for users with dynamic IPs.
         """
+        if not warned_by.server.config['add_warn_on_kick_ban'] and warn_type != 'warn':
+            return None
         with self.db as conn:
             if warn_id is None:
-                event_logger.info(f'{warned_by.name} ({warned_by.ipid}) ' +
-                                  f'warned {target.ipid}: \'{reason}\'.')
+                if warn_type == 'warn':
+                    event_logger.info(f'{warned_by.name} ({warned_by.ipid}) ' +
+                                    f'warned {target.ipid}: \'{reason}\'.')
                 warn_id = conn.execute(dedent('''
-                    INSERT INTO warns(reason, warned_by)
-                    VALUES (?, ?)
-                    '''), (reason, warned_by.ipid)).lastrowid
+                    INSERT INTO warns(warn_type, reason, warned_by)
+                    VALUES (?, ?, ?)
+                    '''), (warn_type, reason, warned_by.ipid)).lastrowid
                 warn_id_int = int(warn_id)
                 try:
-                    conn.execute("UPDATE warns SET ipid = ? WHERE warn_id = ?", (target.ipid, warn_id_int))
+                    conn.execute(dedent('''
+                    UPDATE warns
+                    SET
+                        ipid = ?,
+                        hdid = ?
+                    WHERE warn_id = ?
+                    '''), (target.ipid, target.hdid, warn_id_int))
                 except sqlite3.IntegrityError as exc:
                     raise ServerError(f'Error inserting warn: {exc}')
         return warn_id
@@ -296,9 +307,11 @@ class Database:
     class Warn:
         warn_id: int
         ipid: int
+        hdid: str
         warn_date: datetime
         warned_by: int
         reason: str
+        warn_type: str
 
         def __post_init__(self):
             self.warn_date = arrow.get(self.warn_date).datetime

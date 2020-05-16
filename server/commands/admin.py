@@ -209,6 +209,7 @@ def ooc_cmd_kick(client, arg):
         if reason == '':
             reason = 'N/A'
         for c in targets:
+            warn_id = database.warn(target=c, reason=reason, warn_type='kick', warned_by=client)
             database.log_misc('kick', client, target=c, data={'reason': reason})
             w.kick(char=c.char_name, ipid=c.ipid, reason=reason)
             client.send_ooc("{} was kicked.".format(
@@ -285,8 +286,10 @@ def kickban(client, arg, ban_hdid):
             for c in targets:
                 if ban_hdid:
                     database.ban(c.hdid, reason, ban_type='hdid', ban_id=ban_id)
+                    warn_id = database.warn(target=c, reason=f'{reason} (Ban ID: {ban_id}, unban date: {unban_date})', warn_type='ban_hdid', warned_by=client)
                     w.ban(char=c.char_name, ipid=c.ipid, ban_id=ban_id, reason=reason, hdid=c.hdid)
                 else:
+                    warn_id = database.warn(target=c, reason=f'{reason} (Ban ID: {ban_id}, unban date: {unban_date})', warn_type='ban_ipid', warned_by=client)
                     w.ban(char=c.char_name, ipid=c.ipid, ban_id=ban_id, reason=reason)
                 c.send_command('KB', f'Banned: "{reason}"')
                 c.disconnect()
@@ -649,6 +652,19 @@ def ooc_cmd_warns(client, arg):
         for warn in warns:
             msg += f'\n------\n'
             msg += f'Warn ID: {warn.warn_id}\n'
+            if warn.warn_type == 'warn':
+                warn_type = 'Warning'
+            elif warn.warn_type == 'kick':
+                warn_type = 'Kick'
+            elif 'ban' in warn.warn_type and not client.is_mod:
+                warn_type = 'Ban'
+            elif warn.warn_type == 'ban_hdid':
+                warn_type = 'Ban (HDID)'
+            elif warn.warn_type == 'ban_ipid':
+                warn_type = 'Ban (IPID)'
+            else:
+                warn_type = f'{warn.warn_type} (Unrecognized type!)'
+            msg += f'Type: {warn_type}\n'
             msg += f'Reason: "{warn.reason}"\n'
             # just to be safe, don't expose the warned_by IPID to non-mods
             if client.is_mod: warned_by = f'{warn.warned_by_name} ({warn.warned_by})'
@@ -703,6 +719,17 @@ def ooc_cmd_warnsby(client, arg):
         for warn in warns:
             msg += f'\n------\n'
             msg += f'Warn ID: {warn.warn_id}\n'
+            if warn.warn_type == 'warn':
+                warn_type = 'Warning'
+            elif 'ban' in warn.warn_type and not client.is_mod:
+                warn_type = 'Ban'
+            elif warn.warn_type == 'ban_hdid':
+                warn_type = 'Ban (HDID)'
+            elif warn.warn_type == 'ban_ipid':
+                warn_type = 'Ban (IPID)'
+            else:
+                warn_type = f'{warn.warn_type} (Unrecognized type!)'
+            msg += f'Type: {warn_type}\n'
             msg += f'Reason: "{warn.reason}"\n'
             msg += f'Issued by: {warn.warned_by_name} ({warn.warned_by})\n'
             warn_date = arrow.get(warn.warn_date)
@@ -731,6 +758,17 @@ def ooc_cmd_warninfo(client, arg):
     else:
         for warn in warns:
             msg = f'\nWarn ID: {warn.warn_id}\n'
+            if warn.warn_type == 'warn':
+                warn_type = 'Warning'
+            elif 'ban' in warn.warn_type and not client.is_mod:
+                warn_type = 'Ban'
+            elif warn.warn_type == 'ban_hdid':
+                warn_type = 'Ban (HDID)'
+            elif warn.warn_type == 'ban_ipid':
+                warn_type = 'Ban (IPID)'
+            else:
+                warn_type = f'{warn.warn_type} (Unrecognized type!)'
+            msg += f'Type: {warn_type}\n'
             msg += f'IPID warned: {warn.ipid}\n'
             msg += f'Reason: "{warn.reason}"\n'
             msg += f'Issued by: {warn.warned_by_name} ({warn.warned_by})\n'

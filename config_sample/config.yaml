@@ -76,6 +76,9 @@ multiclient_limit: 16
 # Maximum number of characters can a message contain
 max_chars: 256
 
+# Whether or not to add special entries to the warn table when a user is kicked or banned.
+add_warn_on_kick_ban: true
+
 # Whether or not Discord webhooks are enabled, and if they are, the webhook URL to use.
 # If webhooks_enabled is set to false, no webhooks will function regardless of whether they are enabled or not.
 webhooks_enabled: false
