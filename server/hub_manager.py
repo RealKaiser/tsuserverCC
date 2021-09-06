@@ -263,8 +263,11 @@ class HubManager:
 		
 		#client.server.send_all_cmd_pred('CT', '{}'.format(client.server.config['hostname']),f'=== Announcement ===\r\nA new area has been created.\n[{new_id}] {arg}\r\n==================', '1')
 		if client.area.is_hub:
-			for owner in client.area.owners:
-				newsub.owners.append(owner)
+			if newsub.hub.hubtype != 'default':
+				newsub.owners.append(client)
+			else:
+				for owner in client.area.owners:
+					newsub.owners.append(owner)
 		else:
 			for owner in client.area.hub.owners:
 				newsub.owners.append(owner)
