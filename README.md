@@ -299,6 +299,8 @@ Requires Python 3.7+ and PyYAML.
     - Using "clear" as an argument clears the poslock.
 * **ambiance**
 	- Toggles 'ambiance' or server-side looping. While on, allows new clients joining an area to hear a set song once it loops without needing to play it themselves.
+* **timer** \<id> [+/-][time] | \<id> start | \<id> \<pause|stop> | \<id> hide
+    - Manage a countdown timer in the current area. Note that timer of ID 0 is global. All other timer IDs are local to the area.
 
 #### Testimony Recording
 * A new feature in tsuserverCC - you can now record testimonies and play them back with automatic formatting!

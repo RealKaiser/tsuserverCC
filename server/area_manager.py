@@ -21,9 +21,12 @@
 import asyncio
 import random
 import time
-from enum import Enum
-
+import arrow
 import yaml
+
+from dataclasses import dataclass
+from enum import Enum
+from typing import List
 
 from server import database
 from server.evidence import EvidenceList
@@ -32,6 +35,13 @@ from server.exceptions import AreaError
 
 class AreaManager:
 	"""Holds the list of all areas."""
+	@dataclass
+	class Timer:
+		set: bool = False
+		started: bool = False
+		static: arrow.Arrow = None
+		target: arrow.Arrow = None
+		schedule: asyncio.Future = None
 	class Area:
 		"""Represents a single instance of an area."""
 		def __init__(self,
@@ -101,13 +111,8 @@ class AreaManager:
 			self.spies = set()
 			self.ambiance = False
 			self.webblock = False
+			self.timers = [AreaManager.Timer() for _ in range(4)]
 			
-			"""
-			#debug
-			self.evidence_list.append(Evidence("WOW", "desc", "1.png"))
-			self.evidence_list.append(Evidence("wewz", "desc2", "2.png"))
-			self.evidence_list.append(Evidence("weeeeeew", "desc3", "3.png"))
-			"""
 
 			self.is_locked = self.Locked.FREE
 			self.blankposting_allowed = True
@@ -137,6 +142,43 @@ class AreaManager:
 								sub.conn_arup_players()
 			if client.char_id != -1:
 				database.log_room('area.join', client, self)
+				
+			# Update the timers
+			timer = self.server.area_manager.timer
+			if timer.set:
+				s = int(not timer.started)
+				current_time = timer.static
+				if timer.started:
+					current_time = timer.target - arrow.get()
+				int_time = int(current_time.total_seconds()) * 1000
+				# Unhide the timer
+				client.send_command('TI', 0, 2)
+				# Start the timer
+				client.send_command('TI', 0, s, int_time)
+			else:
+				# Stop the timer
+				client.send_command('TI', 0, 3, 0)
+				# Hide the timer
+				client.send_command('TI', 0, 1)
+
+			for timer_id, timer in enumerate(self.timers):
+				# Send static time if applicable
+				if timer.set:
+					s = int(not timer.started)
+					current_time = timer.static
+					if timer.started:
+						current_time = timer.target - arrow.get()
+					int_time = int(current_time.total_seconds()) * 1000
+					# Start the timer
+					client.send_command('TI', timer_id+1, s, int_time)
+					# Unhide the timer
+					client.send_command('TI', timer_id+1, 2)
+					client.send_ooc(f'Timer {timer_id+1} is at {current_time}')
+				else:
+					# Stop the timer
+					client.send_command('TI', timer_id+1, 1, 0)
+					# Hide the timer
+					client.send_command('TI', timer_id+1, 3)
 
 		def remove_client(self, client):
 			"""Remove a disconnected client from the area."""
@@ -829,6 +871,7 @@ class AreaManager:
 		self.cur_id = 0
 		self.areas = []
 		self.load_areas()
+		self.timer = AreaManager.Timer()
 
 	def load_areas(self):
 		"""Create all areas from a YAML file."""
@@ -857,14 +900,7 @@ class AreaManager:
 				item['hub_id'] = 0
 			if 'hubtype' not in item:
 				item['hubtype'] = 'default'
-			self.areas.append(
-				self.Area(self.cur_id, self.server, item['area'],
-						  item['background'], item['bglock'],
-						  item['evidence_mod'], item['locking_allowed'],
-						  item['iniswap_allowed'],
-						  item['showname_changes_allowed'],
-						  item['shouts_allowed'], item['jukebox'],
-						  item['abbreviation'], item['noninterrupting_pres'], item['is_hub'], item['hub_id'], item['hubtype']))
+			self.areas.append(self.Area(self.cur_id, self.server, item['area'], item['background'], item['bglock'], item['evidence_mod'], item['locking_allowed'], item['iniswap_allowed'],item['showname_changes_allowed'], item['shouts_allowed'], item['jukebox'], item['abbreviation'], item['noninterrupting_pres'], item['is_hub'], item['hub_id'], item['hubtype']))
 			self.cur_id += 1
 
 	def default_area(self):
