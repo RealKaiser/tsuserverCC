@@ -80,7 +80,7 @@ def ooc_cmd_spy(client, arg):
 			raise ArgumentError('Area not recognized.')
 		spyhere.spies.add(client)
 		client.spying.append(spyhere)
-		return send_ooc(f'You are now spying in {spyhere.name}.')
+		return client.send_ooc(f'You are now spying in {spyhere.name}.')
 
 def ooc_cmd_allowmusic(client, arg):
 	if client not in client.area.owners and not client.is_mod:

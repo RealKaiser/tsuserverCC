@@ -235,8 +235,13 @@ class AOProtocol(asyncio.Protocol):
 		
 		ID#<pv:int>#<software:string>#<version:string>#%
 		"""
-		self.client.send_command('FL', 'yellowtext', 'customobjections', 'flipping', 'fastloading', 'noencryption',
-								 'deskmod', 'evidence', 'modcall_reason', 'cccc_ic_support', 'arup', 'casing_alerts', 'looping_sfx', 'additive', 'effects', 'prezoom' 'y_offset', 'expanded_desk_mods')
+		self.client.send_command('FL', 'yellowtext', 'customobjections', 
+								 'flipping', 'fastloading', 'noencryption',
+								 'deskmod', 'evidence', 
+								 'modcall_reason', 'cccc_ic_support', 
+								 'arup', 'casing_alerts', 
+								 'looping_sfx', 'additive', 'effects', 
+								 'prezoom', 'y_offset', 'expanded_desk_mods')
 
 		# Send Asset packet if asset_url is defined
 		if self.server.config['asset_url'] != '':
