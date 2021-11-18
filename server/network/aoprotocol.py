@@ -583,7 +583,6 @@ class AOProtocol(asyncio.Protocol):
 		if not len(self.client.area.poslock) == 0:
 			if pos not in self.client.area.poslock:
 				pos = self.client.area.poslock[0]
-				self.client.send_ooc(f'Your pos isn\'t in /poslock, falling back on {pos}. Please switch to a pos in /poslock!')
 		msg = self.dezalgo(text)[:256]
 		if self.client.shaken:
 			msg = self.client.shake_message(msg)
@@ -808,9 +807,7 @@ class AOProtocol(asyncio.Protocol):
 						send_args[2] = 'Narrator'
 						send_args[3] = 'normal'
 					elif not self.client.visible:
-						send_args[1] = 0
-						send_args[2] = 'Narrator'
-						send_args[3] = '../../background/AADetentionCenter/defensedesk'
+						send_args[19] = 100
 
 					self.client.area.send_command('MS', *send_args)
 					self.server.area_manager.send_remote_command(target_area, 'MS', *send_args)
