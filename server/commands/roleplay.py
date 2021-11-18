@@ -72,7 +72,7 @@ def ooc_cmd_addrole(client, arg):
 		try:
 			id = int(arg[0])
 		except:
-			raise ArgumentError(f'{id} does not look like a valid ID.')
+			raise ArgumentError('Given ID does not look like a valid ID.')
 	if len(arg) < 2:
 		raise ArgumentError('Not enough arguments! Use /addrole [id] [role].')
 	party = client.party
@@ -408,7 +408,7 @@ def ooc_cmd_destroyparty(client, arg):
 		try:
 			id = int(arg)
 		except:
-			raise ArgumentError(f'{id} does not look like a valid ID.')
+			raise ArgumentError('Given ID does not look like a valid ID.')
 		for party in client.server.parties:
 			parties = []
 			parties.add(party)
@@ -437,7 +437,7 @@ def ooc_cmd_joinparty(client, arg):
 		try:
 			id = int(arg)
 		except:
-			raise ArgumentError(f'{id} does not look like a valid ID.')
+			raise ArgumentError('Given ID does not look like a valid ID.')
 		for party in client.server.parties:
 			if id == party.id:
 				if party.lock:
@@ -492,7 +492,7 @@ def ooc_cmd_partykick(client, arg):
 		try:
 			id = int(arg)
 		except:
-			raise ArgumentError(f'{id} does not look like a valid ID.')
+			raise ArgumentError('Given ID does not look like a valid ID.')
 	party = client.party
 	users = set()
 	for member in party.users:

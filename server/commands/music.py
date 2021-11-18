@@ -63,7 +63,7 @@ def ooc_cmd_addmusic(client, arg):
 		try:
 			length = int(args[1])
 		except ValueError:
-			raise ClientError(f'{length} does not look like a valid length.')
+			raise ClientError(f'Given length does not look like a valid length.')
 		if len(mlist) == 0:
 			songs = []
 			mlist.append({'category': 'CUSTOM'})
@@ -203,7 +203,7 @@ def ooc_cmd_hubplay(client, arg):
 	elif len(arg) > 0:
 		custom = False
 		try:
-			name, length, mod, custom = self.server.get_song_data(arg, self.client.area)
+			name, length, mod, custom = client.server.get_song_data(arg, client.client.area)
 		except:
 			name = arg
 			length = -1
