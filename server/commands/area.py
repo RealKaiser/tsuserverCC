@@ -866,6 +866,23 @@ def ooc_cmd_areakick(client, arg):
 				client.send_ooc(
 					"Attempting to kick {} to area {}.".format(
 						c.char_name, output))
+				if c in c.area.owners:
+					c.area.owners.remove(c)
+					if c.area.sub:
+						c.area.hub.sub_arup_cms()
+					elif client.area.is_hub:
+						for sub in client.area.subareas:
+							sub.owners.remove(client)
+							if sub.is_restricted:
+								sub.conn_arup_cms()
+						client.area.sub_arup_cms()
+						client.server.area_manager.send_arup_cms()
+					else:
+						client.server.area_manager.send_arup_cms()
+					if len(client.area.owners) == 0:
+						client.area.is_recording = False
+						client.area.recorded_messages = []
+						client.area.statement = 0
 				c.change_area(area)
 				c.send_ooc(
 					f"You were kicked from the area to area {output}.")
@@ -891,6 +908,23 @@ def ooc_cmd_areakick(client, arg):
 						raise
 				client.send_ooc(
 					"Attempting to kick {} to area {}.".format(c.char_name, output))
+				if c in c.area.owners:
+					c.area.owners.remove(c)
+					if c.area.sub:
+						c.area.hub.sub_arup_cms()
+					elif client.area.is_hub:
+						for sub in client.area.subareas:
+							sub.owners.remove(client)
+							if sub.is_restricted:
+								sub.conn_arup_cms()
+						client.area.sub_arup_cms()
+						client.server.area_manager.send_arup_cms()
+					else:
+						client.server.area_manager.send_arup_cms()
+					if len(client.area.owners) == 0:
+						client.area.is_recording = False
+						client.area.recorded_messages = []
+						client.area.statement = 0
 				c.change_area(area)
 				c.send_ooc(
 					f"You were kicked from the area to area {output}.")
