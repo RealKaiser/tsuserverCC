@@ -863,32 +863,32 @@ def ooc_cmd_areakick(client, arg):
 						output = arg[1]
 					except AreaError:
 						raise
-				client.send_ooc(
-					"Attempting to kick {} to area {}.".format(
-						c.char_name, output))
-				if c in c.area.owners:
-					c.area.owners.remove(c)
-					if c.area.sub:
-						c.area.hub.sub_arup_cms()
-					elif client.area.is_hub:
-						for sub in client.area.subareas:
+				if c not in client.area.clients and not client.is_mod:
+					raise ArgumentError('That user isn\'t in your area.')
+				client.send_ooc("Attempting to kick {} to area {}.".format(c.char_name, output))
+				c.area = carea
+				if c in carea.owners:
+					carea.owners.remove(c)
+					if carea.sub:
+						carea.hub.sub_arup_cms()
+					elif carea.is_hub:
+						for sub in carea.subareas:
 							sub.owners.remove(client)
 							if sub.is_restricted:
 								sub.conn_arup_cms()
-						client.area.sub_arup_cms()
+						carea.sub_arup_cms()
 						client.server.area_manager.send_arup_cms()
 					else:
 						client.server.area_manager.send_arup_cms()
-					if len(client.area.owners) == 0:
-						client.area.is_recording = False
-						client.area.recorded_messages = []
-						client.area.statement = 0
+					if len(carea.owners) == 0:
+						carea.is_recording = False
+						carea.recorded_messages = []
+						carea.statement = 0
 				c.change_area(area)
-				c.send_ooc(
-					f"You were kicked from the area to area {output}.")
+				c.send_ooc(f"You were kicked from the area to area {output}.")
 				database.log_room('area_kick', client, client.area, target=c, message=output)
-				if client.area.is_locked != client.area.Locked.FREE:
-					client.area.invite_list.pop(c.id)
+				if carea.is_locked != carea.Locked.FREE:
+					carea.invite_list.pop(c.id)
 		except AreaError:
 			raise
 		except ClientError:
@@ -906,31 +906,32 @@ def ooc_cmd_areakick(client, arg):
 						output = arg[1]
 					except AreaError:
 						raise
-				client.send_ooc(
-					"Attempting to kick {} to area {}.".format(c.char_name, output))
-				if c in c.area.owners:
-					c.area.owners.remove(c)
-					if c.area.sub:
-						c.area.hub.sub_arup_cms()
-					elif client.area.is_hub:
-						for sub in client.area.subareas:
+				if c not in client.area.clients and not client.is_mod:
+					raise ArgumentError('That user isn\'t in your area.')
+				client.send_ooc("Attempting to kick {} to area {}.".format(c.char_name, output))
+				c.area = carea
+				if c in carea.owners:
+					carea.owners.remove(c)
+					if carea.sub:
+						carea.hub.sub_arup_cms()
+					elif carea.is_hub:
+						for sub in carea.subareas:
 							sub.owners.remove(client)
 							if sub.is_restricted:
 								sub.conn_arup_cms()
-						client.area.sub_arup_cms()
+						carea.sub_arup_cms()
 						client.server.area_manager.send_arup_cms()
 					else:
 						client.server.area_manager.send_arup_cms()
-					if len(client.area.owners) == 0:
-						client.area.is_recording = False
-						client.area.recorded_messages = []
-						client.area.statement = 0
+					if len(carea.owners) == 0:
+						carea.is_recording = False
+						carea.recorded_messages = []
+						carea.statement = 0
 				c.change_area(area)
-				c.send_ooc(
-					f"You were kicked from the area to area {output}.")
+				c.send_ooc(f"You were kicked from the area to area {output}.")
 				database.log_room('area_kick', client, client.area, target=c, message=output)
-				if client.area.is_locked != client.area.Locked.FREE:
-					client.area.invite_list.pop(c.id)
+				if carea.is_locked != carea.Locked.FREE:
+					carea.invite_list.pop(c.id)
 		except AreaError:
 			raise
 		except ClientError:
