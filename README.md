@@ -218,7 +218,9 @@ Requires Python 3.7+ and PyYAML.
     - Default voting power is 0 (one vote) except for the Sacrifice role, which is 1 (two votes).
 
 ### CM Commands
-* **hide** "ID/*"
+* **listen**
+    - Toggles whether you'll receive messages from remotely CM'd areas. On by default.
+ * **hide** "ID/*"
     - Hides the target from /getarea and playercount.
 * **unhide** "ID/*"
     - Unhides the target from /getarea and playercount, can be used by non-CM if no arguments are given.
@@ -310,7 +312,7 @@ Requires Python 3.7+ and PyYAML.
 * Once you're done recording your testimony, just do `/end`. After this, you can do `///` in IC to make the title appear again, this time with a CE woosh.
 * After all that, anyone in the area can say `>` in IC to move to the next statement or `<` for the previous statement, `=` is also available to use to see the current statement again. 
 * All the statements will be automatically displayed in green.
-* The CM can at this point also add 'substatements' by using +again, and then can also amend the current statement by using &[amended statement] in OOC.
+* The CM can at this point also add 'substatements' by using +again, and then can also amend the current statement by using &[amended statement].
 * If you want to clear the testimony, use /cleartestimony in OOC. For viewing the current testimony, simply do /testimony in OOC.
 
 ### Mod Commands
