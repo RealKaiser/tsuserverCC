@@ -40,14 +40,14 @@ def ooc_cmd_ambiance(client, arg):
 		area.ambiance = False
 		area.broadcast_ooc('Ambiance for this area has been disabled, music played will loop client-side.')
 		if area.is_hub:
-			for sub in area.subs:
+			for sub in area.subareas:
 				sub.ambiance = False
 				sub.broadcast_ooc('Ambiance for this area has been disabled, music played will loop client-side.')
 	else:
 		area.ambiance = True
 		area.broadcast_ooc('Ambiance for this area has been enabled, music played will loop server-side.')
 		if area.is_hub:
-			for sub in area.subs:
+			for sub in area.subareass:
 				sub.ambiance = True
 				sub.broadcast_ooc('Ambiance for this area has been enabled, music played will loop server-side.')
 		
