@@ -23,9 +23,19 @@ __all__ = [
 	'ooc_cmd_call',
 	'ooc_cmd_acceptcall',
 	'ooc_cmd_endcall',
-	'ooc_cmd_holdcall'
+	'ooc_cmd_holdcall',
+	'ooc_cmd_listen'
 ]
 
+def ooc_cmd_listen(client, arg):
+	if len(arg) > 0:
+		raise ArgumentError('This doesn\'t take arguments.')
+	if client.listen:
+		client.listen = False
+		client.send_ooc('You will no longer receive messages from RCM\'d areas.')
+	else:
+		client.listen = True
+		client.send_ooc('You will now receive messages from RCM\'d areas.')
 
 def ooc_cmd_call(client, arg):
 	if len(arg) == 0:

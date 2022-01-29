@@ -69,6 +69,7 @@ class ClientManager:
 			self.old_char_name = ''
 			self.ooc_delay = None
 			self.afk = False
+			self.listen = True
 			
 			# Mod/Admin stuff
 			self.is_admin = False

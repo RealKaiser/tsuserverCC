@@ -286,7 +286,7 @@ class AreaManager:
 			that are not currently in the area.
 			"""
 			for c in self.owners:
-				if c not in self.clients:
+				if c not in self.clients and c.listen:
 					c.send_command(cmd, *args)
 			for spy in self.spies:
 				if spy not in self.clients and spy not in self.owners:
