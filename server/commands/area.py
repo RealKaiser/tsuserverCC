@@ -48,15 +48,45 @@ __all__ = [
 	'ooc_cmd_savehub',
 	'ooc_cmd_loadhub',
 	'ooc_cmd_hubstatus',
-	'ooc_cmd_gethubs'
+	'ooc_cmd_gethubs',
+	'ooc_cmd_areadesc',
+	'ooc_cmd_setareadesc',
+	'ooc_cmd_clearareadesc'
 ]
 
-def ooc_cmd_totalmulticlients(client, arg):
-	"""
-	Show information about all areas.
-	Usage: /getareas
-	"""
-	client.send_area_info(client.area, False, False, True)
+def ooc_cmd_areadesc(client, arg):
+	if len(arg) != 0:
+		raise ArgumentError('This command has no arguments.')
+	if client.area.desc == '':
+		client.send_ooc('This area has no set description')
+	else:
+		client.send_ooc(client.area.desc)
+		
+def ooc_cmd_setareadesc(client, arg):
+	if len(arg) == 0:
+		raise ArgumentError('Requires a description.')
+	if client not in client.area.owners:
+		if client.area.sub and client not in client.area.hub.owners:
+			raise ClientError("You aren't CM or this area or its hub.")
+	if len(arg) > 255:
+		raise ArgumentError('Description is too long, try something shorter.')
+	setdesc = '=== Area Description ===\r\n'
+	setdesc += arg
+	client.area.desc = setdesc
+	client.send_ooc('Area description set, it will be shown to each new client to the area.')
+		
+def ooc_cmd_clearareadesc(client, arg):
+	if len(arg) != 0:
+		raise ArgumentError('This command has no arguments.')
+	if client not in client.area.owners:
+		if client.area.sub and client in client.area.hub.owners:
+			client.area.desc = ''
+			return client.send_ooc('Area description cleared')
+		else:
+			raise ClientError("You aren't CM or this area or its hub.")
+	else:
+		client.area.desc = ''
+		return client.send_ooc('Area description cleared')
 
 def ooc_cmd_poslock(client, arg):
 	if len(arg) == 0:

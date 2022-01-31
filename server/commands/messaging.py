@@ -24,10 +24,10 @@ __all__ = [
 	'ooc_cmd_acceptcall',
 	'ooc_cmd_endcall',
 	'ooc_cmd_holdcall',
-	'ooc_cmd_listen'
+	'ooc_cmd_listenall'
 ]
 
-def ooc_cmd_listen(client, arg):
+def ooc_cmd_listenall(client, arg):
 	if len(arg) > 0:
 		raise ArgumentError('This doesn\'t take arguments.')
 	if client.listen:

@@ -48,6 +48,7 @@ class HubManager:
 				if 'hub' in item:
 					client.area.background = item['background']
 					client.area.doc = item['doc']
+					client.area.desc = item['desc']
 					if item['musiclist'] != '':
 						self.server.musiclist_manager.loadlist(client, item['musiclist'])
 						hubmusiclist = item['musiclist']
@@ -62,6 +63,8 @@ class HubManager:
 					newsub.hub = client.area
 					if 'doc' in item:
 						newsub.doc = item['doc']
+					if 'desc' in item:
+						newsub.desc = item['desc']
 					if item['musiclist'] != '':
 						self.server.musiclist_manager.loadsublist(newsub, item['musiclist'])
 					elif hubmusiclist != '':
@@ -105,14 +108,14 @@ class HubManager:
 		if not new:
 			os.remove(hubname)
 		hub = []
-		hub.append({'area': client.area.name, 'background': client.area.background, 'doc': client.area.doc, 'musiclist': client.area.cmusic_listname, 'reachable_areas': client.area.connections, 'hub': 'true'})
+		hub.append({'area': client.area.name, 'background': client.area.background, 'doc': client.area.doc, 'musiclist': client.area.cmusic_listname, 'reachable_areas': client.area.connections, 'hub': 'true', 'desc': client.area.desc})
 		for area in client.area.subareas:
 			connections = ''
 			if len(area.connections) > 0:
 				for connection in area.connections:
 					connections += f'{connection.name}, '
 				connections = connections[:-2]
-			hub.append({'area': area.name, 'background': area.background, 'doc': area.doc, 'musiclist': area.cmusic_listname, 'reachable_areas': connections})
+			hub.append({'area': area.name, 'background': area.background, 'doc': area.doc, 'musiclist': area.cmusic_listname, 'reachable_areas': connections, 'desc': area.desc})
 		with open(hubname, 'w', encoding='utf-8') as hubfile:
 			yaml.dump(hub, hubfile)
 		client.send_ooc(f'Hub {arg} saved!')
@@ -183,6 +186,7 @@ class HubManager:
 					dc.send_ooc(f'You were moved to {hub.name} because the hub was cleared.')
 		hub.subareas.clear()
 		hub.cur_subid = 1
+		hub.desc = ''
 		area_list = []
 		lobby = client.server.area_manager.default_area()
 		area_list.append(lobby.name)
