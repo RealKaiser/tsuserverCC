@@ -60,8 +60,9 @@ class AreaManager:
 					 non_int_pres_only=False,
 					 is_hub=False,
 					 hubid=0,
-					 hubtype='default'
+					 hubtype='default',
 					 desc=''):
+			self.timetomove = 0
 			self.desc = ''
 			self.is_hub = is_hub
 			self.hubid = hubid

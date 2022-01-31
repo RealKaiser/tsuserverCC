@@ -71,6 +71,10 @@ class ClientManager:
 			self.afk = False
 			self.listen = True
 			
+			# Area movement time stuff
+			self.moveto = None
+			self.movetimer = 0
+			
 			# Mod/Admin stuff
 			self.is_admin = False
 			self.is_mod = False
@@ -343,8 +347,6 @@ class ClientManager:
 			"""
 			if self.area == area:
 				raise ClientError('User already in specified area.')
-			if self.hdid == 32 and area.weblock == True:
-				raise ClientError('Web clients are disallowed from entering that area.')
 			if self.is_hostage == True:
 				for c in self.following:
 					if not c in area.clients:
@@ -360,16 +362,6 @@ class ClientManager:
 					raise ClientError('That area is locked with a password! Use /area <id> <password> to enter.')
 				else:
 					raise ClientError('That area is locked!')
-			if area.is_locked == area.Locked.SPECTATABLE and not self.is_mod and not self.id in area.invite_list:
-				self.send_ooc('This area is spectatable, but not free - you cannot talk in-character unless invited.')
-			if self.is_following == True:
-				for c in self.following:
-					if not c in area.clients:
-						self.is_following = False
-						c.followers.remove(self)
-						c.send_ooc(f'{self.char_name} left the area and is no longer following you.')
-						self.send_ooc(f'You left the area and are no longer following {c.char_name}.')
-						self.following.remove(c)
 			if not self.is_mod and self.area.is_restricted == True:
 				found = 'false'
 				for connection in self.area.connections:
@@ -377,6 +369,32 @@ class ClientManager:
 						found = 'true'
 				if found != 'true':
 					raise ClientError('That area is not connected to your current area!')
+			if self.is_following == True:
+				for c in self.following:
+					if not c in area.clients:
+						self.is_following = False
+						c.followers.remove(self)
+						c.send_ooc(f'{self.char_name} tried to leave the area and is no longer following you.')
+						self.send_ooc(f'You tried to leave the area and are no longer following {c.char_name}.')
+						self.following.remove(c)
+			if area.timetomove > 0:
+				if not self.is_mod and not self.is_following and self not in area.owners:
+					if area.sub and not self.area.is_hub and self not in area.hub.owners:
+						if self.moveto != area:
+							self.moveto = area
+							self.movetimer = time.perf_counter() + area.timetomove
+							raise ClientError(f'Destination confirmed, wait for {area.timetomove} seconds to move to that area.')
+						else:
+							now = time.perf_counter()
+							if now < self.movetimer:
+								left = int(self.movetimer - now)
+								raise ClientError(f'You still need to wait {left} seconds to move there.')
+
+			self.moveto = None
+			self.movetimer = 0
+
+			if area.is_locked == area.Locked.SPECTATABLE and not self.is_mod and not self.id in area.invite_list:
+				self.send_ooc('This area is spectatable, but not free - you cannot talk in-character unless invited.')
 
 			if self.area.jukebox:
 				self.area.remove_jukebox_vote(self, True)
