@@ -10,6 +10,10 @@ from server.constants import TargetType
 
 from . import mod_only
 
+# List with all OOC commands in this file.
+# If you wish to add a new OOC command, insert it here.
+# Otherwise, it won't work.
+
 __all__ = [
 	'ooc_cmd_currentmusic',
 	'ooc_cmd_music',
@@ -40,14 +44,14 @@ def ooc_cmd_ambiance(client, arg):
 		area.ambiance = False
 		area.broadcast_ooc('Ambiance for this area has been disabled, music played will loop client-side.')
 		if area.is_hub:
-			for sub in area.subareas:
+			for sub in area.subs:
 				sub.ambiance = False
 				sub.broadcast_ooc('Ambiance for this area has been disabled, music played will loop client-side.')
 	else:
 		area.ambiance = True
 		area.broadcast_ooc('Ambiance for this area has been enabled, music played will loop server-side.')
 		if area.is_hub:
-			for sub in area.subareass:
+			for sub in area.subs:
 				sub.ambiance = True
 				sub.broadcast_ooc('Ambiance for this area has been enabled, music played will loop server-side.')
 		
@@ -63,7 +67,7 @@ def ooc_cmd_addmusic(client, arg):
 		try:
 			length = int(args[1])
 		except ValueError:
-			raise ClientError(f'Given length does not look like a valid length.')
+			raise ClientError('The length of this track does not look like a valid length.')
 		if len(mlist) == 0:
 			songs = []
 			mlist.append({'category': 'CUSTOM'})
@@ -161,12 +165,8 @@ def ooc_cmd_play(client, arg):
 		raise ArgumentError('Not enough arguments. Use /play "name" "length in seconds".')
 	elif len(args) == 2:
 		if re.match(r"(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?", args[0]):
-			if '.mp3' not in args[0]:
-				raise ArgumentError("Doesn't seem to be an mp3.")
-			if '.mp3/' in args[0]:
-				raise ArgumentError("Don't be sneaky.")
 			name = ''
-			length = args[1]
+			length = 0
 		else:
 			name = 'custom/'
 			length = args[1]
@@ -178,12 +178,7 @@ def ooc_cmd_play(client, arg):
 			raise ClientError(f'{length} does not look like a valid length.')
 	elif len(args) == 1:
 		if re.match(r"(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?", args[0]):
-			if '.mp3' not in args[0]:
-				raise ArgumentError("Doesn't seem to be an mp3.")
-			if '.mp3/' in args[0]:
-				raise ArgumentError("Don't be sneaky.")
 			name = ''
-			length: 0
 		else:
 			name = 'custom/'
 		name += args[0]

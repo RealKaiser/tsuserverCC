@@ -19,18 +19,20 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+def features_fl():
+    """
+    Returns a list of features supported by the server. 
+    
+    This function is intended to be used in aoprotocol.py
+    in order to obtain the flags needed for the FL Packet 
+    (net_cmd_id) and it takes no arguments.
 
-class ClientError(Exception):
-    pass
-
-
-class AreaError(Exception):
-    pass
-
-
-class ArgumentError(Exception):
-    pass
-
-
-class ServerError(Exception):
-    pass
+    """
+    features = 	['FL', 'yellowtext', 'customobjections', 
+				'flipping', 'fastloading', 'noencryption',
+				'deskmod', 'evidence', 'modcall_reason', 
+				'cccc_ic_support', 'arup', 'casing_alerts', 
+				'looping_sfx', 'additive', 'effects',
+				'prezoom', 'y_offset', 'expanded_desk_mods',
+                'auth_packet']
+    return features
