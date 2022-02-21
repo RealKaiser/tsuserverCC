@@ -1,23 +1,21 @@
-"""
-tsuserverOLE, an Attorney Online server.
-Copyright (C) 2021 KillerSteel <killermagnum5@gmail.com
-
-Derivative of tsuserverCC, an Attorney Online server.
-Copyright (C) 2020 Kaiser <kaiserkaisie@gmail.com>
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as
-published by the Free Software Foundation, either version 3 of the
-License, or (at your option) any later version.
- 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Affero General Public License for more details.
- 
-You should have received a copy of the GNU Affero General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
-"""
+# tsuserverCC, an Attorney Online server.
+#
+# Copyright (C) 2020 Kaiser <kaiserkaisie@gmail.com>
+#
+# Derivative of tsuserver3, an Attorney Online server. Copyright (C) 2016 argoneus <argoneuscze@gmail.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import sys
 import os
@@ -43,7 +41,6 @@ from server.emotes import Emotes
 from server.exceptions import ClientError,ServerError
 from server.network.aoprotocol import AOProtocol
 from server.network.aoprotocol_ws import new_websocket_client
-from server.constants import remove_URL, dezalgo
 from server.network.masterserverclient import MasterServerClient
 import server.logger
 
@@ -255,6 +252,9 @@ class TsuServerCC:
 		
 		if 'ooc_delay' not in self.config:
 			self.config['ooc_delay'] = 0
+			
+		if 'asset_url' not in self.config:
+			self.config['asset_url'] = ''
 
 		#if isinstance(self.config['modpass'], str):
 		#	self.config['modpass'] = {'default': {'password': self.config['modpass']}}
@@ -596,7 +596,7 @@ class TsuServerCC:
 				except:
 					return
 		self.send_all_cmd_pred('ARUP', *args, pred=lambda x: x.area == area and not x in x.area.hub.owners)
-	
+
 	def refresh(self):
 		"""
 		Refresh as many parts of the server as possible:
@@ -630,7 +630,6 @@ class TsuServerCC:
 						client.mod_profile_name = None
 						database.log_misc('unmod.modpass', client)
 						client.send_ooc('Your moderator credentials have been revoked.')
-						client.send_command('AUTH', '-1')
 			if isinstance(self.config['modpass'], str):
 				self.config['modpass'] = {'default': {'password': self.config['modpass']}}
 			if isinstance(cfg_yaml['modpass'], str):
@@ -647,7 +646,6 @@ class TsuServerCC:
 						database.log_misc('unmod.modpass', client)
 						client.send_ooc(
 							'Your moderator credentials have been revoked.')
-						client.send_command('AUTH', '-1')
 			self.config['modpass'] = cfg_yaml['modpass']
 
 		self.load_characters()

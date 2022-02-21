@@ -12,12 +12,7 @@ from server.exceptions import ClientError, ServerError, ArgumentError
 
 from . import mod_only
 
-# List with all OOC commands in this file.
-# If you wish to add a new OOC command, insert it here.
-# Otherwise, it won't work.
-
 __all__ = [
-	'ooc_cmd_derp',
 	'ooc_cmd_motd',
 	'ooc_cmd_help',
 	'ooc_cmd_kick',
@@ -49,8 +44,7 @@ __all__ = [
 	'ooc_cmd_addmod',
 	'ooc_cmd_removemod',
 	'ooc_cmd_spy',
-	'ooc_cmd_geoiprefresh',
-	'ooc_cmd_about'
+	'ooc_cmd_geoiprefresh'
 ]
 
 def ooc_cmd_geoiprefresh(client, arg):
@@ -58,33 +52,19 @@ def ooc_cmd_geoiprefresh(client, arg):
 		raise ArgumentError('You must be authorized to do that.')
 	client.server.load_ipranges()
 
-"""
-Command: /spy
-Usage: Spy on an area (act as if you were its CM),
-see IC and OOC messages in these rooms.
-Arguments: None, 'here', 'clear', area abbreviations
-Specifics: Leans on 'spying' list in client_manager, 'spies' list and
-send_owner_command in area_manager. 'send_owner_command' is called
-as part of both the IC and OOC message handlers in aoprotocol.py.
-"""
-def ooc_cmd_spy(client, arg: str) -> None:
-	# Check if the user's a mod.
+def ooc_cmd_spy(client, arg):
 	if not client.is_mod:
 		raise ArgumentError('You must be authorized to do that.')
-	# No arguments (just /spy being used), tell me the users I'm
-	# spying on.
 	if len(arg) == 0:
 		msg = 'Spying on:'
 		for a in client.spying:
 			msg += f'\n[{a.abbreviation}]'
 		return client.send_ooc(msg)
-	# 'here' as argument, add me as a spy to the area I'm in.
 	elif arg == 'here':
 		if client not in client.area.spies:
 			client.area.spies.add(client)
 			client.spying.append(client.area)
 		return client.send_ooc('You are now spying on this area.')
-	# 'clear' as argument, clear out my spying list.
 	elif arg == 'clear':
 		spyl = []
 		for a in client.spying:
@@ -93,20 +73,12 @@ def ooc_cmd_spy(client, arg: str) -> None:
 			b.spies.remove(client)
 			client.spying.remove(b)
 		return client.send_ooc('All spying cleared.')
-	# Entered area name abbreviations as arguments.
 	else:
 		try:
-			# Try adding them to 'spyhere'.
 			spyhere = client.server.area_manager.get_area_by_abbreviation(arg)
 		except:
 			raise ArgumentError('Area not recognized.')
-		# Add me as a spy in the spyhere list.
-		# Add the spyhere list entries to my spying entry.
-
-		# 'spies' is in area_manager as part of 'send_owner_command'
 		spyhere.spies.add(client)
-
-		# 'spying' is in client_manager as a variable intializer.
 		client.spying.append(spyhere)
 		return client.send_ooc(f'You are now spying in {spyhere.name}.')
 
@@ -175,8 +147,7 @@ def ooc_cmd_serverpoll(client, arg):
 			nay.append(hdid)
 			client.send_ooc('You voted nay on the server poll.')
 	else:
-		raise ArgumentError\
-			('Vote either "yay" or"nay". Check the server poll by using no argument.')
+		raise ArgumentError('Vote either "yay" or"nay". Check the server poll by using no argument.')
 
 def ooc_cmd_clearserverpoll(client, arg):
 	if not client.is_mod:
@@ -197,19 +168,8 @@ def ooc_cmd_ghost(client, arg):
 	else:
 		client.ghost = True
 		client.send_ooc('You are now a ghost.')
-"""
-A fun command Steel made to try out his knowledge of how 
-	AO's admin.py file works.
-Syntax should be /derp, if 'ooc_cmd_' is to be interpreted as such, 
-	like the rest of these commands.
-It should check if you're an admin, then if you are, post an OOC message.
-"""
-def ooc_cmd_derp(client, arg):
-	if not client.is_admin:
-		raise ClientError('You aren\'t an admin.')
-	client.send_ooc('I am Steel and I speak for the admin.py file.')
 
-def ooc_cmd_permit(client, arg: str) -> None: 
+def ooc_cmd_permit(client, arg):
 	if not client.is_mod:
 		raise ClientError('You are not authorized.')
 	else:
@@ -218,11 +178,10 @@ def ooc_cmd_permit(client, arg: str) -> None:
 		for id in arg:
 			try:
 				id = int(id)
-				c = client.server.client_manager.get_targets\
-					(client, TargetType.ID, id, False)[0]
+				c = client.server.client_manager.get_targets(client, TargetType.ID, id, False)[0]
 			except:
 				client.send_ooc(f'{id} does not look like a valid ID.')
-			if len(client.hdid) != 32:
+			if len(c.hdid) != 32:
 				raise ArgumentError('That does not seem to be a webAO client.')
 			permfile = 'config/webaoperms.yaml'
 			new = not os.path.exists(permfile)
@@ -245,7 +204,7 @@ def ooc_cmd_permit(client, arg: str) -> None:
 				yaml.dump(perms, dump)
 			client.server.webperms = perms
 
-def ooc_cmd_addmod(client, arg: str) -> None: 
+def ooc_cmd_addmod(client, arg):
 	"""
 	Registers target as a moderator, allowing them to login.
 	"""
@@ -255,12 +214,10 @@ def ooc_cmd_addmod(client, arg: str) -> None:
 	if len(arg) == 0:
 		raise ArgumentError('This command requires arguments.')
 	if len(args) < 2:
-		raise ArgumentError\
-			('This command requires ID and a set name as arguments.')
+		raise ArgumentError('This command requires ID and a set name as arguments.')
 	try:
 		id = int(args[0])
-		c = client.server.client_manager.get_targets\
-			(client, TargetType.ID, id, False)[0]
+		c = client.server.client_manager.get_targets(client, TargetType.ID, id, False)[0]
 		modfile = 'config/moderation.yaml'
 	except:
 		client.send_ooc(f'{id} does not look like a valid ID.')
@@ -281,7 +238,7 @@ def ooc_cmd_addmod(client, arg: str) -> None:
 		yaml.dump(mods, dump)
 	
 			
-def ooc_cmd_removemod(client, arg: str) -> None:
+def ooc_cmd_removemod(client, arg):
 	if not client.is_admin:
 		raise ClientError('You are not authorized.')
 	if len(arg) == 0:
@@ -324,26 +281,13 @@ def ooc_cmd_help(client, arg):
 	"""
 	if len(arg) != 0:
 		raise ArgumentError('This command has no arguments.')
-	help_url = 'https://github.com/HolyMan-17/tsuserverOLE#readme'
+	help_url = 'https://github.com/RealKaiser/tsuserverCC/blob/master/README.md'
 	help_msg = f'The commands available on this server can be found here: {help_url}'
 	client.send_ooc(help_msg)
 
-def ooc_cmd_about(client, arg):
-	"""
-	Shows information about the latest version
-	of the server's content and its maintainers.
-	Usage: /about
-	"""
-
-	release_url = "https://drive.google.com/file/d/1Bqa1Q4FuZvS0K6CB7Zhm6rJjzpO16FbX/view?usp=sharing"
-	
-	client.send_ooc(
-		f"OLE's current release version is OLEXMAS1.3\nYou can download it from here: {release_url}\
-		\nMaintained by: Official Law Empire Development Team" 
-		)
 
 @mod_only()
-def ooc_cmd_kick(client, arg: str) -> None:
+def ooc_cmd_kick(client, arg):
 	"""
 	Kick a player.
 	Usage: /kick <ipid|*|**> [reason]
@@ -391,7 +335,7 @@ def ooc_cmd_kick(client, arg: str) -> None:
 			f'No targets with the IPID {ipid} were found.')
 
 
-def ooc_cmd_ban(client, arg: str) -> None:
+def ooc_cmd_ban(client, arg):
 	"""
 	Ban a user. If a ban ID is specified instead of a reason,
 	then the IPID is added to an existing ban record.
@@ -402,7 +346,7 @@ def ooc_cmd_ban(client, arg: str) -> None:
 	kickban(client, arg, False)
 
 
-def ooc_cmd_banhdid(client, arg: str) -> None:
+def ooc_cmd_banhdid(client, arg):
 	"""
 	Ban both a user's HDID and IPID.
 	DANGER: Banning webAO users by HDID has unintended consequences.
@@ -481,7 +425,7 @@ def kickban(client, arg, ban_hdid):
 
 
 @mod_only()
-def ooc_cmd_unban(client, arg: str) -> None:
+def ooc_cmd_unban(client, arg):
 	"""
 	Unban a list of users.
 	Usage: /unban <ban_id...>
@@ -501,7 +445,7 @@ def ooc_cmd_unban(client, arg: str) -> None:
 		database.log_misc('unban', client, data={'id': ban_id})
 
 @mod_only()
-def ooc_cmd_warn(client, arg: str) -> None:
+def ooc_cmd_warn(client, arg):
 	"""
 	Warn the given user.
 	Usage: /warn <ipid> [reason]
@@ -543,7 +487,7 @@ def ooc_cmd_warn(client, arg: str) -> None:
 			f'No targets with the IPID {ipid} were found.')
 
 @mod_only()
-def ooc_cmd_unwarn(client, arg: str) -> None:
+def ooc_cmd_unwarn(client, arg):
 	"""
 	Remove a list of warn entries from the database.
 	Usage: /unwarn <warn_id ...>
@@ -627,61 +571,32 @@ def ooc_cmd_unmute(client, arg):
 				f'{raw_ipid} does not look like a valid IPID.')
 
 
-def ooc_cmd_login(client, arg: str) -> None:
+def ooc_cmd_login(client, arg):
 	"""
-	Logs the user in as a moderator.
-
-    Calls auth_mod to check whether or not the user's login attempt is 
-    valid. 
-
-	Should return a message in-client confirming login and 
-	log profile in the server's internal log. 
-
-    Will throw an error and log it if not and send an OOC message in-client
-    stating that the user's login attempt was invalid. 
-
-    Usage: /login <password> (The user might not require using a mod pass
-    if their profile already exists in the moderation.yaml)
-
-    Parameters:
-    client = An instance of the class Client. 
-    arg = The mod pass used in order to log in.
-
-    Precondition: arg is a valid mod pass. 
-    Otherwise, throws login_invalid error. 
-
-
+	Login as a moderator.
+	Usage: /login <password>
+	
+	if len(arg) == 0:
+		raise ArgumentError('You must specify the password.')
+	login_name = None
+	try:
+		login_name = client.auth_mod(arg)
+	except ClientError:
+		database.log_misc('login.invalid', client)
+		raise
+	if client.area.evidence_mod == 'HiddenCM':
+		client.area.broadcast_evidence_list()
+	client.send_ooc('Logged in as a moderator.')
+	database.log_misc('login', client, data={'profile': login_name})
 	"""
 	login_name = None
 	try:
 		login_name = client.auth_mod(arg)
 	except ClientError:
-		client.send_command('AUTH', '0')
 		database.log_misc('login.invalid', client)
 		raise
-    
 	client.send_ooc('Logged in as a moderator.')
-	client.send_command('AUTH', '1')
 	database.log_misc('login', client, data={'profile': login_name})
-
-    # I don't know what this is supposed to be and why it was
-	# in the docstring, but I'll leave it here in case it bears
-	# any unexpected relevance.
-	# - HolyMan
-
-	# if len(arg) == 0:
-	#	raise ArgumentError('You must specify the password.')
-	# login_name = None
-	# try:
-	#	login_name = client.auth_mod(arg)
-	# except ClientError:
-	#	database.log_misc('login.invalid', client)
-	#	raise
-	# if client.area.evidence_mod == 'HiddenCM':
-	#	client.area.broadcast_evidence_list()
-	# client.send_ooc('Logged in as a moderator.')
-	# database.log_misc('login', client, data={'profile': login_name})
-
 
 @mod_only()
 def ooc_cmd_refresh(client, arg):
@@ -751,8 +666,7 @@ def ooc_cmd_unmod(client, arg):
 	client.mod_profile_name = None
 	if client.area.evidence_mod == 'HiddenCM':
 		client.area.broadcast_evidence_list()
-	client.send_ooc('You\'re not a mod anymore.')
-	client.send_command('AUTH', '-1')
+	client.send_ooc('you\'re not a mod now')
 
 
 @mod_only()
@@ -776,7 +690,7 @@ def ooc_cmd_oocmute(client, arg):
 
 
 @mod_only()
-def ooc_cmd_oocunmute(client, arg: str) -> None:
+def ooc_cmd_oocunmute(client, arg):
 	"""
 	Allow an OOC-muted user to talk out-of-character.
 	Usage: /ooc_unmute <ooc-name>
@@ -795,25 +709,20 @@ def ooc_cmd_oocunmute(client, arg: str) -> None:
 		len(targets)))
 
 @mod_only()
-def ooc_cmd_bans(client, _arg: str) -> None:
+def ooc_cmd_bans(client, _arg):
 	"""
 	Get the 5 most recent bans.
 	Usage: /bans
 	"""
 	msg = 'Last 5 bans:\n'
-	bandate = None
 	for ban in database.recent_bans():
-		if ban.ban_date == None or ban.ban_date == "None":
-			bandate = "N/A"
-		else:
-			bandate = ban.ban_date
-		time = bandate
+		time = arrow.get(ban.ban_date).humanize()
 		msg += f'{time}: {ban.banned_by_name} ({ban.banned_by}) issued ban ' \
 			   f'{ban.ban_id} (\'{ban.reason}\')\n'
 	client.send_ooc(msg)
 
 @mod_only()
-def ooc_cmd_baninfo(client, arg: str) -> None:
+def ooc_cmd_baninfo(client, arg):
 	"""
 	Get information about a ban.
 	Usage: /baninfo <id> ['ban_id'|'ipid'|'hdid']
@@ -849,7 +758,7 @@ def ooc_cmd_baninfo(client, arg: str) -> None:
 			msg += 'Unban date: N/A'
 		client.send_ooc(msg)
 		
-def ooc_cmd_warns(client, arg: str) -> None:
+def ooc_cmd_warns(client, arg):
 	"""
 	Get the warns for a given IPID. Returns the last 5 by default.
 	Use with no arguments to view warns for your own IPID (must not be logged in)
@@ -908,7 +817,7 @@ def ooc_cmd_warns(client, arg: str) -> None:
 		
 	
 @mod_only()
-def ooc_cmd_warnsby(client, arg: str) -> None:
+def ooc_cmd_warnsby(client, arg):
 	"""
 	Get a list of warns issued by the given IPID. Returns the last 5 by default.
 	In the interest of streamlining, "me" resolves to the IPID of the user.
@@ -958,7 +867,7 @@ def ooc_cmd_warnsby(client, arg: str) -> None:
 		client.send_ooc(msg)
 		
 @mod_only()
-def ooc_cmd_warninfo(client, arg: str) -> None:
+def ooc_cmd_warninfo(client, arg):
 	"""
 	Get information about a warn.
 	Usage: /warninfo <warn_id>

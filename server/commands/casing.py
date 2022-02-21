@@ -6,10 +6,6 @@ from server.exceptions import ClientError, ServerError, ArgumentError
 
 from . import mod_only
 
-# List with all OOC commands in this file.
-# If you wish to add a new OOC command, insert it here.
-# Otherwise, it won't work.
-
 __all__ = [
 	'ooc_cmd_doc',
 	'ooc_cmd_cleardoc',
@@ -24,8 +20,7 @@ __all__ = [
 	'ooc_cmd_judgelog',
 	'ooc_cmd_woosh',
 	'ooc_cmd_testimony',
-	'ooc_cmd_cleartestimony',
-	'ooc_cmd_afk' 
+	'ooc_cmd_cleartestimony'
 ]
 
 def ooc_cmd_testimony(client, arg):
@@ -104,9 +99,6 @@ def ooc_cmd_cleardoc(client, arg):
 		database.log_room('doc.clear', client, client.area)
 	else:
 		client.send_ooc('You must be CM to change the doc.')
-
-def ooc_cmd_afk(client, arg):
-	client.server.client_manager.toggle_afk(client)
 
 @mod_only()
 def ooc_cmd_evidence_mod(client, arg):
@@ -316,8 +308,6 @@ def ooc_cmd_setcase(client, arg):
 		client.casing_jur = args[5] == "1"
 		client.casing_steno = args[6] == "1"
 
-def ooc_cmd_afk(client, arg):
-	client.server.client_manager.toggle_afk(client)
 
 # LEGACY
 def ooc_cmd_anncase(client, arg):
@@ -435,4 +425,5 @@ def ooc_cmd_judgelog(client, arg):
 			'There have been no judge actions in this area since start of session.'
 		)
 
-
+def ooc_cmd_afk(client, arg):
+	client.server.client_manager.toggle_afk(client)

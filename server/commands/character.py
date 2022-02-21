@@ -6,10 +6,6 @@ from server.exceptions import ClientError, ServerError, ArgumentError, AreaError
 
 from . import mod_only
 
-# List with all OOC commands in this file.
-# If you wish to add a new OOC command, insert it here.
-# Otherwise, it won't work.
-
 __all__ = [
 	'ooc_cmd_switch',
 	'ooc_cmd_pos',
@@ -22,8 +18,14 @@ __all__ = [
 	'ooc_cmd_reload',
 	'ooc_cmd_visible',
 	'ooc_cmd_narrator',
-	'ooc_cmd_kickother'
+	'ooc_cmd_kickother',
+	'ooc_cmd_afk'
 ]
+
+def ooc_cmd_afk(client, arg):
+	if len(arg) > 0:
+		raise ArgumentError('This command takes no arguments.')
+	client.toggle_afk()
 
 def ooc_cmd_narrator(client, arg):
 	if len(arg) > 0:

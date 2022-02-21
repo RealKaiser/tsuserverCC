@@ -4,10 +4,6 @@ from server.exceptions import ClientError, ArgumentError
 
 from . import mod_only
 
-# List with all OOC commands in this file.
-# If you wish to add a new OOC command, insert it here.
-# Otherwise, it won't work.
-
 __all__ = [
 	'ooc_cmd_disemvowel',
 	'ooc_cmd_undisemvowel',
@@ -19,22 +15,8 @@ __all__ = [
 	'ooc_cmd_knock',
 	'ooc_cmd_tutturu',
 	'ooc_cmd_gimp',
-	'ooc_cmd_unshake',
-	'ooc_cmd_dailyjoke',
-	'ooc_cmd_zelkie'
+	'ooc_cmd_unshake'
 ]
-
-def ooc_cmd_dailyjoke(client, arg):
-	"""
-	i accidentally closed the code on my dick when I was trying to code it
-
-	Isplays-day the oke-jay of the ay-day
-
-	Usage: /dailyjoke
-	"""
-	if len(arg) > 0:
-		raise ArgumentError('This command takes no arguments!')
-	client.send_ooc('penis')
 
 def ooc_cmd_tutturu(client, arg):
 	if not client.is_mod:
@@ -62,21 +44,6 @@ def ooc_cmd_digitalroot(client, arg):
 		raise ArgumentError('That does not seem to be a valid number.')
 	num = (num - 1) % 9 + 1
 	client.send_ooc(f'The digital root of {arg} is {num}.')
-
-def ooc_cmd_zelkie(client, arg):
-	"""
-	Funny Humorous your mother joke command that gives you 
-	funny humerous your mother joke.
-
-	Parameters:
-
-	client = An instance of the class Client
-	arg = The name of the OOC Command: zelkie
-
-	Preconditions: Shouldn't need any???
-
-	"""
-	client.send_ooc("Funni humorous your mother joke why would u even know this command exists go away or ill throw tacos at u ")
 
 @mod_only()
 def ooc_cmd_disemvowel(client, arg):
