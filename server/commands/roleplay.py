@@ -2,6 +2,10 @@ import random
 import re
 import time
 import threading
+import asyncio
+import arrow
+import datetime
+import pytimeparse
 
 from server import database
 from server.party import Party, Vote
@@ -34,9 +38,6 @@ __all__ = [
 	'ooc_cmd_hostage',
 	'ooc_cmd_time',
 	'ooc_cmd_timer',
-	'ooc_cmd_setalarm',
-	'ooc_cmd_setalarmsecs',
-	'ooc_cmd_setalarmhours',
 	'ooc_cmd_party',
 	'ooc_cmd_parties',
 	'ooc_cmd_partyinvite',
@@ -547,76 +548,149 @@ def ooc_cmd_time(client, arg):
 	client.send_ooc(msg)
 
 def ooc_cmd_timer(client, arg):
-	if len(arg) == 0:
-		if client.timer.started == False:
-			if client.timer.alarmtime is not None:
-				ttime = client.timer.alarmtimeset - time.perf_counter()
-				ttime = ttime / 60
-				msg = f'Alarm in {ttime:0.1f} minutes.'
-				client.send_ooc(msg)
+	"""
+	Manage a countdown timer in the current area. Note that timer of ID 0 is global.
+	All other timer IDs are local to the area (valid IDs are 1 - 4).
+	Usage:
+	/timer <id> [+/-][time]
+		Set the timer's time, optionally adding or subtracting time. If the timer had
+		not been previously set up, it will be shown paused.
+	/timer <id> start
+	/timer <id> <pause|stop>
+	/timer <id> hide
+	"""
+
+	arg = arg.split()
+	if len(arg) < 1:
+		msg = 'Currently active timers:'
+		# Global timer
+		timer = client.server.area_manager.timer
+		if timer.set:
+			if timer.started:
+				msg += f'\nTimer 0 is at {timer.target - arrow.get()}'
 			else:
-				raise ArgumentError('Timer has not started.')
-		else:
-			ttime = client.timer.check()
-			msg = 'Timer:\n'
-			msg += f'{ttime:0.1f} seconds.\n'
-			ttime = ttime / 60
-			msg += f'{ttime:0.1f} minutes.\n'
-			ttime = ttime / 60
-			msg += f'{ttime:0.2f} hours.'
-			ttime = client.timer.alarmtime / 60
-			msg += '\nAlarm:\n{ttime:0.1f} minutes remaining.'
-			client.send_ooc(msg)
+				msg += f'\nTimer 0 is at {timer.static}'
+		# Area timers
+		for timer_id, timer in enumerate(client.area.timers):
+			if timer.set:
+				if timer.started:
+					msg += f'\nTimer {timer_id+1} is at {timer.target - arrow.get()}'
+				else:
+					msg += f'\nTimer {timer_id+1} is at {timer.static}'
+		client.send_ooc(msg)
+		return
+
+	# TI packet specification:
+	# TI#TimerID#Type#Value#%
+	# TimerID = from 0 to 4 (5 possible timers total)
+	# Type 0 = start/resume/sync timer at time
+	# Type 1 = pause timer at time
+	# Type 2 = show timer
+	# Type 3 = hide timer
+	# Value = Time to set on the timer
+
+	try:
+		timer_id = int(arg[0])
+	except:
+		raise ArgumentError('Invalid ID. Usage: /timer <id>')
+
+	if timer_id < 0 or timer_id > 4:
+		raise ArgumentError('Invalid ID. Usage: /timer <id>')
+	if timer_id == 0:
+		timer = client.server.area_manager.timer
 	else:
-		if arg == 'start':
-			client.timer.start()
-			client.send_ooc('Timer started.')
-		elif arg == 'continue':
-			client.timer.nostop()
-			client.send_ooc('Timer continued.')
-		elif arg == 'stop':
-			ttime = client.timer.stop()
-			msg = 'Timer stopped at:\n'
-			msg += f'{ttime:0.1f} seconds.\n'
-			ttime = ttime / 60
-			msg += f'{ttime:0.1f} minutes.\n'
-			ttime = ttime / 60
-			msg += f'{ttime:0.2f} hours.'
-			client.send_ooc(msg)
+		timer = client.area.timers[timer_id-1]
+
+	if len(arg) < 2:
+		if timer.set:
+			if timer.started:
+				client.send_ooc(f'Timer {timer_id} is at {timer.target - arrow.get()}')
+			else:
+				client.send_ooc(f'Timer {timer_id} is at {timer.static}')
 		else:
-			raise ArgumentError('Invalid argument, please use <start>, <stop>, continue or no argument.')
+			client.send_ooc(f'Timer {timer_id} is unset.')
+		return
 
+	if client not in client.area.owners and not client.is_mod:
+		raise ArgumentError('Only CMs or mods can modify timers. Usage: /timer <id>')
+	if timer_id == 0 and not client.is_mod:
+		raise ArgumentError('Only mods can set the global timer. Usage: /timer <id>')
 
-def ooc_cmd_setalarm(client, arg):
-	if len(arg) == 0:
-		raise ArgumentError('Not enough arguments. Use /settimer <minutes>')
-	time = int(arg)
-	send = time
-	time = time * 60
-	if time > 43200:
-		raise ArgumentError('Can\'t set a time longer than 12 hours.')
-	client.timer.setalarm(time, 'minutes', client)
-	client.send_ooc(f'Alarm set for {arg} minutes from now.')
+	duration = pytimeparse.parse(''.join(arg[1:]))
+	if duration is not None:
+		if timer.set:
+			if timer.started:
+				if not (arg[1] == '+' or duration < 0):
+					timer.target = arrow.get()
+				timer.target = timer.target.shift(seconds=duration)
+				timer.static = timer.target - arrow.get()
+			else:
+				if not (arg[1] == '+' or duration < 0):
+					timer.static = datetime.timedelta(0)
+				timer.static += datetime.timedelta(seconds=duration)
+		else:
+			timer.static = datetime.timedelta(seconds=abs(duration))
+			timer.set = True
+			if timer_id == 0:
+				client.server.send_all_cmd_pred('TI', timer_id, 2)
+			else:
+				client.area.send_command('TI', timer_id, 2)
 
-def ooc_cmd_setalarmsecs(client, arg):
-	if len(arg) == 0:
-		raise ArgumentError('Not enough arguments. Use /settimer <minutes>')
-	time = int(arg)
-	if time > 43200:
-		raise ArgumentError('Can\'t set a time longer than 12 hours.')
-	client.timer.setalarm(time, 'seconds', client)
-	client.send_ooc(f'Alarm set for {arg} seconds from now.')
+	if not timer.set:
+		raise ArgumentError(f'Timer {timer_id} is not set in this area.')
+	elif arg[1] == 'start':
+		timer.target = timer.static + arrow.get()
+		timer.started = True
+		client.send_ooc(f'Starting timer {timer_id}.')
+		database.log_room('timer.start', client, client.area, message=str(timer_id))
+	elif arg[1] in ('pause', 'stop'):
+		timer.static = timer.target - arrow.get()
+		timer.started = False
+		client.send_ooc(f'Stopping timer {timer_id}.')
+		database.log_room('timer.stop', client, client.area, message=str(timer_id))
+	elif arg[1] in ('unset', 'hide'):
+		timer.set = False
+		timer.started = False
+		timer.static = None
+		timer.target = None
+		client.send_ooc(f'Timer {timer_id} unset and hidden.')
+		database.log_room('timer.hide', client, client.area, message=str(timer_id))
+		if timer_id == 0:
+			client.server.send_all_cmd_pred('TI', timer_id, 3)
+		else:
+			client.area.send_command('TI', timer_id, 3)
 
-def ooc_cmd_setalarmhours(client, arg):
-	if len(arg) == 0:
-		raise ArgumentError('Not enough arguments. Use /settimer <minutes>')
-	time = int(arg)
-	send = time
-	time = time * 3600
-	if time > 43200:
-		raise ArgumentError('Can\'t set a time longer than 12 hours.')
-	client.timer.setalarm(time, 'hours', client)
-	client.send_ooc(f'Alarm set for {arg} hours from now.')
+	# Send static time if applicable
+	if timer.set:
+		s = int(not timer.started)
+		static_time = int(timer.static.total_seconds()) * 1000
+
+		if timer_id == 0:
+			client.server.send_all_cmd_pred('TI', timer_id, s, static_time)
+		else:
+			client.area.send_command('TI', timer_id, s, static_time)
+
+		client.send_ooc(f'Timer {timer_id} is at {timer.static}')
+
+		target = client.area
+
+		def timer_expired():
+			if timer.schedule:
+				timer.schedule.cancel()
+			# Area was destroyed at some point
+			if target is None or timer is None:
+				return
+			if timer_id != 0:
+				target.send_ooc(f'Timer {timer_id} has expired.')
+			timer.static = datetime.timedelta(0)
+			timer.started = False
+			database.log_room('timer.expired', None, target, message=str(timer_id))
+
+		if timer.schedule:
+			timer.schedule.cancel()
+		if timer.started:
+			timer.schedule = asyncio.get_event_loop().call_later(
+				int(timer.static.total_seconds()), timer_expired)
 
 def ooc_cmd_follow(client, arg):
 	if len(arg) == 0:

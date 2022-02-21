@@ -75,10 +75,10 @@ class ClientManager:
 			self.ipid = ipid
 			self.notepad = ''
 			self.autopass = False
-			self.timer = Timer()
 			self.old_char_name = ''
 			self.ooc_delay = None
 			self.afk = False
+			self.listen = True
 			
 			# Mod/Admin stuff
 			self.is_admin = False
@@ -105,6 +105,10 @@ class ClientManager:
 			self.partyrole = ''
 			self.votepower = 0
 			self.voted = False
+			
+			# Area movement time stuff
+			self.moveto = None
+			self.movetimer = 0
 			
 			# Following stuff
 			self.followers = []
@@ -382,6 +386,22 @@ class ClientManager:
 						c.send_ooc(f'{self.char_name} left the area and is no longer following you.')
 						self.send_ooc(f'You left the area and are no longer following {c.char_name}.')
 						self.following.remove(c)
+			if area.timetomove > 0:
+				if not self.is_mod and not self.is_following and self not in area.owners:
+					if area.sub and not self.area.is_hub and self not in area.hub.owners:
+						if self.moveto != area:
+							self.moveto = area
+							self.movetimer = time.perf_counter() + area.timetomove
+							raise ClientError(f'Destination confirmed, wait for {area.timetomove} seconds to move to that area.')
+						else:
+							now = time.perf_counter()
+							if now < self.movetimer:
+								left = int(self.movetimer - now)
+								raise ClientError(f'You still need to wait {left} seconds to move there.')
+
+			self.moveto = None
+			self.movetimer = 0
+			
 			if not self.is_mod and self.area.is_restricted == True:
 				found = 'false'
 				for connection in self.area.connections:
@@ -572,6 +592,8 @@ class ClientManager:
 						self.area.broadcast_ooc(f'{self.char_name} has entered from {old_area.name}.')
 			for c in self.followers:
 				c.change_area(area)
+			if self.area.desc != '':
+				self.send_ooc(self.area.desc)
 			self.area.send_command('CharsCheck', *self.get_available_char_list())
 			self.send_command('HP', 1, self.area.hp_def)
 			self.send_command('HP', 2, self.area.hp_pro)

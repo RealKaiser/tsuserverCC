@@ -53,15 +53,80 @@ __all__ = [
 	'ooc_cmd_savehub',
 	'ooc_cmd_loadhub',
 	'ooc_cmd_hubstatus',
-	'ooc_cmd_gethubs'
+	'ooc_cmd_gethubs',
+	'ooc_cmd_areadesc',
+	'ooc_cmd_clearareadesc',
+	'ooc_cmd_movetime'
 ]
 
-def ooc_cmd_totalmulticlients(client, arg: str) -> None:
-	"""
-	Show information about all areas.
-	Usage: /getareas
-	"""
-	client.send_area_info(client.area, False, False, True)
+def ooc_cmd_movetime(client, arg):
+	if len(arg) == 0:
+		if client.area.timetomove == 0:
+			return client.send_ooc('This area has no time requirement to move to it, add a time in seconds as argument to set one.')
+		else:
+			return client.send_ooc(f'This area requires {client.area.timetomove} seconds to move to.')
+	if client not in client.area.owners:
+		if client.area.sub and client not in client.area.hub.owners:
+			raise ClientError("You aren't CM or this area or its hub.")
+	if client.area.sub or client.area.is_hub:
+		if client.area.hub.hubtype != 'default':
+			raise AreaError('Cannot change move time in this hub.')
+	try:
+		amount = int(arg)
+	except ValueError:
+		raise ArgumentError('Not a valid number of seconds.')
+	if amount < 0:
+		raise ArgumentError('Cannot use a negative number.')
+	if amount > 60:
+		raise ArgumentError('Cannot set requirement higher than a minute.')
+	if amount == 0:
+		if client.area.is_hub:
+			hub = client.area
+			for sub in hub.subareas:
+				sub.timetomove = 0
+			client.send_ooc('Movement time requirement for hub cleared')
+		elif client.area.sub:
+			client.area.timetomove = 0
+			client.send_ooc('Movement time requirement for this area cleared')
+	else:
+		if client.area.is_hub:
+			hub = client.area
+			for sub in hub.subareas:
+				sub.timetomove = amount
+			client.send_ooc(f'Movement time requirement for hub set to {arg} seconds.')
+		elif client.area.sub:
+			client.area.timetomove = amount
+			client.send_ooc(f'Movement time requirement for this area set to {arg} seconds.')
+	
+
+def ooc_cmd_areadesc(client, arg):
+	if len(arg) == 0:
+		if client.area.desc == '':
+			client.send_ooc('This area has no set description, add an argument to set its description.')
+		else:
+			client.send_ooc(client.area.desc)
+	if client not in client.area.owners:
+		if client.area.sub and client not in client.area.hub.owners:
+			raise ClientError("You aren't CM or this area or its hub.")
+	if len(arg) > 255:
+		raise ArgumentError('Description is too long, try something shorter.')
+	setdesc = '=== Area Description ===\r\n'
+	setdesc += arg
+	client.area.desc = setdesc
+	client.send_ooc('Area description set, it will be shown to each new client to the area.')
+		
+def ooc_cmd_clearareadesc(client, arg):
+	if len(arg) != 0:
+		raise ArgumentError('This command has no arguments.')
+	if client not in client.area.owners:
+		if client.area.sub and client in client.area.hub.owners:
+			client.area.desc = ''
+			return client.send_ooc('Area description cleared')
+		else:
+			raise ClientError("You aren't CM or this area or its hub.")
+	else:
+		client.area.desc = ''
+		return client.send_ooc('Area description cleared')
 
 def ooc_cmd_poslock(client, arg: str) -> None:
 	if len(arg) == 0:

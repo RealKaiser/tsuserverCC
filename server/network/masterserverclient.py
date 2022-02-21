@@ -16,8 +16,8 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import asyncio
-import aiohttp
 import stun
+import aiohttp
 import time
 from threading import Thread
 

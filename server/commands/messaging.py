@@ -28,9 +28,18 @@ __all__ = [
 	'ooc_cmd_acceptcall',
 	'ooc_cmd_endcall',
 	'ooc_cmd_holdcall',
-	'ooc_cmd_discord'
+	'ooc_cmd_listenall'
 ]
 
+def ooc_cmd_listenall(client, arg):
+	if len(arg) > 0:
+		raise ArgumentError('This doesn\'t take arguments.')
+	if client.listen:
+		client.listen = False
+		client.send_ooc('You will no longer receive messages from RCM\'d areas.')
+	else:
+		client.listen = True
+		client.send_ooc('You will now receive messages from RCM\'d areas.')
 
 def ooc_cmd_call(client, arg):
 	if len(arg) == 0:
@@ -170,12 +179,6 @@ def ooc_cmd_g(client, arg):
 		raise ArgumentError("You can't send an empty message.")
 	client.server.broadcast_global(client, arg)
 	database.log_room('chat.global', client, client.area, message=arg)
-
-def ooc_cmd_discord(client, arg):
-	if len(arg) > 0:
-		raise ClientError('This command does not take any arguments!')
-	
-	client.send_ooc('Join our Discord here!:\n https://discord.gg/HxvKZtJsYz')
 
 def ooc_cmd_p(client, arg):
 	"""

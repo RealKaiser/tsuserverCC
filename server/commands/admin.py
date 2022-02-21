@@ -325,9 +325,7 @@ def ooc_cmd_about(client, arg):
 
 	release_url = "https://docs.google.com/document/d/1FlV3UsJJNA-tMCUpvKgWKp49wI9KrUzVUsT_XmX7ANo/edit?usp=sharing"
 	
-	client.send_ooc(
-		f"You can download CC's files from here: {release_url}
-		)
+	client.send_ooc(f"You can download CC's files from here: {release_url}")
 
 @mod_only()
 def ooc_cmd_kick(client, arg: str) -> None:
