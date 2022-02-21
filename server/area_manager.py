@@ -288,7 +288,7 @@ class AreaManager:
 			"""
 			Broadcast an AO-compatible command to all clients in the area.
 			"""
-			for c in self.clients and c.listen:
+			for c in self.clients:
 				c.send_command(cmd, *args)
 
 		def send_owner_command(self, cmd, *args):
@@ -297,7 +297,7 @@ class AreaManager:
 			that are not currently in the area.
 			"""
 			for c in self.owners:
-				if c not in self.clients:
+				if c not in self.clients and c.listen:
 					c.send_command(cmd, *args)
 			for spy in self.spies:
 				if spy not in self.clients and spy not in self.owners:
