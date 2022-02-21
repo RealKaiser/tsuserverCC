@@ -153,16 +153,6 @@ class ClientManager:
 				for x in range(self.server.config['wtce_floodguard']
 							   ['times_per_interval'])
 			]
-			
-
-		def ann_alarm(self, alarmtype, alarmtime):
-			if alarmtype == 'seconds':
-				self.send_ooc(f'Alarm: {alarmtime:0.0f} seconds have passed.')
-			if alarmtype == 'hours':
-				self.send_ooc(f'Alarm: {alarmtime:0.0f} hours have passed.')
-			if alarmtype == 'minutes':
-				self.send_ooc(f'Alarm: {alarmtime:0.0f} minutes have passed.')
-			self.timer.alarmset = False
 
 		def send_raw_message(self, msg):
 			"""
