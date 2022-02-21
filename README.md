@@ -2,7 +2,7 @@
 
 A Python-based server for Attorney Online, forked from [AttorneyOnline/tsuserver3](https://github.com/AttorneyOnline/tsuserver3)
 
-Also includes many code improvements from TsuOLE (https://github.com/HolyMan-17/tsuserverOLE)
+Also includes many code improvements from [TsuOLE](https://github.com/HolyMan-17/tsuserverOLE)
 
 Requires Python 3.7+ and PyYAML.
 
@@ -16,11 +16,9 @@ Requires Python 3.7+ and PyYAML.
   - Password locks,
   - Ability to connect areas via 'exits,'
   - and playercount hiding.
-* Serverside notepads,
 * Additional moderation features,
 * Add music on the fly, and have it appear on the server's music list, (per area/hub basis)
 * A category-based music shuffle system,
-* Fully-functional(?) party system with Main Game features inbuilt.
 
 ## How to use
 

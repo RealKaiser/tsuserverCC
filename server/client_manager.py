@@ -72,7 +72,6 @@ class ClientManager:
 			self.pm_mute = False
 			self.mod_call_time = 0
 			self.ipid = ipid
-			self.notepad = ''
 			self.autopass = False
 			self.old_char_name = ''
 			self.ooc_delay = None
@@ -97,13 +96,6 @@ class ClientManager:
 			self.call = None
 			self.calling = []
 			self.incall = False
-			
-			# Party stuff
-			self.in_party = False
-			self.party = None
-			self.partyrole = ''
-			self.votepower = 0
-			self.voted = False
 			
 			# Area movement time stuff
 			self.moveto = None

@@ -15,14 +15,12 @@ __all__ = [
 	'ooc_cmd_gm',
 	'ooc_cmd_m',
 	'ooc_cmd_lm',
-	'ooc_cmd_p',
 	'ooc_cmd_h',
 	'ooc_cmd_announce',
 	'ooc_cmd_toggleglobal',
 	'ooc_cmd_need',
 	'ooc_cmd_toggleadverts',
 	'ooc_cmd_pm',
-	'ooc_cmd_ppm',
 	'ooc_cmd_mutepm',
 	'ooc_cmd_call',
 	'ooc_cmd_acceptcall',
@@ -180,20 +178,6 @@ def ooc_cmd_g(client, arg):
 	client.server.broadcast_global(client, arg)
 	database.log_room('chat.global', client, client.area, message=arg)
 
-def ooc_cmd_p(client, arg):
-	"""
-	Broadcast a message to all areas.
-	Usage: /g <message>
-	"""
-	if client.muted_global:
-		raise ClientError('Global chat toggled off.')
-	if not client.in_party:
-		raise ClientError('Not in a party.')
-	if len(arg) == 0:
-		raise ArgumentError("You can't send an empty message.")
-	client.server.send_partychat(client, arg)
-	database.log_room('chat.mod', client, client.area, message=arg)
-
 def ooc_cmd_h(client, arg):
 	if len(arg) == 0:
 		raise ArgumentError('You can\'t send an empty message.')
@@ -337,24 +321,6 @@ def ooc_cmd_pm(client, arg):
 		else:
 			c.send_ooc('PM from {} (ID: {}) in {} ({}): {}'.format(client.name, client.id, client.area.name, client.char_name, msg))
 		client.send_ooc('PM sent to {}. Message: {}'.format(args[0], msg))
-
-def ooc_cmd_ppm(client, arg):
-	if not client.in_party:
-		raise ClientError('You aren\'t in a party.')
-	args = arg.split()
-	if len(args) < 2:
-		raise ArgumentError('Not enough arguments. use /pm <target> <message>. Target should be ID, OOC-name or char-name. Use /getarea for getting info like "[ID] char-name".')
-	msg = ' '.join(args[1:])
-	id = int(args[0])
-	for c in client.party.users:
-		if id == c.id:
-			if c.is_mod:
-				c.send_ooc('PM from {} (ID: {}, IPID: {}) in {} ({}): {}'.format(client.name, client.id, client.ipid, client.area.name, client.char_name, msg))
-			else:
-				c.send_ooc('PM from {} (ID: {}) in {} ({}): {}'.format(client.name, client.id, client.area.name, client.char_name, msg))
-			client.send_ooc('PM sent to {}. Message: {}'.format(args[0], msg))
-			return
-	raise ClientError('You must specify a target. Use /pm <id> <message')
 
 def ooc_cmd_mutepm(client, arg):
 	"""
