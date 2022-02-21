@@ -1,21 +1,29 @@
-# tsuserverCC, an Attorney Online server.
-#
-# Copyright (C) 2020 Kaiser <kaiserkaisie@gmail.com>
-#
-# Derivative of tsuserver3, an Attorney Online server. Copyright (C) 2016 argoneus <argoneuscze@gmail.com>
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as
-# published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Affero General Public License for more details.
-#
-# You should have received a copy of the GNU Affero General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+tsuserverCC, an Attorney Online server.
+Copyright (C) 2022 Kaiser <kaiserkaisie@gmail.com>
+
+Derivative of tsuserverOLE, an Attorney Online server.
+Copyright (C) 2021 KillerSteel <killermagnum5@gmail.com
+
+Derivative of tsuserverCC, an Attorney Online server.
+Copyright (C) 2020 Kaiser <kaiserkaisie@gmail.com>
+
+Derivative of tsuserver3, an Attorney Online server. 
+Copyright (C) 2016 argoneus <argoneuscze@gmail.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+ 
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+ 
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
 
 import os
 import logging
@@ -104,9 +112,17 @@ class HubManager:
 		
 	def savehub(self, client, arg):
 		hubname = f'storage/hub/{arg}.yaml'
+		hubpath = 'storage/hub'
 		new = not os.path.exists(hubname)
+		newhub = not os.path.exists(hubpath)
+
+		if newhub:
+			os.mkdir(hubpath)
+		
 		if not new:
 			os.remove(hubname)
+
+		
 		hub = []
 		hub.append({'area': client.area.name, 'background': client.area.background, 'doc': client.area.doc, 'musiclist': client.area.cmusic_listname, 'reachable_areas': client.area.connections, 'hub': 'true', 'desc': client.area.desc})
 		for area in client.area.subareas:
@@ -115,7 +131,7 @@ class HubManager:
 				for connection in area.connections:
 					connections += f'{connection.name}, '
 				connections = connections[:-2]
-			hub.append({'area': area.name, 'background': area.background, 'doc': area.doc, 'musiclist': area.cmusic_listname, 'reachable_areas': connections, 'desc': area.desc})
+			hub.append({'area': area.name, 'background': area.background, 'doc': area.doc, 'musiclist': area.cmusic_listname, 'reachable_areas': connections, 'desc': client.area.desc})
 		with open(hubname, 'w', encoding='utf-8') as hubfile:
 			yaml.dump(hub, hubfile)
 		client.send_ooc(f'Hub {arg} saved!')

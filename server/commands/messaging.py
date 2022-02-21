@@ -4,6 +4,10 @@ from server.exceptions import ClientError, ArgumentError, AreaError
 
 from . import mod_only
 
+# List with all OOC commands in this file.
+# If you wish to add a new OOC command, insert it here.
+# Otherwise, it won't work.
+
 __all__ = [
 	'ooc_cmd_a',
 	'ooc_cmd_s',
@@ -39,7 +43,7 @@ def ooc_cmd_listenall(client, arg):
 
 def ooc_cmd_call(client, arg):
 	if len(arg) == 0:
-		if len(client.calling) > 0 and self.incall:
+		if len(client.calling) > 0 and client.incall:
 			msg = 'You are calling with:'
 			for c in client.calling:
 				msg += f'\n[{c.id}] {c.name}'

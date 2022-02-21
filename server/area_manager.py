@@ -1,32 +1,41 @@
-# tsuserverCC, an Attorney Online server.
-#
-# Copyright (C) 2020 Kaiser <kaiserkaisie@gmail.com>
-#
-# Derivative of tsuserver3, an Attorney Online server. Copyright (C) 2016 argoneus <argoneuscze@gmail.com>
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as
-# published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Affero General Public License for more details.
-#
-# You should have received a copy of the GNU Affero General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+tsuserverCC, an Attorney Online server.
+Copyright (C) 2022 Kaiser <kaiserkaisie@gmail.com>
+
+Derivative of tsuserverOLE, an Attorney Online server.
+Copyright (C) 2021 KillerSteel <killermagnum5@gmail.com
+
+Derivative of tsuserverCC, an Attorney Online server.
+Copyright (C) 2020 Kaiser <kaiserkaisie@gmail.com>
+
+Derivative of tsuserver3, an Attorney Online server. 
+Copyright (C) 2016 argoneus <argoneuscze@gmail.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+ 
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+ 
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
 
 
 import asyncio
 import random
 import time
-import arrow
 import yaml
+import arrow
 
 from dataclasses import dataclass
 from enum import Enum
 from typing import List
+
 
 from server import database
 from server.evidence import EvidenceList
@@ -115,7 +124,6 @@ class AreaManager:
 			self.ambiance = False
 			self.webblock = False
 			self.timers = [AreaManager.Timer() for _ in range(4)]
-			
 
 			self.is_locked = self.Locked.FREE
 			self.blankposting_allowed = True
@@ -280,7 +288,7 @@ class AreaManager:
 			"""
 			Broadcast an AO-compatible command to all clients in the area.
 			"""
-			for c in self.clients:
+			for c in self.clients and c.listen:
 				c.send_command(cmd, *args)
 
 		def send_owner_command(self, cmd, *args):
@@ -289,7 +297,7 @@ class AreaManager:
 			that are not currently in the area.
 			"""
 			for c in self.owners:
-				if c not in self.clients and c.listen:
+				if c not in self.clients:
 					c.send_command(cmd, *args)
 			for spy in self.spies:
 				if spy not in self.clients and spy not in self.owners:
@@ -903,7 +911,14 @@ class AreaManager:
 				item['hub_id'] = 0
 			if 'hubtype' not in item:
 				item['hubtype'] = 'default'
-			self.areas.append(self.Area(self.cur_id, self.server, item['area'], item['background'], item['bglock'], item['evidence_mod'], item['locking_allowed'], item['iniswap_allowed'],item['showname_changes_allowed'], item['shouts_allowed'], item['jukebox'], item['abbreviation'], item['noninterrupting_pres'], item['is_hub'], item['hub_id'], item['hubtype']))
+			self.areas.append(
+				self.Area(self.cur_id, self.server, item['area'],
+						  item['background'], item['bglock'],
+						  item['evidence_mod'], item['locking_allowed'],
+						  item['iniswap_allowed'],
+						  item['showname_changes_allowed'],
+						  item['shouts_allowed'], item['jukebox'],
+						  item['abbreviation'], item['noninterrupting_pres'], item['is_hub'], item['hub_id'], item['hubtype']))
 			self.cur_id += 1
 
 	def default_area(self):

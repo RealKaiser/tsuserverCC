@@ -1,21 +1,29 @@
-# tsuserverCC, an Attorney Online server.
-#
-# Copyright (C) 2020 Kaiser <kaiserkaisie@gmail.com>
-#
-# Derivative of tsuserver3, an Attorney Online server. Copyright (C) 2016 argoneus <argoneuscze@gmail.com>
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as
-# published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Affero General Public License for more details.
-#
-# You should have received a copy of the GNU Affero General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+tsuserverCC, an Attorney Online server.
+Copyright (C) 2022 Kaiser <kaiserkaisie@gmail.com>
+
+Derivative of tsuserverOLE, an Attorney Online server.
+Copyright (C) 2021 KillerSteel <killermagnum5@gmail.com
+
+Derivative of tsuserverCC, an Attorney Online server.
+Copyright (C) 2020 Kaiser <kaiserkaisie@gmail.com>
+
+Derivative of tsuserver3, an Attorney Online server. 
+Copyright (C) 2016 argoneus <argoneuscze@gmail.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+ 
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+ 
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
 
 import yaml
 import os
@@ -23,6 +31,8 @@ import re
 import time
 import random
 from heapq import heappop, heappush
+
+from yaml.loader import FullLoader
 
 from server import database
 from server.timer import Timer
@@ -65,15 +75,10 @@ class ClientManager:
 			self.ipid = ipid
 			self.notepad = ''
 			self.autopass = False
-			self.timer = Timer()
 			self.old_char_name = ''
 			self.ooc_delay = None
 			self.afk = False
 			self.listen = True
-			
-			# Area movement time stuff
-			self.moveto = None
-			self.movetimer = 0
 			
 			# Mod/Admin stuff
 			self.is_admin = False
@@ -100,6 +105,10 @@ class ClientManager:
 			self.partyrole = ''
 			self.votepower = 0
 			self.voted = False
+			
+			# Area movement time stuff
+			self.moveto = None
+			self.movetimer = 0
 			
 			# Following stuff
 			self.followers = []
@@ -144,16 +153,6 @@ class ClientManager:
 				for x in range(self.server.config['wtce_floodguard']
 							   ['times_per_interval'])
 			]
-			
-
-		def ann_alarm(self):
-			if alarmtype == 'seconds':
-				self.send_ooc(f'Alarm: {alarmtime:0.0f} seconds have passed.')
-			if alarmtype == 'hours':
-				self.send_ooc(f'Alarm: {alarmtime:0.0f} hours have passed.')
-			if alarmtype == 'minutes':
-				self.send_ooc(f'Alarm: {alarmtime:0.0f} minutes have passed.')
-			self.timer.alarmset = False
 
 		def send_raw_message(self, msg):
 			"""
@@ -182,7 +181,7 @@ class ClientManager:
 			else:
 				self.send_raw_message(f'{command}#%')
 
-		def send_ooc(self, msg):
+		def send_ooc(self, msg: str) -> None:
 			"""
 			Send an out-of-character message to the client.
 			:param msg: message to send
@@ -228,7 +227,7 @@ class ClientManager:
 			limit = self.server.config['playerlimit']
 			self.send_ooc(f'{players}/{limit} players online.')
 
-		def is_valid_name(self, name):
+		def is_valid_name(self, name: str) -> bool:
 			"""
 			Check if the given string is valid as an OOC name.
 			:param name: name to check
@@ -245,7 +244,10 @@ class ClientManager:
 			"""Disconnect the client gracefully."""
 			self.transport.close()
 
-		def change_character(self, char_id, force=False, switch=False):
+		def change_character(
+			self, char_id: str, 
+			force: bool = False, 
+			switch: bool = False) -> None:
 			"""
 			Change the client's character or force the character selection
 			screen to appear for the client.
@@ -347,6 +349,8 @@ class ClientManager:
 			"""
 			if self.area == area:
 				raise ClientError('User already in specified area.')
+			if self.hdid == 32 and area.weblock == True:
+				raise ClientError('Web clients are disallowed from entering that area.')
 			if self.is_hostage == True:
 				for c in self.following:
 					if not c in area.clients:
@@ -362,20 +366,15 @@ class ClientManager:
 					raise ClientError('That area is locked with a password! Use /area <id> <password> to enter.')
 				else:
 					raise ClientError('That area is locked!')
-			if not self.is_mod and self.area.is_restricted == True:
-				found = 'false'
-				for connection in self.area.connections:
-					if connection == area or self in self.area.owners:
-						found = 'true'
-				if found != 'true':
-					raise ClientError('That area is not connected to your current area!')
+			if area.is_locked == area.Locked.SPECTATABLE and not self.is_mod and not self.id in area.invite_list:
+				self.send_ooc('This area is spectatable, but not free - you cannot talk in-character unless invited.')
 			if self.is_following == True:
 				for c in self.following:
 					if not c in area.clients:
 						self.is_following = False
 						c.followers.remove(self)
-						c.send_ooc(f'{self.char_name} tried to leave the area and is no longer following you.')
-						self.send_ooc(f'You tried to leave the area and are no longer following {c.char_name}.')
+						c.send_ooc(f'{self.char_name} left the area and is no longer following you.')
+						self.send_ooc(f'You left the area and are no longer following {c.char_name}.')
 						self.following.remove(c)
 			if area.timetomove > 0:
 				if not self.is_mod and not self.is_following and self not in area.owners:
@@ -392,9 +391,14 @@ class ClientManager:
 
 			self.moveto = None
 			self.movetimer = 0
-
-			if area.is_locked == area.Locked.SPECTATABLE and not self.is_mod and not self.id in area.invite_list:
-				self.send_ooc('This area is spectatable, but not free - you cannot talk in-character unless invited.')
+			
+			if not self.is_mod and self.area.is_restricted == True:
+				found = 'false'
+				for connection in self.area.connections:
+					if connection == area or self in self.area.owners:
+						found = 'true'
+				if found != 'true':
+					raise ClientError('That area is not connected to your current area!')
 
 			if self.area.jukebox:
 				self.area.remove_jukebox_vote(self, True)
@@ -639,7 +643,7 @@ class ClientManager:
 					msg += ' [*]'
 			self.send_ooc(msg)
 
-		def get_area_info(self, a, hubs=False):
+		def get_area_info(self, a, hubs: bool = False) -> str:
 			"""
 			Get information about a specific area.
 			:param area_id: area ID
@@ -658,7 +662,11 @@ class ClientManager:
 				area.Locked.LOCKED: '[LOCKED]'
 			}
 
-			if self not in area.owners and self not in area.clients and not self.is_mod and area.hidden == True:
+			if (
+			self not in area.owners 
+			and self not in area.clients and not 
+			self.is_mod and area.hidden
+			  ):
 				info += f'[{area.abbreviation}]: [Hidden][{area.status}]{lock[area.is_locked]}'
 				info += '\r\n'
 				info += 'This area\'s playercount is hidden.'
@@ -721,14 +729,35 @@ class ClientManager:
 						info += f'[{c.id}][WEB] {c.char_name}'
 					else:
 						info += f'[{c.id}] {c.char_name}'
+
 					if self.is_mod:
 						info += f' ({c.ipid}): {c.name}'
-					if self in area.owners or self in area.clients or self.is_mod or area == self.server.area_manager.default_area():
-						if c.showname != '':
-							info += f' ({c.showname})'
+
+					if c.showname != '':
+						info += f' ({c.showname})'
+					
+					if c.afk:
+						info += ' [AFK]'
+
 			return info
 			
+		def send_server_bgs(self) -> list:
+			"""
+			Sends a list of the backgrounds available in the server.
+			
+			Checks if the backgrounds.yaml exists. If so, parses
+			the yaml and returns a list. 
 
+			This class method does NOT take any arguments and
+			it's intended to be used as a helper for the function
+			send_ooc_bgslist in area.py.
+
+			"""
+			if os.path.exists('config/backgrounds.yaml'):
+				with open('config/backgrounds.yaml') as b:
+					bgs = yaml.load(b, Loader = yaml.FullLoader)
+					return bgs
+						
 		def send_area_info(self, area, all, hubs=False, multiclients=False):
 			"""
 			Send information over OOC about a specific area.
@@ -848,7 +877,7 @@ class ClientManager:
 				char_list[x] = 0
 			return char_list
 
-		def auth_mod(self, password):
+		def auth_mod(self, password: str) -> None:
 			"""
 			Attempt to log in as a moderator.
 			:param password: password string
@@ -912,7 +941,7 @@ class ClientManager:
 				return None
 			return self.server.char_list[self.char_id]
 
-		def change_position(self, pos=''):
+		def change_position(self, pos: str = '') -> None:
 			"""
 			Change the character's current position in the area.
 			:param pos: position in area (Default value = '')
@@ -1028,9 +1057,6 @@ class ClientManager:
 							client.server.hub_manager.removesub(self, sub)
 							if sub.is_locked != sub.Locked.FREE:
 								sub.unlock()
-		#if len(client.area.clients) < 1:
-		#	if client.area.is_locked != client.area.Locked.FREE:
-		#		client.area.unlock()
 		for c in client.following:
 			c.followers.remove(client)
 			c.send_ooc(f'{client.char_name} disconnected and is no longer following you.')

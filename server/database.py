@@ -1,21 +1,29 @@
-# tsuserverCC, an Attorney Online server.
-#
-# Copyright (C) 2020 Kaiser <kaiserkaisie@gmail.com>
-#
-# Derivative of tsuserver3, an Attorney Online server. Copyright (C) 2016 argoneus <argoneuscze@gmail.com>
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as
-# published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Affero General Public License for more details.
-#
-# You should have received a copy of the GNU Affero General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+tsuserverCC, an Attorney Online server.
+Copyright (C) 2022 Kaiser <kaiserkaisie@gmail.com>
+
+Derivative of tsuserverOLE, an Attorney Online server.
+Copyright (C) 2021 KillerSteel <killermagnum5@gmail.com
+
+Derivative of tsuserverCC, an Attorney Online server.
+Copyright (C) 2020 Kaiser <kaiserkaisie@gmail.com>
+
+Derivative of tsuserver3, an Attorney Online server. 
+Copyright (C) 2016 argoneus <argoneuscze@gmail.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+ 
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+ 
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
 
 import os
 
@@ -37,7 +45,7 @@ from textwrap import dedent
 from .exceptions import ServerError
 
 
-DB_FILE = 'storage/db.sqlite3'
+DB_FILE = os.getcwd() + '/storage/db.sqlite3'
 _database_singleton = None
 
 def __getattr__(name):
@@ -54,12 +62,15 @@ class Database:
     """
 
     def __init__(self):
-        new = not os.path.exists('storage/db.sqlite3')
+        new = not os.path.exists(DB_FILE)
+
         self.db = sqlite3.connect(DB_FILE)
         self.db.execute('PRAGMA foreign_keys = ON')
         self.db.row_factory = sqlite3.Row
+
         if new:
             self.migrate_json_to_v1()
+
         self.migrate()
 
     def migrate_json_to_v1(self):
@@ -262,7 +273,11 @@ class Database:
 
         def __post_init__(self):
             self.ban_date = arrow.get(self.ban_date).datetime
-            self.unban_date = arrow.get(self.unban_date).datetime
+
+            if self.unban_date is None or self.unban_date == None or self.unban_date == "":
+                self.unban_date = None
+            else:
+                self.unban_date = arrow.get(self.unban_date).datetime
 
         @property
         def ipids(self):
