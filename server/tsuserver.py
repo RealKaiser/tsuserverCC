@@ -1,9 +1,15 @@
 """
-tsuserverOLE, an Attorney Online server.
+tsuserverCC, an Attorney Online server.
+Copyright (C) 2022 Kaiser <kaiserkaisie@gmail.com>
+
+Derivative of tsuserverOLE, an Attorney Online server.
 Copyright (C) 2021 KillerSteel <killermagnum5@gmail.com
 
 Derivative of tsuserverCC, an Attorney Online server.
 Copyright (C) 2020 Kaiser <kaiserkaisie@gmail.com>
+
+Derivative of tsuserver3, an Attorney Online server. 
+Copyright (C) 2016 argoneus <argoneuscze@gmail.com>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
@@ -61,7 +67,7 @@ class TsuServerCC:
 		self.software = 'tsuservercc'
 
 		self.release = 1
-		self.major_version = 4
+		self.major_version = 5
 		self.minor_version = 0
 
 		self.config = None

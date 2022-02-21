@@ -904,7 +904,7 @@ def ooc_cmd_areakick(client, arg: str) -> None:
 				client.send_ooc(
 					"Attempting to kick {} to area {}.".format(
 						c.char_name, output))
-				if c.area.id != client.area.id:
+				if c.area.id != client.area.id and not client.is_mod:
 					client.send_ooc(f'{c.char_name} is not in this area.')
 					return
 				c.change_area(area)

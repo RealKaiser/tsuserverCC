@@ -17,7 +17,6 @@ from . import mod_only
 # Otherwise, it won't work.
 
 __all__ = [
-	'ooc_cmd_derp',
 	'ooc_cmd_motd',
 	'ooc_cmd_help',
 	'ooc_cmd_kick',
@@ -197,17 +196,6 @@ def ooc_cmd_ghost(client, arg):
 	else:
 		client.ghost = True
 		client.send_ooc('You are now a ghost.')
-"""
-A fun command Steel made to try out his knowledge of how 
-	AO's admin.py file works.
-Syntax should be /derp, if 'ooc_cmd_' is to be interpreted as such, 
-	like the rest of these commands.
-It should check if you're an admin, then if you are, post an OOC message.
-"""
-def ooc_cmd_derp(client, arg):
-	if not client.is_admin:
-		raise ClientError('You aren\'t an admin.')
-	client.send_ooc('I am Steel and I speak for the admin.py file.')
 
 def ooc_cmd_permit(client, arg: str) -> None: 
 	if not client.is_mod:
@@ -324,7 +312,7 @@ def ooc_cmd_help(client, arg):
 	"""
 	if len(arg) != 0:
 		raise ArgumentError('This command has no arguments.')
-	help_url = 'https://github.com/HolyMan-17/tsuserverOLE#readme'
+	help_url = 'https://github.com/RealKaiser/tsuserverCC'
 	help_msg = f'The commands available on this server can be found here: {help_url}'
 	client.send_ooc(help_msg)
 
@@ -335,11 +323,10 @@ def ooc_cmd_about(client, arg):
 	Usage: /about
 	"""
 
-	release_url = "https://drive.google.com/file/d/1Bqa1Q4FuZvS0K6CB7Zhm6rJjzpO16FbX/view?usp=sharing"
+	release_url = "https://docs.google.com/document/d/1FlV3UsJJNA-tMCUpvKgWKp49wI9KrUzVUsT_XmX7ANo/edit?usp=sharing"
 	
 	client.send_ooc(
-		f"OLE's current release version is OLEXMAS1.3\nYou can download it from here: {release_url}\
-		\nMaintained by: Official Law Empire Development Team" 
+		f"You can download CC's files from here: {release_url}
 		)
 
 @mod_only()

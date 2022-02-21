@@ -44,14 +44,14 @@ def ooc_cmd_ambiance(client, arg):
 		area.ambiance = False
 		area.broadcast_ooc('Ambiance for this area has been disabled, music played will loop client-side.')
 		if area.is_hub:
-			for sub in area.subs:
+			for sub in area.subareas:
 				sub.ambiance = False
 				sub.broadcast_ooc('Ambiance for this area has been disabled, music played will loop client-side.')
 	else:
 		area.ambiance = True
 		area.broadcast_ooc('Ambiance for this area has been enabled, music played will loop server-side.')
 		if area.is_hub:
-			for sub in area.subs:
+			for sub in area.subareas:
 				sub.ambiance = True
 				sub.broadcast_ooc('Ambiance for this area has been enabled, music played will loop server-side.')
 		
@@ -165,8 +165,16 @@ def ooc_cmd_play(client, arg):
 		raise ArgumentError('Not enough arguments. Use /play "name" "length in seconds".')
 	elif len(args) == 2:
 		if re.match(r"(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?", args[0]):
+			if '.mp3' not in args[0]:
+				raise ArgumentError("Doesn't seem to be an mp3.")
+			if '.mp3/' or '.mp3\\' in args[0]:
+				raise ArgumentError("Don't be sneaky.")
 			name = ''
-			length = 0
+			
+			if client.area.ambiance:
+				length = args[1]
+			else:
+				length = 1
 		else:
 			name = 'custom/'
 			length = args[1]
@@ -178,7 +186,15 @@ def ooc_cmd_play(client, arg):
 			raise ClientError(f'{length} does not look like a valid length.')
 	elif len(args) == 1:
 		if re.match(r"(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?", args[0]):
+			if '.mp3' not in args[0]:
+				raise ArgumentError("Doesn't seem to be an mp3.")
+			if '.mp3/' or '.mp3\\' in args[0]:
+				raise ArgumentError("Don't be sneaky.")
 			name = ''
+			if client.area.ambiance:
+				length = 0
+			else:
+				length = 1
 		else:
 			name = 'custom/'
 		name += args[0]
