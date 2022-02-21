@@ -35,7 +35,6 @@ from heapq import heappop, heappush
 from yaml.loader import FullLoader
 
 from server import database
-from server.timer import Timer
 from server.constants import TargetType
 from server.exceptions import ClientError, AreaError
 
