@@ -302,6 +302,12 @@ Requires Python 3.7+ and PyYAML.
 	- Toggles 'ambiance' or server-side looping. While on, allows new clients joining an area to hear a set song once it loops without needing to play it themselves.
 * **timer** \<id> [+/-][x in seconds, minutes, hours etc.] | \<id> start | \<id> \<pause|stop> | \<id> hide
     - Manage a countdown timer in the current area. Note that timer of ID 0 is global. All other timer IDs are local to the area.
+* **areadesc** "your description here"
+	- Sets a description that will be sent to every client that enters the area, use without argument to check what the current is, if any.
+* **areadesc**
+	- Will clear the area's description if it has one.
+* **movetime** "time in seconds"
+	- Sets how long it takes to enter the area, only works in hubs you CM. if used in the hub's main area it will apply to every sub-area. setting this to 0 clears it.
 
 #### Testimony Recording
 * A new feature in tsuserverCC - you can now record testimonies and play them back with automatic formatting!
@@ -311,7 +317,7 @@ Requires Python 3.7+ and PyYAML.
 * Once you're done recording your testimony, just do `/end`. After this, you can do `///` in IC to make the title appear again, this time with a CE woosh.
 * After all that, anyone in the area can say `>` in IC to move to the next statement or `<` for the previous statement, `=` is also available to use to see the current statement again. 
 * All the statements will be automatically displayed in green.
-* The CM can at this point also add 'substatements' by using +again, and then can also amend the current statement by using &[amended statement].
+* The CM can at this point also add 'substatements' by using +[statement] again, and then can also amend the current statement by using &[amended statement].
 * If you want to clear the testimony, use /cleartestimony in OOC. For viewing the current testimony, simply do /testimony in OOC.
 
 ### Mod Commands
