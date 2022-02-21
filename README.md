@@ -2,6 +2,8 @@
 
 A Python-based server for Attorney Online, forked from [AttorneyOnline/tsuserver3](https://github.com/AttorneyOnline/tsuserver3)
 
+Also includes many code improvements from TsuOLE (https://github.com/HolyMan-17/tsuserverOLE)
+
 Requires Python 3.7+ and PyYAML.
 
 ### Changes/additions from tsuserver3
@@ -140,9 +142,6 @@ Requires Python 3.7+ and PyYAML.
     - Use with argument "new" to disallow new followers without losing current followers.
 * **time**
     - Show the current time and date according to the server's time.
-* **timer** "start/stop/continue"
-    - A stopwatch. Use without arguments to check current timer without stopping it.
-    - "start" will start a new timer, "stop" will stop the timer, and "continue" will start the timer where it was last stopped.
 * **serverpoll** "yay/nay"
     - View or vote on the current server poll.
 * **digitalroot** "number"
@@ -163,6 +162,8 @@ Requires Python 3.7+ and PyYAML.
     - End an ongoing call or reject an incoming one.
 * **holdcall**
     - Holds your end of the ongoing call so you can speak to people outside the call.
+* **bgslist**
+    - Lists all official backgrounds on the server.
 
 ### Party Commands
 * **party**
@@ -218,7 +219,7 @@ Requires Python 3.7+ and PyYAML.
     - Default voting power is 0 (one vote) except for the Sacrifice role, which is 1 (two votes).
 
 ### CM Commands
-* **listen**
+* **listenall**
     - Toggles whether you'll receive messages from remotely CM'd areas. On by default.
  * **hide** "ID/*"
     - Hides the target from /getarea and playercount.
@@ -330,11 +331,11 @@ Requires Python 3.7+ and PyYAML.
     - Kicks a player back to the character select screen. If no ID was entered then target yourself.
 * **kick** "IPID" 
     - Kicks the targets with this IPID.
-* **ban** "IPID" "length"
+* **ban** "IPID" "reason" "length"
     - Bans the specified IPID for the specified length of time. If no time is specified, ban will default to six hours.
     - All arguments must be wrapped in double quotes.
     - Length syntax is as follows: `"[num] [seconds/minutes/hours/days/weeks] | perma"`.
-* **banhdid** "IPID" "length"
+* **banhdid** "IPID" "reason" "length"
     - "Old-style" HDID ban. This will ban both the specified IPID and the associated HDID.
     - All arguments must be wrapped in double quotes.
     - Length syntax is the same as ||ban||.
