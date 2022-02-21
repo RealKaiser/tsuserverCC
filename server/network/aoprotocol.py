@@ -1,21 +1,23 @@
-# tsuserverCC, an Attorney Online server.
-#
-# Copyright (C) 2020 Kaiser <kaiserkaisie@gmail.com>
-#
-# Derivative of tsuserver3, an Attorney Online server. Copyright (C) 2016 argoneus <argoneuscze@gmail.com>
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as
-# published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the
-# GNU Affero General Public License for more details.
-#
-# You should have received a copy of the GNU Affero General Public License
-# along with this program.	If not, see <https://www.gnu.org/licenses/>.
+"""
+tsuserverOLE, an Attorney Online server.
+Copyright (C) 2021 KillerSteel <killermagnum5@gmail.com
+
+Derivative of tsuserverCC, an Attorney Online server.
+Copyright (C) 2020 Kaiser <kaiserkaisie@gmail.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+ 
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+ 
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
 
 
 import time
@@ -28,8 +30,6 @@ import logging
 logger_debug = logging.getLogger('debug')
 logger = logging.getLogger('events')
 
-from enum import Enum
-
 import arrow
 from time import localtime, strftime
 
@@ -38,17 +38,22 @@ from server.statements import Statement
 from server.exceptions import ClientError, AreaError, ArgumentError, ServerError
 from server.fantacrypt import fanta_decrypt
 from .. import commands
+from server.network.packets import features_fl
+from server.network.validator_parameters import *
 
 
 class AOProtocol(asyncio.Protocol):
 	"""The main class that deals with the AO protocol."""
 
-	class ArgType(Enum):
-		"""Represents the data type of an argument for a network command."""
-		STR = 1,
-		STR_OR_EMPTY = 2,
-		INT = 3,
-		INT_OR_STR = 3
+	#Feature flags
+	flpacket = features_fl()
+	#Sets of parameters for IC message validators:
+	msgpre260 = validator_pre260()
+	msg270 = validator_270()
+	msg290 = validator_290()
+
+
+
 
 	def __init__(self, server):
 		super().__init__()
@@ -59,7 +64,8 @@ class AOProtocol(asyncio.Protocol):
 
 	def dezalgo(self, input):
 		"""
-		Turns any string into a de-zalgo'd version, with a tolerance to allow for normal diacritic use.
+		Turns any string into a de-zalgo'd version,
+		with a tolerance to allow for normal diacritic use.
 	
 	
 	
@@ -182,9 +188,9 @@ class AOProtocol(asyncio.Protocol):
 		if len(args) != len(types):
 			return False
 		for i, arg in enumerate(args):
-			if len(arg) == 0 and types[i] != self.ArgType.STR_OR_EMPTY:
+			if len(arg) == 0 and types[i] != ArgType.STR_OR_EMPTY:
 				return False
-			if types[i] == self.ArgType.INT:
+			if types[i] == ArgType.INT:
 				try:
 					args[i] = int(arg)
 				except ValueError:
@@ -192,14 +198,15 @@ class AOProtocol(asyncio.Protocol):
 		return True
 
 	def net_cmd_hi(self, args):
-		"""Handshake.
+		"""
+		Handshake.
 		
 		HI#<hdid:string>#%
 
 		:param args: a list containing all the arguments
 
 		"""
-		if not self.validate_net_cmd(args, self.ArgType.STR, needs_auth=False):
+		if not self.validate_net_cmd(args, ArgType.STR, needs_auth=False):
 			return
 		hdid = self.client.hdid = args[0]
 		ipid = self.client.ipid
@@ -207,6 +214,7 @@ class AOProtocol(asyncio.Protocol):
 		database.add_hdid(ipid, hdid)
 		ban = database.find_ban(ipid, hdid)
 		if ban is not None:
+			
 			if ban.unban_date is not None:
 				unban_date = arrow.get(ban.unban_date)
 			else:
@@ -214,12 +222,17 @@ class AOProtocol(asyncio.Protocol):
 	
 			msg = f'{ban.reason}\r\n'
 			msg += f'ID: {ban.ban_id}\r\n'
-			msg += f'Until: {unban_date.humanize()}'
+			
+			if unban_date == 'N/A':
+				msg += f'Until: {unban_date}'
+			else:
+				msg += f'Until: {unban_date.humanize()}'
 	
 			database.log_connect(self.client, failed=True)
 			self.client.send_command('BD', msg)
 			self.client.disconnect()
 			return
+			
 		else:
 			self.client.is_checked = True
 
@@ -231,23 +244,22 @@ class AOProtocol(asyncio.Protocol):
 								 self.server.config['playerlimit'])
 
 	def net_cmd_id(self, args):
-		"""Client version and PV
+		"""
+		Client version and PV.
+
+		Sends the FL packet that consists of a list of
+		features supported by the server.
+
+		Also sends ASSET packet for WebAO content 
+		if asset_url in config.yaml is defined. 
 		
 		ID#<pv:int>#<software:string>#<version:string>#%
 		"""
-		self.client.send_command('FL', 'yellowtext', 'customobjections', 
-								 'flipping', 'fastloading', 'noencryption',
-								 'deskmod', 'evidence', 
-								 'modcall_reason', 'cccc_ic_support', 
-								 'arup', 'casing_alerts', 
-								 'looping_sfx', 'additive', 'effects', 
-								 'prezoom', 'y_offset', 'expanded_desk_mods')
+	
+		self.client.send_command(*AOProtocol.flpacket)
 
-		# Send Asset packet if asset_url is defined
 		if self.server.config['asset_url'] != '':
-			# Convert Spaces for browsers
-			cleaned_url: str = self.server.config['asset_url'].replace(' ', '<percent>20')
-			self.client.send_command('ASS', cleaned_url)
+			self.client.send_command('ASS', self.server.config['asset_url'])
 
 	def net_cmd_ch(self, _):
 		"""Reset the client drop timeout (keepalive).
@@ -282,7 +294,7 @@ class AOProtocol(asyncio.Protocol):
 		
 		AN#<page:int>#%
 		"""
-		if not self.validate_net_cmd(args, self.ArgType.INT, needs_auth=False):
+		if not self.validate_net_cmd(args, ArgType.INT, needs_auth=False):
 			return
 		if len(self.server.char_pages_ao1) > args[0] >= 0:
 			self.client.send_command('CI',
@@ -306,7 +318,7 @@ class AOProtocol(asyncio.Protocol):
 		AM#<page:int>#%
 
 		"""
-		if not self.validate_net_cmd(args, self.ArgType.INT, needs_auth=False):
+		if not self.validate_net_cmd(args, ArgType.INT, needs_auth=False):
 			return
 		if len(self.server.music_pages_ao1) > args[0] >= 0:
 			self.client.send_command('EM',
@@ -348,8 +360,8 @@ class AOProtocol(asyncio.Protocol):
 		self.client.send_motd()
 		self.client.send_poll()
 		if len(self.client.hdid) == 32:
-			if self.client.ipid in self.server.webperms:
-				self.client.permission = True
+			#if self.client.ipid in self.server.webperms:
+			self.client.permission = True
 		else:
 			self.client.permission = True
 
@@ -360,9 +372,9 @@ class AOProtocol(asyncio.Protocol):
 
 		"""
 		if not self.validate_net_cmd(args,
-									 self.ArgType.INT,
-									 self.ArgType.INT,
-									 self.ArgType.STR,
+									 ArgType.INT,
+									 ArgType.INT,
+									 ArgType.STR,
 									 needs_auth=False):
 			return
 		elif not self.client.is_checked:
@@ -374,11 +386,26 @@ class AOProtocol(asyncio.Protocol):
 		except ClientError:
 			return
 
+	"""
+	This handles the entirety of IC message handling.
+	Things that could be broken out into their own functions:
+	-Version handling for legacies and current version
+	"""
+
 	def net_cmd_ms(self, args):
 		"""IC message.
 		
 		Refer to the implementation for details.
+		-Steel: Doing some documentation on this giga-function. You'll find my stuff sprinkled about through here.
+		It's mostly theorized ideas of what the code is doing as I read, with references to functions and the files they come from.
+		Enjoy. And good luck.
+		"""
 
+		"""
+		is_checked is part of the ban checking process, which is found in net_cmd_hi further up this file.
+		is_muted is kind of obvious.
+		can_send_message is defined in server/area_manager.py, checking to see if you can send a message in an area.
+		'permission' is if you can use Web AO or not, I think. It's granted by ooc_cmd_permit in server/admin.py.
 		"""
 		if not self.client.is_checked:
 			return
@@ -406,69 +433,36 @@ class AOProtocol(asyncio.Protocol):
 		additive = 0
 		effect = ""
 		pair_order = 0
-		if self.validate_net_cmd(args, self.ArgType.STR, # msg_type
-								 self.ArgType.STR_OR_EMPTY, self.ArgType.STR, # pre, folder
-								 self.ArgType.STR, self.ArgType.STR, # anim, text
-								 self.ArgType.STR, self.ArgType.STR, # pos, sfx
-								 self.ArgType.INT, self.ArgType.INT, # anim_type, cid
-								 self.ArgType.INT, self.ArgType.INT_OR_STR, # sfx_delay, button
-								 self.ArgType.INT, self.ArgType.INT, # evidence, flip
-								 self.ArgType.INT, self.ArgType.INT): # ding, color
+		"""
+		Client validation for the message starts here.
+
+		-Break off into net_cmd_validate_pre26, calling validate_net_cmd with appropriate parameters
+		Looks like it runs the IC message from the client through the validator, then returns 
+		"""
+		if self.validate_net_cmd(args, *AOProtocol.msgpre260): 
 			# Pre-2.6 validation monstrosity.
-			msg_type, pre, folder, anim, text, pos, sfx, anim_type, cid, sfx_delay, button, evidence, flip, ding, color = args
-		elif self.validate_net_cmd(args, self.ArgType.STR, self.ArgType.STR_OR_EMPTY, self.ArgType.STR,
-								   self.ArgType.STR,
-								   self.ArgType.STR, self.ArgType.STR, self.ArgType.STR, self.ArgType.INT,
-								   self.ArgType.INT, self.ArgType.INT, self.ArgType.INT_OR_STR, self.ArgType.INT,
-								   self.ArgType.INT, self.ArgType.INT, self.ArgType.INT, self.ArgType.STR_OR_EMPTY):
-			# 1.3.0 validation monstrosity.
-			msg_type, pre, folder, anim, text, pos, sfx, anim_type, cid, sfx_delay, button, evidence, flip, ding, color, showname = args
-			if len(showname) > 0 and not self.client.area.showname_changes_allowed:
-				self.client.send_host_message("Showname changes are forbidden in this area!")
-				return
-		elif self.validate_net_cmd(args, self.ArgType.STR, self.ArgType.STR_OR_EMPTY, self.ArgType.STR,
-								   self.ArgType.STR,
-								   self.ArgType.STR, self.ArgType.STR, self.ArgType.STR, self.ArgType.INT,
-								   self.ArgType.INT, self.ArgType.INT, self.ArgType.INT_OR_STR, self.ArgType.INT,
-								   self.ArgType.INT, self.ArgType.INT, self.ArgType.INT, self.ArgType.STR_OR_EMPTY,
-								   self.ArgType.INT, self.ArgType.INT):
-			# 1.3.5 validation monstrosity.
-			msg_type, pre, folder, anim, text, pos, sfx, anim_type, cid, sfx_delay, button, evidence, flip, ding, color, showname, charid_pair, offset_pair = args
-			if len(showname) > 0 and not self.client.area.showname_changes_allowed:
-				self.client.send_host_message("Showname changes are forbidden in this area!")
-				return
-		elif self.validate_net_cmd(args, self.ArgType.STR, self.ArgType.STR_OR_EMPTY, self.ArgType.STR,
-								   self.ArgType.STR,
-								   self.ArgType.STR, self.ArgType.STR, self.ArgType.STR, self.ArgType.INT,
-								   self.ArgType.INT, self.ArgType.INT, self.ArgType.INT_OR_STR, self.ArgType.INT,
-								   self.ArgType.INT, self.ArgType.INT, self.ArgType.INT, self.ArgType.STR_OR_EMPTY,
-								   self.ArgType.INT, self.ArgType.INT, self.ArgType.INT):
-			# 1.4.0 validation monstrosity.
-			msg_type, pre, folder, anim, text, pos, sfx, anim_type, cid, sfx_delay, button, evidence, flip, ding, color, showname, charid_pair, offset_pair, nonint_pre = args
-			if len(showname) > 0 and not self.client.area.showname_changes_allowed:
-				self.client.send_host_message("Showname changes are forbidden in this area!")
-				return
-		elif self.validate_net_cmd(args, self.ArgType.STR, self.ArgType.STR_OR_EMPTY, self.ArgType.STR,
-								   self.ArgType.STR,
-								   self.ArgType.STR, self.ArgType.STR, self.ArgType.STR, self.ArgType.INT,
-								   self.ArgType.INT, self.ArgType.INT, self.ArgType.INT, self.ArgType.INT,
-								   self.ArgType.INT, self.ArgType.INT, self.ArgType.INT, self.ArgType.STR_OR_EMPTY,
-								   self.ArgType.INT, self.ArgType.INT, self.ArgType.INT, self.ArgType.STR,
-								   self.ArgType.INT, self.ArgType.STR, self.ArgType.STR, self.ArgType.STR):
+			(msg_type, pre, folder, anim, text, pos, sfx, 
+			anim_type, cid, sfx_delay, button, evidence, flip, 
+			ding, color) = args
+		
+		#-Break off into net_cmd_validate_27, calling validate_net_cmd with appropriate parameters
+		elif self.validate_net_cmd(args, *AOProtocol.msg270):
 			# 2.7.0 validation monstrosity
-			msg_type, pre, folder, anim, text, pos, sfx, anim_type, cid, sfx_delay, button, evidence, flip, ding, color, showname, charid_pair, offset_pair, nonint_pre, looping_sfx, screenshake, frame_screenshake, frame_realization, frame_sfx = args
+			(msg_type, pre, folder, anim, text, pos, sfx, anim_type, cid, 
+			sfx_delay, button, evidence, flip, ding, color, showname, 
+			charid_pair, offset_pair, nonint_pre, looping_sfx, screenshake, 
+			frame_screenshake, frame_realization, frame_sfx) = args
 			if len(showname) > 0 and not self.client.area.showname_changes_allowed:
 				self.client.send_host_message("Showname changes are forbidden in this area!")
 				return
-		elif self.validate_net_cmd(args, self.ArgType.STR, self.ArgType.STR_OR_EMPTY, self.ArgType.STR, #msg_type, pre, folder
-								   self.ArgType.STR, #anim
-								   self.ArgType.STR, self.ArgType.STR, self.ArgType.STR, self.ArgType.INT, #text, pos, sfx, anim_type
-								   self.ArgType.INT, self.ArgType.INT, self.ArgType.INT_OR_STR, self.ArgType.INT, #cid, sfx_delay, button, evidence
-								   self.ArgType.INT, self.ArgType.INT, self.ArgType.INT, self.ArgType.STR_OR_EMPTY, #flip, ding, color, showname
-								   self.ArgType.STR, self.ArgType.STR, self.ArgType.INT, self.ArgType.STR, #charid_pair, offset_pair
-								   self.ArgType.INT, self.ArgType.STR, self.ArgType.STR, self.ArgType.STR,
-								   self.ArgType.INT, self.ArgType.STR):
-			msg_type, pre, folder, anim, text, pos, sfx, anim_type, cid, sfx_delay, button, evidence, flip, ding, color, showname, charid_pair, offset_pair, nonint_pre, looping_sfx, screenshake, frame_screenshake, frame_realization, frame_sfx, additive, effect = args
+		#-Break off into net_cmd_validate_29, calling validate_net_cmd with appropriate parameters.
+		#I think this is the latest set of validations... God, what a mess.
+		elif self.validate_net_cmd(args, *AOProtocol.msg290):
+			(msg_type, pre, folder, anim, text, pos, sfx, 
+			anim_type, cid, sfx_delay, button, evidence, flip, 
+			ding, color, showname, charid_pair, offset_pair, 
+			nonint_pre, looping_sfx, screenshake, frame_screenshake, 
+			frame_realization, frame_sfx, additive, effect) = args
 			pair_args = charid_pair.split("^")
 			charid_pair = int(pair_args[0])
 			if (len(pair_args) > 1):
@@ -478,11 +472,19 @@ class AOProtocol(asyncio.Protocol):
 				return
 		else:
 			return
+		#Client message validation ends here.
+		
+		#Showname is set here, followed by an iniswap check. is_iniswap takes the client, a 'pre', the anim integer I think, folder name and sfx.
+		#Considering the context, I think it's checking to see if you are iniswapped?
+		#You can find is_iniswap in server/network/area_manager.py
+		
 		self.client.showname = showname
 		if self.client.area.is_iniswap(self.client, pre, anim,
 				folder, sfx):
 			self.client.send_ooc("Iniswap/custom emotes are blocked in this area")
 			return
+
+		#Checking if charcurse (ooc_cmd_charcurse in server/commands/character.py) Charcurse is 
 		if len(self.client.charcurse) > 0 and \
 			folder != self.client.char_name:
 			self.client.send_ooc(
@@ -583,6 +585,7 @@ class AOProtocol(asyncio.Protocol):
 		if not len(self.client.area.poslock) == 0:
 			if pos not in self.client.area.poslock:
 				pos = self.client.area.poslock[0]
+				self.client.send_ooc(f'Your pos isn\'t in /poslock, falling back on {pos}. Please switch to a pos in /poslock!')
 		msg = self.dezalgo(text)[:256]
 		if self.client.shaken:
 			msg = self.client.shake_message(msg)
@@ -640,6 +643,9 @@ class AOProtocol(asyncio.Protocol):
 			charid_pair = -1
 			#offset_pair = 0
 		
+		if self.client.afk:
+			self.client.server.client_manager.toggle_afk(self.client)
+
 		send_args = [msg_type, pre, folder, anim, msg,
                      pos, sfx, anim_type, cid, sfx_delay,
                      button, self.client.evi_list[evidence],
@@ -776,6 +782,10 @@ class AOProtocol(asyncio.Protocol):
 					if self.client.area.statement < 1:
 						self.client.area.statement = 1
 						self.client.send_ooc('At first statement, no previous statement available.')
+						for s in self.client.area.recorded_messages:
+							if s.id == self.client.area.statement:
+								statement = s
+								break
 						playback = True
 					else:
 						for s in self.client.area.recorded_messages:
@@ -807,7 +817,9 @@ class AOProtocol(asyncio.Protocol):
 						send_args[2] = 'Narrator'
 						send_args[3] = 'normal'
 					elif not self.client.visible:
-						send_args[19] = 100
+						send_args[1] = 0
+						send_args[2] = 'Narrator'
+						send_args[3] = '../../background/AADetentionCenter/defensedesk'
 
 					self.client.area.send_command('MS', *send_args)
 					self.server.area_manager.send_remote_command(target_area, 'MS', *send_args)
@@ -831,13 +843,18 @@ class AOProtocol(asyncio.Protocol):
 		"""
 		if not self.client.is_checked:
 			return
+
 		if self.client.is_ooc_muted:  # Checks to see if the client has been muted by a mod
 			self.client.send_ooc('You are muted by a moderator.')
+			
+		if self.client.char_id == -1:  #Checks if the user is a spectator
+			self.client.send_ooc("Spectators can't use OOC chat.")
 			return
+
 		if not self.client.permission:
 			self.client.send_ooc('You need permission to use a web client, please ask staff.')
 			return
-		if not self.validate_net_cmd(args, self.ArgType.STR, self.ArgType.STR):
+		if not self.validate_net_cmd(args, ArgType.STR, ArgType.STR):
 			return
 		if self.client.name != args[0] and self.client.fake_name != args[0]:
 			if self.client.is_valid_name(args[0]):
@@ -845,10 +862,12 @@ class AOProtocol(asyncio.Protocol):
 				self.client.fake_name = args[0]
 			else:
 				self.client.fake_name = args[0]
+
 		if self.client.name == '':
 			self.client.send_ooc(
 				'You must insert a name with at least one letter')
 			return
+
 		if len(self.client.name) > 30:
 			self.client.send_ooc(
 				'Your OOC name is too long! Limit it to 30 characters.')
@@ -858,28 +877,34 @@ class AOProtocol(asyncio.Protocol):
 				self.client.send_ooc(
 					'You cannot use format characters in your name!')
 				return
+
 		if self.client.name.startswith(self.server.config['hostname']) or self.client.name.startswith('<dollar>G') or self.client.name.startswith('<dollar>M'):
 			self.client.send_ooc('That name is reserved!')
 			return
+
 		if args[1].startswith(' /'):
 			self.client.send_ooc(
 				'Your message was not sent for safety reasons: you left a space before that slash.'
 			)
 			return
+
 		if args[1].startswith('.'):
 			self.client.send_ooc(
 				'Your message was not sent for safety reasons: you left a dot before that message.'
 			)
 			return
+
 		if len(args[1]) > 300:
 			self.client.send_ooc(
 				'That message is too long!.'
 			)
 			return
+
 		if not args[1].startswith('/') and self.client.ooc_delay != None:
 			if self.client.ooc_delay > time.perf_counter():
 				self.client.send_ooc('You are trying to send messages too fast!')
 				return
+
 		if args[1].startswith('/'):
 			spl = args[1][1:].split(' ', 1)
 			cmd = spl[0].lower()
@@ -952,10 +977,10 @@ class AOProtocol(asyncio.Protocol):
 					if not self.client.area.allowmusic and self.client not in self.client.area.owners:
 						self.client.send_ooc('The CM has disallowed music changes, ask them to change the music.')
 						return
-					if not self.validate_net_cmd(args, self.ArgType.STR, self.ArgType.INT):
-						if not self.validate_net_cmd(args, self.ArgType.STR, self.ArgType.INT, self.ArgType.STR_OR_EMPTY):
-							if not self.validate_net_cmd(args, self.ArgType.STR, self.ArgType.INT, self.ArgType.STR_OR_EMPTY, self.ArgType.INT):
-								if not self.validate_net_cmd(args, self.ArgType.STR, self.ArgType.INT, self.ArgType.STR_OR_EMPTY, self.ArgType.INT, self.ArgType.INT):
+					if not self.validate_net_cmd(args, ArgType.STR, ArgType.INT):
+						if not self.validate_net_cmd(args, ArgType.STR, ArgType.INT, ArgType.STR_OR_EMPTY):
+							if not self.validate_net_cmd(args, ArgType.STR, ArgType.INT, ArgType.STR_OR_EMPTY, ArgType.INT):
+								if not self.validate_net_cmd(args, ArgType.STR, ArgType.INT, ArgType.STR_OR_EMPTY, ArgType.INT, ArgType.INT):
 									return
 					if args[1] != self.client.char_id:
 						return
@@ -1050,8 +1075,8 @@ class AOProtocol(asyncio.Protocol):
 			)
 			return
 		if not self.validate_net_cmd(
-				args, self.ArgType.STR) and not self.validate_net_cmd(
-					args, self.ArgType.STR, self.ArgType.INT):
+				args, ArgType.STR) and not self.validate_net_cmd(
+					args, ArgType.STR, ArgType.INT):
 			return
 		if args[0] == 'testimony1':
 			sign = 'WT'
@@ -1105,7 +1130,7 @@ class AOProtocol(asyncio.Protocol):
 
 			if not args[1] == "1" and not args[2] == "1" and not args[3] == "1" and not args[4] == "1" and not args[5] == "1":
 				raise ArgumentError('You should probably announce the case to at least one person.')
-			msg = '=== Case Announcement ===\r\n{} [{}] is hosting {}, looking for '.format(self.client.get_char_name(),
+			msg = '=== Case Announcement ===\r\n{} [{}] is hosting {}, looking for '.format(self.client.char_name,
 																							self.client.id, args[0])
 
 			lookingfor = []
@@ -1154,7 +1179,7 @@ class AOProtocol(asyncio.Protocol):
 				"You are not on the area's invite list, and thus, you cannot change the Confidence bars!"
 			)
 			return
-		if not self.validate_net_cmd(args, self.ArgType.INT, self.ArgType.INT):
+		if not self.validate_net_cmd(args, ArgType.INT, ArgType.INT):
 			return
 		try:
 			self.client.area.change_hp(args[0], args[1])
@@ -1229,7 +1254,7 @@ class AOProtocol(asyncio.Protocol):
 			self.client.send_ooc('You are muted by a moderator.')
 			return
 
-		if self.client.char_id is -1:
+		if self.client.char_id == -1:
 			self.client.send_ooc(
 				"You cannot call a moderator while spectating.")
 			return

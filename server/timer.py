@@ -1,21 +1,23 @@
-# tsuserverCC, an Attorney Online server.
-#
-# Copyright (C) 2020 Kaiser <kaiserkaisie@gmail.com>
-#
-# Derivative of tsuserver3, an Attorney Online server. Copyright (C) 2016 argoneus <argoneuscze@gmail.com>
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as
-# published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Affero General Public License for more details.
-#
-# You should have received a copy of the GNU Affero General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+tsuserverOLE, an Attorney Online server.
+Copyright (C) 2021 KillerSteel <killermagnum5@gmail.com
+
+Derivative of tsuserverCC, an Attorney Online server.
+Copyright (C) 2020 Kaiser <kaiserkaisie@gmail.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+ 
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+ 
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
 
 import time
 import asyncio
@@ -40,7 +42,7 @@ class Timer:
         elif self.elapsed_time == None:
             self.elapsed_time = time.perf_counter() - self._start_time
         else:
-            self._start_time = time.perf_counter() - elapsed_time
+            self._start_time = time.perf_counter() - self.elapsed_time
 				
     def stop(self):
         self.elapsed_time = time.perf_counter() - self._start_time
@@ -59,10 +61,10 @@ class Timer:
         self.alarmtimeset = time.perf_counter()
         self.alarmtimeset += ttime
         self.alarmtype = type
-        if type is 'hours':
+        if type == 'hours':
             ttime = ttime / 60
             ttime = ttime / 60
-        if type is 'minutes':
+        if type == 'minutes':
             ttime = ttime / 60
         asyncio.get_event_loop().call_later(self.alarmtime, lambda: self.resetalarm(client, ttime, type))
 
