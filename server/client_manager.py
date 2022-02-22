@@ -275,6 +275,8 @@ class ClientManager:
 			if self.afk:
 				self.server.client_manager.toggle_afk(self)
 			if self.server.config['afk_delay'] > 0:
+				if self.afktime:
+					self.afktime.cancel()
 				self.afktime = asyncio.get_event_loop().call_later(self.server.config['afk_delay'], lambda: self.server.client_manager.toggle_afk(self))
 
 		def change_music_cd(self):
@@ -589,6 +591,8 @@ class ClientManager:
 			self.send_command('LE', *self.area.get_evidence_list(self))
 			if self.afk:
 				self.server.client_manager.toggle_afk(self)
+			if self.afktime:
+				self.afktime.cancel()
 			if self.server.config['afk_delay'] > 0:
 				self.afktime = asyncio.get_event_loop().call_later(self.server.config['afk_delay'], lambda: self.server.client_manager.toggle_afk(self))
 
@@ -1167,7 +1171,8 @@ class ClientManager:
 				w.modafk(client=client, afk=False)
 		else:
 			client.area.broadcast_ooc('{} is now AFK.'.format(client.char_name))
-			client.afktime = None
+			if client.afktime:
+				client.afktime.cancel()
 			client.afk = True
 			if client.is_mod:
 				w.modafk(client=client, afk=True)

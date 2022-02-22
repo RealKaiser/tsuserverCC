@@ -645,6 +645,8 @@ class AOProtocol(asyncio.Protocol):
 
 		if self.client.afk:
 			self.client.server.client_manager.toggle_afk(self.client)
+		if self.client.afktime:
+			self.client.afktime.cancel()
 		if self.server.config['afk_delay'] > 0:
 			self.client.afktime = asyncio.get_event_loop().call_later(self.client.server.config['afk_delay'], lambda: self.client.server.client_manager.toggle_afk(self.client))
 
@@ -909,6 +911,8 @@ class AOProtocol(asyncio.Protocol):
 
 		if self.client.afk:
 			self.client.server.client_manager.toggle_afk(self.client)
+		if self.client.afktime:
+			self.client.afktime.cancel()
 		if self.server.config['afk_delay'] > 0:
 			self.client.afktime = asyncio.get_event_loop().call_later(self.client.server.config['afk_delay'], lambda: self.client.server.client_manager.toggle_afk(self.client))
 
@@ -1047,6 +1051,8 @@ class AOProtocol(asyncio.Protocol):
 							database.log_room('music', self.client, self.client.area, message=name)
 						if self.client.afk:
 							self.client.server.client_manager.toggle_afk(self.client)
+						if self.client.afktime:
+							self.client.afktime.cancel()
 						if self.server.config['afk_delay'] > 0:
 							self.client.afktime = asyncio.get_event_loop().call_later(self.client.server.config['afk_delay'], lambda: client.server.client_manager.toggle_afk(self.client))
 					except ServerError:
