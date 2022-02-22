@@ -398,7 +398,7 @@ def ooc_cmd_shuffle(client, arg):
 	Play a track.
 	Usage: /play <name>
 	"""
-	if arg == 'musiclist' or 'custom':
+	if arg == 'musiclist' or arg == 'custom':
 		client.area.musiclist_shuffle(client)
 	else:
 		client.area.music_shuffle(arg, client)
