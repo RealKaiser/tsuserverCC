@@ -1020,6 +1020,7 @@ class ClientManager:
 		Remove a disconnected client from the client list.
 		:param client: disconnected client
 		"""
+		w = Webhooks(client.server)
 		if client.id not in self.available_ids:
 			self.available_ids.append(client.id)
 		self.clients.remove(client)
@@ -1090,6 +1091,7 @@ class ClientManager:
 		for c in self.clients:
 			if c.ipid == client.ipid:
 				c.clientscon -= 1
+		w.unmod(client=client)
 
 	def get_targets(self, client, key, value, local=False, single=False):
 		"""

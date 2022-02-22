@@ -149,7 +149,26 @@ class Webhooks:
 		
 		self.send_webhook(username=username, avatar_url=avatar_url, message=message)
 
-
+	def login(self, client):
+		is_enabled = self.server.config['login_webhook']['enabled']
+		username = self.server.config['login_webhook']['username']
+		avatar_url = self.server.config['login_webhook']['avatar_url']
 		
+		if not is_enabled:
+			return
 		
-
+		message = f"{client.mod_profile_name} logged in."
+		
+		self.send_webhook(username=username, avatar_url=avatar_url, message=message)
+		
+	def unmod(self, client, login_name):
+		is_enabled = self.server.config['unmod_webhook']['enabled']
+		username = self.server.config['unmod_webhook']['username']
+		avatar_url = self.server.config['unmod_webhook']['avatar_url']
+		
+		if not is_enabled:
+			return
+		
+		message = f"{client.mod_profile_name} disconnected/unmodded."
+		
+		self.send_webhook(username=username, avatar_url=avatar_url, message=message)

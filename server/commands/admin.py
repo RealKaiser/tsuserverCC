@@ -637,6 +637,7 @@ def ooc_cmd_login(client, arg: str) -> None:
 
 
 	"""
+	w = Webhooks(client.server)
 	login_name = None
 	try:
 		login_name = client.auth_mod(arg)
@@ -647,6 +648,7 @@ def ooc_cmd_login(client, arg: str) -> None:
     
 	client.send_ooc('Logged in as a moderator.')
 	client.send_command('AUTH', '1')
+	w.login(client=client)
 	database.log_misc('login', client, data={'profile': login_name})
 
     # I don't know what this is supposed to be and why it was
@@ -731,6 +733,7 @@ def ooc_cmd_unmod(client, arg):
 	Log out as a moderator.
 	Usage: /unmod
 	"""
+	w = Webhooks(client.server)
 	client.is_mod = False
 	client.is_admin = False
 	client.mod_profile_name = None
@@ -738,6 +741,7 @@ def ooc_cmd_unmod(client, arg):
 		client.area.broadcast_evidence_list()
 	client.send_ooc('You\'re not a mod anymore.')
 	client.send_command('AUTH', '-1')
+	w.unmod(client=client)
 
 
 @mod_only()

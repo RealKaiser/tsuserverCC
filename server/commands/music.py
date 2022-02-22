@@ -167,7 +167,7 @@ def ooc_cmd_play(client, arg):
 		if re.match(r"(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?", args[0]):
 			if '.mp3' not in args[0]:
 				raise ArgumentError("Doesn't seem to be an mp3.")
-			if '.mp3/' or '.mp3\\' in args[0]:
+			if '.mp3/' in args[0]:
 				raise ArgumentError("Don't be sneaky.")
 			name = ''
 			
@@ -188,7 +188,7 @@ def ooc_cmd_play(client, arg):
 		if re.match(r"(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?", args[0]):
 			if '.mp3' not in args[0]:
 				raise ArgumentError("Doesn't seem to be an mp3.")
-			if '.mp3/' or '.mp3\\' in args[0]:
+			if '.mp3/' in args[0]:
 				raise ArgumentError("Don't be sneaky.")
 			name = ''
 			if client.area.ambiance:
