@@ -1092,6 +1092,8 @@ class ClientManager:
 				c.clientscon -= 1
 		if client.is_mod:
 			w.unmod(client.mod_profile_name)
+		if client.afktime:
+			client.afktime.cancel()
 
 	def get_targets(self, client, key, value, local=False, single=False):
 		"""
