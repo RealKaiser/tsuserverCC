@@ -30,11 +30,13 @@ import os
 import re
 import time
 import random
-from heapq import heappop, heappush
+import asyncio
 
+from heapq import heappop, heappush
 from yaml.loader import FullLoader
 
 from server import database
+from server.webhooks import Webhooks
 from server.constants import TargetType
 from server.exceptions import ClientError, AreaError
 
@@ -76,6 +78,7 @@ class ClientManager:
 			self.old_char_name = ''
 			self.ooc_delay = None
 			self.afk = False
+			self.afktime = None
 			self.listen = True
 			
 			# Mod/Admin stuff
@@ -269,6 +272,10 @@ class ClientManager:
 			new_char = self.char_name
 			database.log_room('char.change', self, self.area,
 				message={'from': old_char, 'to': new_char})
+			if self.afk:
+				self.server.client_manager.toggle_afk(self)
+			if self.server.config['afk_delay'] > 0:
+				self.afktime = asyncio.get_event_loop().call_later(self.server.config['afk_delay'], lambda: self.server.client_manager.toggle_afk(self))
 
 		def change_music_cd(self):
 			"""
@@ -580,6 +587,10 @@ class ClientManager:
 			self.send_command('HP', 2, self.area.hp_pro)
 			self.send_command('BN', self.area.background, self.pos)
 			self.send_command('LE', *self.area.get_evidence_list(self))
+			if self.afk:
+				self.server.client_manager.toggle_afk(self)
+			if self.server.config['afk_delay'] > 0:
+				self.afktime = asyncio.get_event_loop().call_later(self.server.config['afk_delay'], lambda: self.server.client_manager.toggle_afk(self))
 
 		def send_self_arup(self, args):
 			"""Update the area properties for 2.6 clients.
@@ -1056,22 +1067,6 @@ class ClientManager:
 			b.following.remove(client)
 			b.is_following = False
 			b.send_ooc(f'{client.char_name} disconnected. Unfollowing.')
-		if client.in_party:
-			party = client.party
-			if len(party.users) != 0 and client in party.users:
-				party.users.remove(client)
-				for member in party.users:
-					member.send_ooc(f'{client.name} disconnected and left the party.')
-			if party.leader == client and len(party.users) != 0:
-				for member in party.users:
-					member.send_ooc(f'{client.name} disconnected and left the party.')
-					if party.leader not in party.users:
-						party.leader = member
-						member.send_ooc('Party Leader left, you are now the new Party Leader.')
-					else:
-						member.send_ooc(f'Party Leader left, {party.leader.name} is the new Party Leader.')
-			if len(party.users) == 0:
-				client.server.parties.remove(party)
 		if len(client.calling) > 0:
 			caller = client.calling[0]
 			client.calling.clear()
@@ -1091,7 +1086,8 @@ class ClientManager:
 		for c in self.clients:
 			if c.ipid == client.ipid:
 				c.clientscon -= 1
-		w.unmod(client=client)
+		if client.is_mod:
+			w.unmod(client.mod_profile_name)
 
 	def get_targets(self, client, key, value, local=False, single=False):
 		"""
@@ -1163,11 +1159,15 @@ class ClientManager:
 		return clients
 
 	def toggle_afk(self, client):
+		w = Webhooks(client.server)
 		if client.afk:
 			client.area.broadcast_ooc('{} is no longer AFK.'.format(client.char_name))
-			client.send_ooc('You are no longer AFK. Welcome back!')  # Making the server a bit friendly wouldn't hurt, right?
 			client.afk = False
+			if client.is_mod:
+				w.modafk(client=client, afk=False)
 		else:
 			client.area.broadcast_ooc('{} is now AFK.'.format(client.char_name))
-			client.send_ooc('You are now AFK. Have a good day!')
+			client.afktime = None
 			client.afk = True
+			if client.is_mod:
+				w.modafk(client=client, afk=True)

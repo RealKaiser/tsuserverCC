@@ -736,12 +736,13 @@ def ooc_cmd_unmod(client, arg):
 	w = Webhooks(client.server)
 	client.is_mod = False
 	client.is_admin = False
+	login_name = client.mod_profile_name
 	client.mod_profile_name = None
 	if client.area.evidence_mod == 'HiddenCM':
 		client.area.broadcast_evidence_list()
 	client.send_ooc('You\'re not a mod anymore.')
 	client.send_command('AUTH', '-1')
-	w.unmod(client=client)
+	w.unmod(login_name=login_name)
 
 
 @mod_only()

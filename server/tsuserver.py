@@ -258,9 +258,15 @@ class TsuServerCC:
 
 		if 'webhook_url' not in self.config:
 			self.config['webhook_url'] = "example.com"
+			
+		if 'webhook2_url' not in self.config:
+			self.config['webhook2_url'] = None
 		
 		if 'ooc_delay' not in self.config:
 			self.config['ooc_delay'] = 0
+		
+		if 'afk_delay' not in self.config:
+			self.config['afk_delay'] = 0
 
 		#if isinstance(self.config['modpass'], str):
 		#	self.config['modpass'] = {'default': {'password': self.config['modpass']}}

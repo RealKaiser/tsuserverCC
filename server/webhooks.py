@@ -41,9 +41,12 @@ class Webhooks:
 	"""
 	def __init__(self, server):
 		self.server = server
-	def send_webhook(self, username=None, avatar_url=None, message=None, embed=False, title=None, description=None):
+	def send_webhook(self, username=None, avatar_url=None, message=None, embed=False, title=None, description=None, altwebhook=False):
 		is_enabled = self.server.config['webhooks_enabled']
-		url = self.server.config['webhook_url']
+		if altwebhook:
+			url = self.server.config['webhook2_url']
+		else:
+			url = self.server.config['webhook_url']
 		
 		if not is_enabled:
 			return
@@ -64,6 +67,12 @@ class Webhooks:
 			database.log_misc('webhook.err', data=err)
 		else:
 			database.log_misc('webhook.ok', data="successfully delivered payload, code {}".format(result.status_code))
+	def send_webhook2(self, username=None, avatar_url=None, message=None, embed=False, title=None, description=None):
+		if self.server.config['webhook2_url'] != None:
+			self.send_webhook(username=username, avatar_url=avatar_url, message=message, embed=False, title=None, description=None, altwebhook=True)
+		else:
+			self.send_webhook(username=username, avatar_url=avatar_url, message=message)
+
 	def modcall(self, char, ipid, area, reason=None):
 		is_enabled = self.server.config['modcall_webhook']['enabled']
 		username = self.server.config['modcall_webhook']['username']
@@ -159,9 +168,9 @@ class Webhooks:
 		
 		message = f"{client.mod_profile_name} logged in."
 		
-		self.send_webhook(username=username, avatar_url=avatar_url, message=message)
+		self.send_webhook2(username=username, avatar_url=avatar_url, message=message)
 		
-	def unmod(self, client, login_name):
+	def unmod(self, login_name):
 		is_enabled = self.server.config['unmod_webhook']['enabled']
 		username = self.server.config['unmod_webhook']['username']
 		avatar_url = self.server.config['unmod_webhook']['avatar_url']
@@ -169,6 +178,21 @@ class Webhooks:
 		if not is_enabled:
 			return
 		
-		message = f"{client.mod_profile_name} disconnected/unmodded."
+		message = f"{login_name} disconnected/unmodded."
 		
-		self.send_webhook(username=username, avatar_url=avatar_url, message=message)
+		self.send_webhook2(username=username, avatar_url=avatar_url, message=message)
+		
+	def modafk(self, client, afk):
+		is_enabled = self.server.config['modafk_webhook']['enabled']
+		username = self.server.config['modafk_webhook']['username']
+		avatar_url = self.server.config['modafk_webhook']['avatar_url']
+		
+		if not is_enabled:
+			return
+		
+		if afk:
+			message = f"{client.mod_profile_name} went AFK."
+		else:
+			message = f"{client.mod_profile_name} is no longer AFK."
+		
+		self.send_webhook2(username=username, avatar_url=avatar_url, message=message)

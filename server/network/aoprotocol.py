@@ -642,9 +642,11 @@ class AOProtocol(asyncio.Protocol):
 		if not confirmed:
 			charid_pair = -1
 			#offset_pair = 0
-		
+
 		if self.client.afk:
 			self.client.server.client_manager.toggle_afk(self.client)
+		if self.server.config['afk_delay'] > 0:
+			self.client.afktime = asyncio.get_event_loop().call_later(self.client.server.config['afk_delay'], lambda: self.client.server.client_manager.toggle_afk(self.client))
 
 		send_args = [msg_type, pre, folder, anim, msg,
                      pos, sfx, anim_type, cid, sfx_delay,
@@ -905,6 +907,11 @@ class AOProtocol(asyncio.Protocol):
 				self.client.send_ooc('You are trying to send messages too fast!')
 				return
 
+		if self.client.afk:
+			self.client.server.client_manager.toggle_afk(self.client)
+		if self.server.config['afk_delay'] > 0:
+			self.client.afktime = asyncio.get_event_loop().call_later(self.client.server.config['afk_delay'], lambda: self.client.server.client_manager.toggle_afk(self.client))
+
 		if args[1].startswith('/'):
 			spl = args[1][1:].split(' ', 1)
 			cmd = spl[0].lower()
@@ -1038,6 +1045,10 @@ class AOProtocol(asyncio.Protocol):
 															length)
 								self.client.area.add_music_playing(self.client, name)
 							database.log_room('music', self.client, self.client.area, message=name)
+						if self.client.afk:
+							self.client.server.client_manager.toggle_afk(self.client)
+						if self.server.config['afk_delay'] > 0:
+							self.client.afktime = asyncio.get_event_loop().call_later(self.client.server.config['afk_delay'], lambda: client.server.client_manager.toggle_afk(self.client))
 					except ServerError:
 						return
 				except ClientError as ex:

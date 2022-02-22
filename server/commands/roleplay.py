@@ -40,7 +40,6 @@ __all__ = [
 	'ooc_cmd_timer',
 	'ooc_cmd_hide',
 	'ooc_cmd_unhide',
-	'ooc_cmd_addrole',
 	'ooc_cmd_broadcast'
 ]
 
