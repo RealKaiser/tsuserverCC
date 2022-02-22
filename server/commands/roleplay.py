@@ -267,7 +267,7 @@ def ooc_cmd_timer(client, arg):
 				target.send_ooc(f'Timer {timer_id} has expired.')
 			timer.static = datetime.timedelta(0)
 			timer.started = False
-			database.log_room('timer.expired', None, target, message=str(timer_id))
+			#database.log_room('timer.expired', None, target, message=str(timer_id))
 
 		if timer.schedule:
 			timer.schedule.cancel()
