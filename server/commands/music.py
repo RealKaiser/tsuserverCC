@@ -39,11 +39,11 @@ __all__ = [
 ]
 
 def ooc_cmd_ambiance(client, arg):
-	if arg < 1:
+	if len(arg) < 1:
 		raise ArgumentError('Input a track to use as ambiance, or input the preset: "rain"')
 	if not client.is_mod and client not in client.area.owners:
 		raise ClientError('You must be a CM.')
-	if arg == 'rain' or '"rain"':
+	if arg == 'rain':
 		arg = 'https://rainymood.com/audio1112/0.mp3'
 	client.area.ambiance = arg
 	client.area.send_command("MC", arg, -1, "", 1, 1, int(MusicEffect.FADE_OUT | MusicEffect.FADE_IN | MusicEffect.SYNC_POS),)
@@ -55,7 +55,7 @@ def ooc_cmd_ambiance(client, arg):
 	else:
 		client.send_ooc('Ambiance for this area set!')
 		
-def ooc_cmd_clearambiance(client):
+def ooc_cmd_clearambiance(client, arg):
 	if not client.is_mod and client not in client.area.owners:
 		raise ClientError('You must be a CM.')
 	client.area.ambiance = ''
