@@ -41,26 +41,30 @@ __all__ = [
 def ooc_cmd_ambiance(client, arg):
 	if arg < 1:
 		raise ArgumentError('Input a track to use as ambiance, or input the preset: "rain"')
-	if arg = 'rain' or '"rain"':
-		arg = https://rainymood.com/audio1112/0.mp3
+	if not client.is_mod and client not in client.area.owners:
+		raise ClientError('You must be a CM.')
+	if arg == 'rain' or '"rain"':
+		arg = 'https://rainymood.com/audio1112/0.mp3'
 	client.area.ambiance = arg
 	client.area.send_command("MC", arg, -1, "", 1, 1, int(MusicEffect.FADE_OUT | MusicEffect.FADE_IN | MusicEffect.SYNC_POS),)
 	if client.area.is_hub:
 		for sub in client.area.subareas:
+			sub.send_command("MC", arg, -1, "", 1, 1, int(MusicEffect.FADE_OUT | MusicEffect.FADE_IN | MusicEffect.SYNC_POS),)
 			sub.ambiance = arg
 		client.send_ooc('Ambiance for this hub set!')
-			sub.send_command("MC", arg, -1, "", 1, 1, int(MusicEffect.FADE_OUT | MusicEffect.FADE_IN | MusicEffect.SYNC_POS),)
 	else:
 		client.send_ooc('Ambiance for this area set!')
 		
 def ooc_cmd_clearambiance(client):
+	if not client.is_mod and client not in client.area.owners:
+		raise ClientError('You must be a CM.')
 	client.area.ambiance = ''
 	client.area.send_command("MC", '', -1, "", 1, 1, int(MusicEffect.FADE_OUT | MusicEffect.FADE_IN | MusicEffect.SYNC_POS),)
 	if client.area.is_hub:
 		for sub in client.area.subareas:
 			sub.ambiance = ''
-		client.send_ooc('Ambiance for this hub cleared!')
 			sub.send_command("MC", '', -1, "", 1, 1, int(MusicEffect.FADE_OUT | MusicEffect.FADE_IN | MusicEffect.SYNC_POS),)
+		client.send_ooc('Ambiance for this hub cleared!')
 	else:
 		client.send_ooc('Ambiance for this area cleared!')
 
