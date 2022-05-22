@@ -80,6 +80,7 @@ class ClientManager:
 			self.afk = False
 			self.afktime = None
 			self.listen = True
+			self.ambiance = ''
 			
 			# Mod/Admin stuff
 			self.is_admin = False
@@ -584,6 +585,9 @@ class ClientManager:
 				c.change_area(area)
 			if self.area.desc != '':
 				self.send_ooc(self.area.desc)
+			if self.area.ambiance != self.ambiance:
+				self.ambiance = self.area.ambiance
+				self.send_command("MC", self.ambiance, -1, "", 1, 1, int(MusicEffect.FADE_OUT | MusicEffect.FADE_IN | MusicEffect.SYNC_POS),)
 			self.area.send_command('CharsCheck', *self.get_available_char_list())
 			self.send_command('HP', 1, self.area.hp_def)
 			self.send_command('HP', 2, self.area.hp_pro)

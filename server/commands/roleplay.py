@@ -8,7 +8,6 @@ import datetime
 import pytimeparse
 
 from server import database
-from server.party import Party, Vote
 from server.constants import TargetType
 from server.exceptions import ClientError, ServerError, ArgumentError
 

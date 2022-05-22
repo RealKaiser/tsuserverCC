@@ -7,6 +7,7 @@ from server import database
 from server.constants import TargetType
 from server.exceptions import ClientError, ServerError, ArgumentError
 from server.constants import TargetType
+from server.constants import MusicEffect
 
 from . import mod_only
 
@@ -32,28 +33,55 @@ __all__ = [
 	'ooc_cmd_storemlist',
 	'ooc_cmd_loadmlist',
 	'ooc_cmd_clearmusiclist',
-	'ooc_cmd_ambiance'
+	'ooc_cmd_loop',
+	'ooc_cmd_ambiance',
+	'ooc_cmd_clearambiance'
 ]
 
-
 def ooc_cmd_ambiance(client, arg):
+	if arg < 1:
+		raise ArgumentError('Input a track to use as ambiance, or input the preset: "rain"')
+	if arg = 'rain' or '"rain"':
+		arg = https://rainymood.com/audio1112/0.mp3
+	client.area.ambiance = arg
+	client.area.send_command("MC", arg, -1, "", 1, 1, int(MusicEffect.FADE_OUT | MusicEffect.FADE_IN | MusicEffect.SYNC_POS),)
+	if client.area.is_hub:
+		for sub in client.area.subareas:
+			sub.ambiance = arg
+		client.send_ooc('Ambiance for this hub set!')
+			sub.send_command("MC", arg, -1, "", 1, 1, int(MusicEffect.FADE_OUT | MusicEffect.FADE_IN | MusicEffect.SYNC_POS),)
+	else:
+		client.send_ooc('Ambiance for this area set!')
+		
+def ooc_cmd_clearambiance(client):
+	client.area.ambiance = ''
+	client.area.send_command("MC", '', -1, "", 1, 1, int(MusicEffect.FADE_OUT | MusicEffect.FADE_IN | MusicEffect.SYNC_POS),)
+	if client.area.is_hub:
+		for sub in client.area.subareas:
+			sub.ambiance = ''
+		client.send_ooc('Ambiance for this hub cleared!')
+			sub.send_command("MC", '', -1, "", 1, 1, int(MusicEffect.FADE_OUT | MusicEffect.FADE_IN | MusicEffect.SYNC_POS),)
+	else:
+		client.send_ooc('Ambiance for this area cleared!')
+
+def ooc_cmd_loop(client, arg):
 	if not client.is_mod and client not in client.area.owners:
 		raise ClientError('You must be a CM.')
 	area = client.area
-	if area.ambiance:
-		area.ambiance = False
-		area.broadcast_ooc('Ambiance for this area has been disabled, music played will loop client-side.')
+	if area.loop:
+		area.loop = False
+		area.broadcast_ooc('Music played will now loop client-side.')
 		if area.is_hub:
 			for sub in area.subareas:
-				sub.ambiance = False
-				sub.broadcast_ooc('Ambiance for this area has been disabled, music played will loop client-side.')
+				sub.loop = False
+				sub.broadcast_ooc('Music played will loop client-side.')
 	else:
-		area.ambiance = True
-		area.broadcast_ooc('Ambiance for this area has been enabled, music played will loop server-side.')
+		area.loop = True
+		area.broadcast_ooc('Music played will loop server-side.')
 		if area.is_hub:
 			for sub in area.subareas:
-				sub.ambiance = True
-				sub.broadcast_ooc('Ambiance for this area has been enabled, music played will loop server-side.')
+				sub.loop = True
+				sub.broadcast_ooc('Music played will loop server-side.')
 		
 		
 def ooc_cmd_addmusic(client, arg):
@@ -170,14 +198,12 @@ def ooc_cmd_play(client, arg):
 			if '.mp3/' in args[0]:
 				raise ArgumentError("Don't be sneaky.")
 			name = ''
-			
-			if client.area.ambiance:
-				length = args[1]
-			else:
-				length = 1
 		else:
 			name = 'custom/'
+		if client.area.ambiance:
 			length = args[1]
+		else:
+			length = 1
 		name += args[0]
 		
 		try:
@@ -185,20 +211,18 @@ def ooc_cmd_play(client, arg):
 		except ValueError:
 			raise ClientError(f'{length} does not look like a valid length.')
 	elif len(args) == 1:
+		length = 0
 		if re.match(r"(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?", args[0]):
 			if '.mp3' not in args[0]:
 				raise ArgumentError("Doesn't seem to be an mp3.")
 			if '.mp3/' in args[0]:
 				raise ArgumentError("Don't be sneaky.")
 			name = ''
-			if client.area.ambiance:
-				length = 0
-			else:
-				length = 1
 		else:
 			name = 'custom/'
 		name += args[0]
-		length = 0
+		if not client.area.ambiance:
+			length = 1
 	else:
 		raise ArgumentError('Too many arguments. Use /play "name" "length in seconds".')
 	client.area.play_music(name, client.char_id, length)

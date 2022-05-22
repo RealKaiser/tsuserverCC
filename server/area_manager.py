@@ -121,8 +121,9 @@ class AreaManager:
 			self.last_speaker = None
 			self.last_ooc = ''
 			self.spies = set()
-			self.ambiance = False
+			self.loop = False
 			self.webblock = False
+			self.ambiance = ''
 			self.timers = [AreaManager.Timer() for _ in range(4)]
 
 			self.is_locked = self.Locked.FREE
@@ -358,9 +359,11 @@ class AreaManager:
 			"""
 			if self.music_looper:
 				self.music_looper.cancel()
-			if self.ambiance or name.startswith('/custom'):
+			if self.loop or name.startswith('/custom'):
 				if length != 0:
 					self.music_looper = asyncio.get_event_loop().call_later(length, lambda: self.play_music(name, -1, length, effects))
+				else:
+					length = 1
 			else:
 				if length != 0:
 					length = 1
@@ -377,9 +380,11 @@ class AreaManager:
 			"""
 			if self.music_looper:
 				self.music_looper.cancel()
-			if self.ambiance or name.startswith('/custom'):
+			if self.loop or name.startswith('/custom'):
 				if length != 0:
 					self.music_looper = asyncio.get_event_loop().call_later(length, lambda: self.play_music(name, -1, length, effects))
+				else:
+					length = 1
 			else:
 				if length != 0:
 					length = 1
