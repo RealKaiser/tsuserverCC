@@ -213,15 +213,7 @@ class ClientManager:
 			"""Send the message of the day to the client."""
 			motd = self.server.config['motd']
 			self.send_ooc(f'=== MOTD ===\r\n{motd}\r\n=============')
-
-		def set_ambiance(self):
-			"""Plays ambiance upon joining the server if applicable."""
-			lobby = self.server.area_manager.default_area()
-			if lobby.desc != '':
-				self.send_ooc(lobby.desc)
-			if self.ambiance != lobby.ambiance:
-				lobby.ambiance = self.ambiance
-				self.send_command("MC", self.ambiance, -1, "", 1, 1, int(MusicEffect.FADE_OUT | MusicEffect.FADE_IN | MusicEffect.SYNC_POS),)
+			
 
 		def send_player_count(self):
 			"""
@@ -283,6 +275,9 @@ class ClientManager:
 			new_char = self.char_name
 			database.log_room('char.change', self, self.area,
 				message={'from': old_char, 'to': new_char})
+			if self.ambiance != self.area.ambiance:
+				self.ambiance = self.area.ambiance
+				self.send_command("MC", self.area.ambiance, -1, "", 1, 1, int(MusicEffect.FADE_OUT | MusicEffect.FADE_IN | MusicEffect.SYNC_POS),)
 			if self.afk:
 				self.server.client_manager.toggle_afk(self)
 			if self.server.config['afk_delay'] > 0:

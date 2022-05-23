@@ -47,6 +47,8 @@ def ooc_cmd_ambiance(client, arg):
 		arg = 'https://rainymood.com/audio1112/0.mp3'
 	client.area.ambiance = arg
 	client.area.send_command("MC", arg, -1, "", 1, 1, int(MusicEffect.FADE_OUT | MusicEffect.FADE_IN | MusicEffect.SYNC_POS),)
+	for c in client.area.clients:
+		c.ambiance is client.area.ambiance
 	if client.area.is_hub:
 		for sub in client.area.subareas:
 			sub.send_command("MC", arg, -1, "", 1, 1, int(MusicEffect.FADE_OUT | MusicEffect.FADE_IN | MusicEffect.SYNC_POS),)
@@ -60,6 +62,8 @@ def ooc_cmd_clearambiance(client, arg):
 		raise ClientError('You must be a CM.')
 	client.area.ambiance = ''
 	client.area.send_command("MC", '', -1, "", 1, 1, int(MusicEffect.FADE_OUT | MusicEffect.FADE_IN | MusicEffect.SYNC_POS),)
+	for c in client.area.clients:
+		c.ambiance is client.area.ambiance
 	if client.area.is_hub:
 		for sub in client.area.subareas:
 			sub.ambiance = ''
