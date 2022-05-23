@@ -298,16 +298,20 @@ Requires Python 3.7+ and PyYAML.
     - Allow only the specified position(s) to be used.
 	- Use with no arguments to what positions the area is locked.
     - Using "clear" as an argument clears the poslock.
-* **ambiance**
-	- Toggles 'ambiance' or server-side looping. While on, allows new clients joining an area to hear a set song once it loops without needing to play it themselves.
+* **loop**
+	- Toggles server-side looping. While on, allows new clients joining an area to hear a set song once it loops without needing to play it themselves.
 * **timer** \<id> [+/-][x in seconds, minutes, hours etc.] | \<id> start | \<id> \<pause|stop> | \<id> hide
     - Manage a countdown timer in the current area. Note that timer of ID 0 is global. All other timer IDs are local to the area.
 * **areadesc** "your description here"
 	- Sets a description that will be sent to every client that enters the area, use without argument to check what the current is, if any.
-* **areadesc**
+* **clearareadesc**
 	- Will clear the area's description if it has one.
 * **movetime** "time in seconds"
 	- Sets how long it takes to enter the area, only works in hubs you CM. if used in the hub's main area it will apply to every sub-area. setting this to 0 clears it.
+* **ambiance** "track to play"
+	- Plays ambiance that will alongside music, looks in the music folder by default, but you can also stream or use the "rain" preset.
+* **clearambiance**
+	- Clears any ambiance currently playing in the area.
 
 #### Testimony Recording
 * A new feature in tsuserverCC - you can now record testimonies and play them back with automatic formatting!
