@@ -38,6 +38,7 @@ from typing import List
 
 
 from server import database
+from server.constants import MusicEffect
 from server.evidence import EvidenceList
 from server.exceptions import AreaError
 
@@ -154,6 +155,12 @@ class AreaManager:
 								sub.conn_arup_players()
 			if client.char_id != -1:
 				database.log_room('area.join', client, self)
+				
+			if self.desc != '':
+				client.send_ooc(self.desc)
+			if self.ambiance != client.ambiance:
+				client.ambiance = self.ambiance
+				client.send_command("MC", self.ambiance, -1, "", 1, 1, int(MusicEffect.FADE_OUT | MusicEffect.FADE_IN | MusicEffect.SYNC_POS),)
 				
 			# Update the timers
 			timer = self.server.area_manager.timer

@@ -39,6 +39,7 @@ from server import database
 from server.webhooks import Webhooks
 from server.constants import TargetType
 from server.exceptions import ClientError, AreaError
+from server.constants import MusicEffect
 
 
 class ClientManager:
@@ -212,6 +213,15 @@ class ClientManager:
 			"""Send the message of the day to the client."""
 			motd = self.server.config['motd']
 			self.send_ooc(f'=== MOTD ===\r\n{motd}\r\n=============')
+
+		def set_ambiance(self):
+			"""Plays ambiance upon joining the server if applicable."""
+			lobby = self.server.area_manager.default_area()
+			if lobby.desc != '':
+				self.send_ooc(lobby.desc)
+			if self.ambiance != lobby.ambiance:
+				lobby.ambiance = self.ambiance
+				self.send_command("MC", self.ambiance, -1, "", 1, 1, int(MusicEffect.FADE_OUT | MusicEffect.FADE_IN | MusicEffect.SYNC_POS),)
 
 		def send_player_count(self):
 			"""
@@ -583,11 +593,6 @@ class ClientManager:
 						self.area.broadcast_ooc(f'{self.char_name} has entered from {old_area.name}.')
 			for c in self.followers:
 				c.change_area(area)
-			if self.area.desc != '':
-				self.send_ooc(self.area.desc)
-			if self.area.ambiance != self.ambiance:
-				self.ambiance = self.area.ambiance
-				self.send_command("MC", self.ambiance, -1, "", 1, 1, int(MusicEffect.FADE_OUT | MusicEffect.FADE_IN | MusicEffect.SYNC_POS),)
 			self.area.send_command('CharsCheck', *self.get_available_char_list())
 			self.send_command('HP', 1, self.area.hp_def)
 			self.send_command('HP', 2, self.area.hp_pro)
