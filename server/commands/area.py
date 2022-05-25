@@ -286,6 +286,14 @@ def ooc_cmd_rename(client, arg: str) -> None:
 			for area in client.server.area_manager.areas:
 				area_list.append(area.name)
 			client.server.send_all_cmd_pred('FA', *area_list, pred=lambda x: not x.area.is_hub and not x.area.sub)
+			client.server.area_manager.send_arup_cms()
+			client.server.area_manager.send_arup_players()
+			client.server.area_manager.send_arup_lock()
+			client.server.area_manager.send_arup_status()
+			client.area.sub_arup_players()
+			client.area.sub_arup_cms()
+			client.area.sub_arup_status()
+			client.area.sub_arup_lock()
 			return
 	if len(arg) > 30:
 		raise ArgumentError('That name is too long!')
@@ -312,6 +320,10 @@ def ooc_cmd_rename(client, arg: str) -> None:
 		client.server.area_manager.send_arup_players()
 		client.server.area_manager.send_arup_lock()
 		client.server.area_manager.send_arup_status()
+		client.area.sub_arup_players()
+		client.area.sub_arup_cms()
+		client.area.sub_arup_status()
+		client.area.sub_arup_lock()
 	else:
 		client.area.name = arg
 		area_list = []
