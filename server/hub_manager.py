@@ -203,11 +203,21 @@ class HubManager:
 		hub.subareas.clear()
 		hub.cur_subid = 1
 		hub.desc = ''
+		hub.name = f'Hub {hub.hubid}'
+		hub.change_status('idle')
 		area_list = []
 		lobby = client.server.area_manager.default_area()
 		area_list.append(lobby.name)
 		area_list.append(hub.name)
 		client.server.send_all_cmd_pred('FA', *area_list, pred=lambda x: x.area == hub or x.area in hub.subareas)
+		area_list = []
+		for area in client.server.area_manager.areas:
+			area_list.append(area.name)
+		client.server.send_all_cmd_pred('FA', *area_list, pred=lambda x: not x.area.is_hub and not x.area.sub)
+		client.server.area_manager.send_arup_cms()
+		client.server.area_manager.send_arup_players()
+		client.server.area_manager.send_arup_lock()
+		client.server.area_manager.send_arup_status()
 		hub.sub_arup_players()
 		hub.sub_arup_cms()
 		hub.sub_arup_status()
