@@ -277,7 +277,7 @@ class HubManager:
 			newsub.hub = client.area.hub
 			client.area.hub.subareas.append(newsub)
 		newsub.background = newsub.hub.background
-		newsub.cmusic_list = newsub.hub.cmusic_list
+		newsub.cmusic_list = newsub.hub.cmusic_list.copy()
 		newsub.cmusic_listname = newsub.hub.cmusic_listname
 		if newsub.hub.hubtype == 'arcade':
 			newsub.abbreviation = f'AHS{new_id}'
