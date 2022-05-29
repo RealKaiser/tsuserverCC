@@ -203,7 +203,8 @@ class HubManager:
 		hub.subareas.clear()
 		hub.cur_subid = 1
 		hub.desc = ''
-		hub.name = f'Hub {hub.hubid}'
+		if hub.hubtype == 'default':
+			hub.name = f'Hub {hub.hubid}'
 		hub.change_status('idle')
 		area_list = []
 		lobby = client.server.area_manager.default_area()

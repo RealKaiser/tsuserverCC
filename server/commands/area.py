@@ -303,7 +303,10 @@ def ooc_cmd_rename(client, arg: str) -> None:
 			if not character == ':' and not character == '!' and not character == '-' and not character == '?' and not character == ' ':
 				raise ArgumentError('Try to exclude special characters while renaming.')
 	if client.area.is_hub:
-		client.area.name = f'Hub {client.area.hubid}: {arg}'
+		if client.area.hubtype == 'default':
+			client.area.name = f'Hub {client.area.hubid}: {arg}'
+		else:
+			client.area.name = f'{arg}'
 		area_list = []
 		lobby = client.server.area_manager.default_area()
 		area_list.append(lobby.name)

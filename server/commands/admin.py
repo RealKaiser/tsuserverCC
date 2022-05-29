@@ -3,6 +3,7 @@ import os
 import arrow
 import pytimeparse
 import yaml
+import importlib
 
 from heapq import heappop, heappush
 from server import database
@@ -48,14 +49,8 @@ __all__ = [
 	'ooc_cmd_addmod',
 	'ooc_cmd_removemod',
 	'ooc_cmd_spy',
-	'ooc_cmd_geoiprefresh',
 	'ooc_cmd_about'
 ]
-
-def ooc_cmd_geoiprefresh(client, arg):
-	if not client.is_admin:
-		raise ArgumentError('You must be authorized to do that.')
-	client.server.load_ipranges()
 
 """
 Command: /spy
