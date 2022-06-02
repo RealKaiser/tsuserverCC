@@ -58,7 +58,7 @@ def ooc_cmd_disemvowel(client, arg):
 @mod_only()
 def ooc_cmd_gimp(client, arg):
 	"""
-	Remove all vowels from a user's IC chat.
+	Replace every message from a user in IC chat with a message from gimp.yaml.
 	Usage: /disemvowel <id>
 	"""
 	if len(arg) == 0:
