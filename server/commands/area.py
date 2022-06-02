@@ -105,14 +105,15 @@ def ooc_cmd_areadesc(client, arg):
 			client.send_ooc('This area has no set description, add an argument to set its description.')
 		else:
 			client.send_ooc(client.area.desc)
-	if client not in client.area.owners:
-		raise ClientError("You aren't a CM of this area.")
-	if len(arg) > 255:
-		raise ArgumentError('Description is too long, try something shorter.')
-	setdesc = '=== Area Description ===\r\n'
-	setdesc += arg
-	client.area.desc = setdesc
-	client.send_ooc('Area description set, it will be shown to each new client to the area.')
+	else:
+		if client not in client.area.owners:
+			raise ClientError("You aren't a CM of this area.")
+		if len(arg) > 255:
+			raise ArgumentError('Description is too long, try something shorter.')
+		setdesc = '=== Area Description ===\r\n'
+		setdesc += arg
+		client.area.desc = setdesc
+		client.send_ooc('Area description set, it will be shown to each new client to the area.')
 		
 def ooc_cmd_clearareadesc(client, arg):
 	if len(arg) != 0:
