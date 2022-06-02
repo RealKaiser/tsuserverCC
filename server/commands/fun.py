@@ -128,7 +128,7 @@ def ooc_cmd_partynote(client, arg):
 
 def ooc_cmd_clearpartynote(client, arg):
 	"""
-	Clears the client's notes.
+	Clears the party's notes that a client is part of.
 	"""
 	if not client.in_party:
 		raise ClientError('You aren\'t in a party.')
