@@ -931,6 +931,15 @@ class ClientManager:
 					self.mod_profile_name = matches[0]
 					with open(modfile, 'r') as chars:
 						mods = yaml.safe_load(chars)
+					for item in mods:
+						ipid = item['ipid']
+						if self.ipid == ipid:
+							self.mod_profile_name = item['name']
+							self.is_mod = True
+							return self.mod_profile_name
+							if item['status'] == 'admin':
+								self.is_admin = True
+								return self.mod_profile_name
 					mods.append({'name': matches[0], 'status': 'mod', 'ipid': self.ipid})
 					with open(modfile, 'w', encoding='utf-8') as dump:
 						yaml.dump(mods, dump)

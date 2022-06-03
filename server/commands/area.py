@@ -261,7 +261,6 @@ def ooc_cmd_clearhub(client, arg: str) -> None:
 		raise ArgumentError('This command takes no arguments.')
 	client.server.hub_manager.clearhub(client)
 
-
 def ooc_cmd_rename(client, arg: str) -> None:
 	if client not in client.area.owners and not client.is_mod:
 		raise ClientError('You must be a CM.')
