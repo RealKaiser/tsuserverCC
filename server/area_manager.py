@@ -158,6 +158,9 @@ class AreaManager:
 				if client.ambiance != self.ambiance:
 					client.ambiance = self.ambiance
 					client.send_command("MC", self.ambiance, -1, "", 1, 1, int(MusicEffect.FADE_OUT | MusicEffect.FADE_IN | MusicEffect.SYNC_POS),)
+			if not self.loop:
+				if self.current_music != '':
+					client.send_command("MC", self.current_music, -1, "", 1, 0, int(MusicEffect.FADE_OUT | MusicEffect.FADE_IN | MusicEffect.SYNC_POS),)
 				
 			if self.desc != '':
 				client.send_ooc(self.desc)
