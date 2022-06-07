@@ -392,8 +392,6 @@ class AreaManager:
 				if index == now:
 					index += 1
 					name = item['name']
-					if re.match(r"(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?", name):
-						stream = True
 					length = item['length']
 					if self.music_looper:
 						self.music_looper.cancel()
@@ -406,8 +404,6 @@ class AreaManager:
 				index += 1
 				if item['type'] != 'intro':
 					name = item['name']
-					if re.match(r"(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?", name):
-						stream = True
 					length = item['length']
 					if self.music_looper:
 						self.music_looper.cancel()
