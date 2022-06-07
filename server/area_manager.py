@@ -31,6 +31,7 @@ import random
 import time
 import yaml
 import arrow
+import re
 
 from dataclasses import dataclass
 from enum import Enum
@@ -157,10 +158,14 @@ class AreaManager:
 				database.log_room('area.join', client, self)
 				if client.ambiance != self.ambiance:
 					client.ambiance = self.ambiance
-					client.send_command("MC", self.ambiance, -1, "", 1, 1, int(MusicEffect.FADE_OUT | MusicEffect.FADE_IN | MusicEffect.SYNC_POS),)
-			if not self.loop:
-				if self.current_music != '':
-					client.send_command("MC", self.current_music, -1, "", 1, 0, int(MusicEffect.FADE_OUT | MusicEffect.FADE_IN | MusicEffect.SYNC_POS),)
+					client.send_command("MC", self.ambiance, -1, "", 1, 1, int(MusicEffect.FADE_OUT),)
+				if self.loop:
+					client.send_command("MC", 'None', -1, "", 0, 0, int(MusicEffect.FADE_OUT),)
+					client.current_music = self.current_music
+				else:
+					if client.current_music != self.current_music:
+						client.send_command("MC", self.current_music, -1, "", 1, 0, int(MusicEffect.FADE_OUT),)
+						client.current_music = self.current_music
 				
 			if self.desc != '':
 				client.send_ooc(self.desc)
@@ -378,6 +383,38 @@ class AreaManager:
 				if length != 0:
 					length = 1
 			self.send_command('MC', name, cid, '', length, 0, effects)
+
+		def play_msequence(self, file, index=0):
+			now = 0
+			with open(file, 'r', encoding='utf-8') as chars:
+				sequence = yaml.safe_load(chars)
+			for item in sequence:
+				if index == now:
+					index += 1
+					name = item['name']
+					if re.match(r"(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?", name):
+						stream = True
+					length = item['length']
+					if self.music_looper:
+						self.music_looper.cancel()
+					self.send_command('MC', name, -1, '', length, 0, int(MusicEffect.FADE_OUT))
+					self.music_looper = asyncio.get_event_loop().call_later(length, lambda: self.play_msequence(file, index))
+					return
+				now += 1
+			index = 0
+			for item in sequence:
+				index += 1
+				if item['type'] != 'intro':
+					name = item['name']
+					if re.match(r"(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?", name):
+						stream = True
+					length = item['length']
+					if self.music_looper:
+						self.music_looper.cancel()
+					self.send_command('MC', name, -1, '', length, 0, int(MusicEffect.FADE_OUT))
+					self.music_looper = asyncio.get_event_loop().call_later(length, lambda: self.play_msequence(file, index))
+					return
+			return
 
 		def play_music_shownamed(self, name, cid, showname, length=0, effects=0):
 			"""

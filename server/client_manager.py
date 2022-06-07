@@ -82,6 +82,7 @@ class ClientManager:
 			self.afktime = None
 			self.listen = True
 			self.ambiance = ''
+			self.currentmusic = ''
 			
 			# Mod/Admin stuff
 			self.is_admin = False
@@ -277,7 +278,10 @@ class ClientManager:
 				message={'from': old_char, 'to': new_char})
 			if self.ambiance != self.area.ambiance:
 				self.ambiance = self.area.ambiance
-				self.send_command("MC", self.area.ambiance, -1, "", 1, 1, int(MusicEffect.FADE_OUT | MusicEffect.FADE_IN | MusicEffect.SYNC_POS),)
+				self.send_command("MC", self.area.ambiance, -1, "", 1, 1, int(MusicEffect.FADE_OUT),)
+			if not self.area.loop:
+				if self.currentmusic != self.area.currentmusic:
+					sell.send_command("MC", self.area.current_music, -1, "", 1, 0, int(MusicEffect.FADE_OUT),)
 			if self.afk:
 				self.server.client_manager.toggle_afk(self)
 			if self.server.config['afk_delay'] > 0:
