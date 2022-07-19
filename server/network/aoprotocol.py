@@ -535,6 +535,9 @@ class AOProtocol(asyncio.Protocol):
 			text = ' '.join(part[1:])
 		if msg_type not in ('chat', '0', '1'):
 			return
+		if sfx.startswith('../music'):
+			self.client.send_ooc('Music as SFX is not allowed.')
+			return
 		if anim_type not in (0, 1, 2, 4, 5, 6):
 			return
 		if cid != self.client.char_id:

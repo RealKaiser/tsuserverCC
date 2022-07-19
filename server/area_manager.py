@@ -75,7 +75,6 @@ class AreaManager:
 					 desc=''):
 			self.timetomove = 0
 			self.desc = ''
-			self.is_hub = is_hub
 			self.hubid = hubid
 			self.hubtype = hubtype
 			self.hub = None

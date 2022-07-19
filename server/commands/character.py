@@ -16,6 +16,7 @@ __all__ = [
 	'ooc_cmd_forcepos',
 	'ooc_cmd_charselect',
 	'ooc_cmd_randomchar',
+	'ooc_cmd_rc',
 	'ooc_cmd_charcurse',
 	'ooc_cmd_uncharcurse',
 	'ooc_cmd_charids',
@@ -163,7 +164,27 @@ def ooc_cmd_randomchar(client, arg):
 		raise
 	client.send_ooc('Randomly switched to {}'.format(
 		client.char_name))
-
+		
+def ooc_cmd_rc(client, arg):
+	"""
+	Select a random character.
+	Usage: /randomchar
+	"""
+	if len(arg) != 0:
+		raise ArgumentError('This command has no arguments.')
+	if len(client.charcurse) > 0:
+		free_id = random.choice(client.charcurse)
+	else:
+		try:
+			free_id = client.area.get_rand_avail_char_id()
+		except AreaError:
+			raise
+	try:
+		client.change_character(free_id)
+	except ClientError:
+		raise
+	client.send_ooc('Randomly switched to {}'.format(
+		client.char_name))
 
 @mod_only()
 def ooc_cmd_charcurse(client, arg):
