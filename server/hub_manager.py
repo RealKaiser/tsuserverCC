@@ -281,9 +281,9 @@ class HubManager:
 		newsub.cmusic_list = newsub.hub.cmusic_list.copy()
 		newsub.cmusic_listname = newsub.hub.cmusic_listname
 		if newsub.hub.hubtype == 'arcade':
-			newsub.abbreviation = f'AHS{new_id}'
+			newsub.abbreviation = f'AR{new_id}'
 		elif newsub.hub.hubtype == 'user':
-			newsub.abbreviation = f'UHS{new_id}'
+			newsub.abbreviation = f'USER{new_id}'
 		elif newsub.hub.hubtype == 'courtroom':
 			newsub.abbreviation = f'CR{new_id}'
 			if len(arg) == 0:
