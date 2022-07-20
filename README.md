@@ -319,9 +319,10 @@ Requires Python 3.7+ and PyYAML.
 * While recording, you can add new statements by putting in IC `+[Your Statement]`. These will show up as if you're just normally testifying for the first time. 
     - If you're paired and want your partner to have a statement, have the pair add the statement instead. (Make sure they are also a CM.)
 * Once you're done recording your testimony, just do `/end`. After this, you can do `///` in IC to make the title appear again, this time with a CE woosh.
-* After all that, anyone in the area can say `>` in IC to move to the next statement or `<` for the previous statement, `=` is also available to use to see the current statement again. 
+* After all that, anyone in the area can say `>` in IC to move to the next statement or `<` for the previous statement, `=` is also available to use to see the current statement again.
+* If the next statement is particularly long, you can say `>>` to speed it up. You can also skip to a statement with `>[statement number].
 * All the statements will be automatically displayed in green.
-* The CM can at this point also add 'substatements' by using +[statement] again, and then can also amend the current statement by using &[amended statement].
+* The CM can at this point  add 'substatements' by using +[statement] again, and can also amend the current statement by using &[amended statement].
 * If you want to clear the testimony, use /cleartestimony in OOC. For viewing the current testimony, simply do /testimony in OOC.
 
 ### Mod Commands

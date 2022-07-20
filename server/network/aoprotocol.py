@@ -752,6 +752,7 @@ class AOProtocol(asyncio.Protocol):
 						self.client.send_ooc(f'Statement {newamend.id} amended.')
 
 			playback = False
+			fastforward = False
 			if msg == '>':
 				if len(self.client.area.recorded_messages) != 0 and not self.client.area.is_recording:
 					self.client.area.statement += 1
@@ -765,6 +766,20 @@ class AOProtocol(asyncio.Protocol):
 							statement = s
 							break
 					playback = True
+			if msg == '>>':
+				if len(self.client.area.recorded_messages) != 0 and not self.client.area.is_recording:
+					self.client.area.statement += 1
+					if self.client.area.statement >= len(self.client.area.recorded_messages):
+						self.client.area.statement = 1
+						self.client.area.broadcast_ooc(f'{self.client.char_name} reached end, looping back to first statement.')
+					else:
+						self.client.area.broadcast_ooc(f'Testimony advanced by {self.client.char_name}.')
+					for s in self.client.area.recorded_messages:
+						if s.id == self.client.area.statement:
+							statement = s
+							break
+					playback = True
+					fastforward = True
 			elif msg.startswith('>'):
 				if len(self.client.area.recorded_messages) != 0 and not self.client.area.is_recording:
 					msg = msg[1:]
@@ -816,7 +831,14 @@ class AOProtocol(asyncio.Protocol):
 				last = len(self.client.area.recorded_messages) - 1
 				if not self.client.area.statement < 1 and not self.client.area.statement == last:
 					statement.prepce()
+				if fastforward:
+					nargs = statement.args[4]
+					statement.args[4] = '}}}'
+					statement.args[4] += nargs
 				self.client.area.send_command('MS', *statement.args)
+				if fastforward:
+					nargs = statement.args[4]
+					statement.args[4] = nargs[3:]
 
 			if not msg == '///' or not self.client in self.client.area.owners or len(self.client.area.recorded_messages) == 0:
 				if not playback:
