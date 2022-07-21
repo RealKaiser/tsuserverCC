@@ -165,9 +165,9 @@ class HubManager:
 			if sub.name == f'Area {oldid}':
 				sub.name = f'Area {sub.id}'
 			if hub.hubtype == 'arcade':
-				sub.abbreviation = f'AHS{sub.id}'
+				sub.abbreviation = f'AR{sub.id}'
 			elif hub.hubtype == 'user':
-				sub.abbreviation = f'UHS{sub.id}'
+				sub.abbreviation = f'USER{sub.id}'
 			elif hub.hubtype == 'courtroom':
 				if sub.name == f'Courtroom {oldid}':
 					sub.name = f'Courtroom {sub.id}'

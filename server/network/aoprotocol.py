@@ -753,7 +753,7 @@ class AOProtocol(asyncio.Protocol):
 
 			playback = False
 			fastforward = False
-			if msg == '>':
+			if msg == '>' or msg == '>>':
 				if len(self.client.area.recorded_messages) != 0 and not self.client.area.is_recording:
 					self.client.area.statement += 1
 					if self.client.area.statement >= len(self.client.area.recorded_messages):
@@ -766,23 +766,15 @@ class AOProtocol(asyncio.Protocol):
 							statement = s
 							break
 					playback = True
-			if msg == '>>':
-				if len(self.client.area.recorded_messages) != 0 and not self.client.area.is_recording:
-					self.client.area.statement += 1
-					if self.client.area.statement >= len(self.client.area.recorded_messages):
-						self.client.area.statement = 1
-						self.client.area.broadcast_ooc(f'{self.client.char_name} reached end, looping back to first statement.')
-					else:
-						self.client.area.broadcast_ooc(f'Testimony advanced by {self.client.char_name}.')
-					for s in self.client.area.recorded_messages:
-						if s.id == self.client.area.statement:
-							statement = s
-							break
-					playback = True
-					fastforward = True
+					if msg == '>>':
+						fastforward = True
 			elif msg.startswith('>'):
 				if len(self.client.area.recorded_messages) != 0 and not self.client.area.is_recording:
-					msg = msg[1:]
+					if msg.startswith('>>'):
+						msg = msg[2:]
+						fastforward = True
+					else:
+						msg = msg[1:]
 					try:
 						statementno = int(msg)
 					except:
@@ -798,7 +790,7 @@ class AOProtocol(asyncio.Protocol):
 					if not playback:
 						self.client.send_ooc('No statement with that number found.')
 						return
-			if msg == '<':
+			if msg == '<' or msg == '<<':
 				if len(self.client.area.recorded_messages) != 0 and not self.client.area.is_recording:
 					self.client.area.statement += -1
 					if self.client.area.statement < 1:
@@ -809,11 +801,15 @@ class AOProtocol(asyncio.Protocol):
 								statement = s
 								break
 						playback = True
+						if msg == '<<':
+							fastforward = True
 					else:
 						for s in self.client.area.recorded_messages:
 							if s.id == self.client.area.statement:
 								statement = s
 								playback = True
+								if msg == '<<':
+									fastforward = True
 								break
 						self.client.area.broadcast_ooc(f'{self.client.char_name} went to the previous statement of the testimony.')
 			if msg == '=':

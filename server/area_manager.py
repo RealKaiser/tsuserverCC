@@ -75,6 +75,7 @@ class AreaManager:
 					 desc=''):
 			self.timetomove = 0
 			self.desc = ''
+			self.is_hub = is_hub
 			self.hubid = hubid
 			self.hubtype = hubtype
 			self.hub = None
@@ -696,6 +697,8 @@ class AreaManager:
 			self.current_music_player = client.char_name
 			self.current_music_player_ipid = client.ipid
 			self.current_music = name
+			for c in self.clients:
+				c.current_music = name
 
 		def add_music_playing_shownamed(self, client, showname, name):
 			"""
@@ -707,6 +710,8 @@ class AreaManager:
 			self.current_music_player = f'{showname} ({client.char_name})'
 			self.current_music_player_ipid = client.ipid
 			self.current_music = name
+			for c in self.clients:
+				c.current_music = name
 
 		def get_evidence_list(self, client):
 			"""
