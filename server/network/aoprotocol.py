@@ -812,15 +812,17 @@ class AOProtocol(asyncio.Protocol):
 									fastforward = True
 								break
 						self.client.area.broadcast_ooc(f'{self.client.char_name} went to the previous statement of the testimony.')
-			if msg == '=':
+			if msg == '=' or msg == '==':
 				if len(self.client.area.recorded_messages) != 0 and not self.client.area.is_recording:
 					if self.client.area.statement <= 0:
 						self.client.area.statement = 1
 					for s in self.client.area.recorded_messages:
 						if s.id == self.client.area.statement:
 							statement = s
-							playback = True
 							break
+						playback = True
+						if msg == '==':
+							fastforward = True
 					self.client.area.broadcast_ooc(f'{self.client.char_name} repeated the current statement.')
 
 			if playback:
@@ -842,8 +844,6 @@ class AOProtocol(asyncio.Protocol):
 						send_args[2] = 'Narrator'
 						send_args[3] = 'normal'
 					elif not self.client.visible:
-						send_args[1] = 0
-						send_args[2] = 'Narrator'
 						send_args[3] = '../../background/AADetentionCenter/defensedesk'
 
 					self.client.area.send_command('MS', *send_args)
