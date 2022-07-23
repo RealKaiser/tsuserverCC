@@ -75,13 +75,6 @@ class AreaManager:
 					 desc=''):
 			self.timetomove = 0
 			self.desc = ''
-			self.is_hub = is_hub
-			self.hubid = hubid
-			self.hubtype = hubtype
-			self.hub = None
-			self.subareas = []
-			self.sub = False
-			self.cur_subid = 1
 			self.iniswap_allowed = iniswap_allowed
 			self.clients = set()
 			self.invite_list = {}
@@ -96,37 +89,48 @@ class AreaManager:
 			self.doc = 'No document.'
 			self.status = 'IDLE'
 			self.judgelog = []
-			self.current_music = ''
-			self.current_music_player = ''
-			self.current_music_player_ipid = -1
 			self.evi_list = EvidenceList()
-			self.is_recording = False
 			self.is_restricted = False
-			self.recorded_messages = []
-			self.statement = 0
 			self.connections = []
 			self.evidence_mod = evidence_mod
 			self.locking_allowed = locking_allowed
 			self.showname_changes_allowed = showname_changes_allowed
 			self.shouts_allowed = shouts_allowed
 			self.abbreviation = abbreviation
-			self.music_looper = None
 			self.cards = dict()
-			self.custom_list = dict()
-			self.cmusic_list = []
-			self.cmusic_listname = ''
 			self.hidden = False
 			self.password = ''
-			self.allowmusic = True
-			self.areapair = dict()
 			self.poslock = []
 			self.last_speaker = None
 			self.last_ooc = ''
 			self.spies = set()
-			self.loop = False
 			self.webblock = False
-			self.ambiance = ''
 			self.timers = [AreaManager.Timer() for _ in range(4)]
+			
+			# Hub stuff
+			self.is_hub = is_hub
+			self.hubid = hubid
+			self.hubtype = hubtype
+			self.hub = None
+			self.subareas = []
+			self.sub = False
+			self.cur_subid = 1
+			
+			# Music stuff
+			self.allowmusic = True
+			self.loop = False
+			self.current_music = ''
+			self.current_music_player = ''
+			self.current_music_player_ipid = -1
+			self.music_looper = None
+			self.ambiance = ''
+			self.cmusic_list = []
+			self.cmusic_listname = ''
+			
+			#Testimony stuff
+			self.is_recording = False
+			self.recorded_messages = []
+			self.statement = 0
 
 			self.is_locked = self.Locked.FREE
 			self.blankposting_allowed = True
@@ -580,6 +584,8 @@ class AreaManager:
 				raise AreaError('Invalid background name.')
 			self.background = bg
 			self.send_command('BN', self.background)
+			if len(self.poslock) > 0:
+				self.send_command('SD', '*'.join(client.area.poslock))
 		
 		def change_cbackground(self, bg):
 			"""
@@ -589,6 +595,8 @@ class AreaManager:
 			"""
 			self.background = bg
 			self.send_command('BN', self.background)
+			if len(self.poslock) > 0:
+				self.send_command('SD', '*'.join(client.area.poslock))
 
 		def change_status(self, value):
 			"""

@@ -23,8 +23,54 @@ __all__ = [
 	'ooc_cmd_reload',
 	'ooc_cmd_visible',
 	'ooc_cmd_narrator',
+	'ooc_cmd_addfiles',
+	'ooc_cmd_removefiles',
+	'ooc_cmd_files',
 	'ooc_cmd_kickother'
 ]
+
+def ooc_cmd_addfiles(client, arg: str) -> None:
+	"""
+	Add a client's files link.
+	Usage: /addcustom <link>
+	"""
+	if len(arg) == 0:
+		raise ArgumentError('You must specify a link. Use /addcustom <link>.')
+	if len(arg) > 200:
+		raise ArgumentError('That link is too long.')
+	client.files = arg
+	client.area.broadcast_ooc('{} added a link for their files.'.format(client.char_name))
+
+def ooc_cmd_removefiles(client, arg: str) -> None:
+	"""
+	Removes a client's files link.
+	Usage: /removecustom
+	"""
+	if len(arg) > 0:
+		raise ArgumentError('This command takes no arguments.')
+	client.files = ''
+	client.area.broadcast_ooc('{} removed link for their files.'.format(client.char_name))
+
+def ooc_cmd_files(client, arg: str) -> None:
+	"""
+	Shows the files list
+	Usage: /files
+	"""
+	if len(arg) > 0:
+		raise ArgumentError('This command takes no arguments.')
+	msg = 'Files List:'
+	list = ''
+	for c in client.area.clients:
+		if c.files != '':
+			if c.showname != '':
+				list += f'\n{c.showname} ({c.charname}): {c.files}'
+			else:
+				list += f'\n{c.charname}: {c.files}'
+	if list != '':
+		msg += list
+	else:
+		msg = 'No players in the area have set their files'
+	client.send_ooc(msg)
 
 def ooc_cmd_narrator(client, arg):
 	if len(arg) > 0:
@@ -74,12 +120,10 @@ def ooc_cmd_pos(client, arg):
 	Usage: /pos <name>
 	"""
 	if len(arg) == 0:
-		client.change_position()
+		client.change_position('', True)
 		client.send_ooc('Position reset.')
 	else:
 		client.change_position(arg)
-		client.area.broadcast_evidence_list()
-		client.send_ooc('Position changed.')
 
 
 def ooc_cmd_forcepos(client, arg):

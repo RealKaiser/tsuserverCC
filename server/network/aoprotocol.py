@@ -536,8 +536,7 @@ class AOProtocol(asyncio.Protocol):
 		if msg_type not in ('chat', '0', '1'):
 			return
 		if sfx.startswith('../music'):
-			self.client.send_ooc('Music as SFX is not allowed.')
-			return
+			sfx = ''
 		if anim_type not in (0, 1, 2, 4, 5, 6):
 			return
 		if cid != self.client.char_id:
@@ -570,7 +569,7 @@ class AOProtocol(asyncio.Protocol):
 			elif anim_type == 6:
 				anim_type = 5
 				nonint_pre = 1
-		if not self.client.area.shouts_allowed:
+		if not self.client.area.shouts_allowed and not (self.client.is_mod or self.client in self.client.area.owners)::
 			# Old clients communicate the objecting in anim_type.
 			if anim_type == 2:
 				anim_type = 1
@@ -580,15 +579,15 @@ class AOProtocol(asyncio.Protocol):
 			button = 0
 			# Turn off the ding.
 			ding = 0
-		if color == 2 and not (self.client.is_mod
-							   or self.client in self.client.area.owners):
+		if color == 2 and not (self.client.is_mod or self.client in self.client.area.owners):
 			color = 0
 		if pos != self.client.pos:
-			self.client.pos = pos
-		if not len(self.client.area.poslock) == 0:
+			self.client.change_position(pos, True)
+		if not len(self.client.area.poslock) == 0 and not (self.client.is_mod or self.client in self.client.area.owners):
 			if pos not in self.client.area.poslock:
 				pos = self.client.area.poslock[0]
-				self.client.send_ooc(f'Your pos isn\'t in /poslock, falling back on {pos}. Please switch to a pos in /poslock!')
+				self.client.send_ooc(f'Your pos isn\'t in /poslock, falling back on {pos}.')
+				self.client.change_position(pos, True)
 		msg = self.dezalgo(text)[:256]
 		if self.client.shaken:
 			msg = self.client.shake_message(msg)

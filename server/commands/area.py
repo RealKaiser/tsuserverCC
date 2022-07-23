@@ -29,10 +29,6 @@ __all__ = [
 	'ooc_cmd_uninviteall',
 	'ooc_cmd_iclock',
 	'ooc_cmd_areakick',
-	'ooc_cmd_addcustom',
-	'ooc_cmd_removecustom',
-	'ooc_cmd_customlist',
-	'ooc_cmd_clearcustomlist',
 	'ooc_cmd_connect',
 	'ooc_cmd_biconnect',
 	'ooc_cmd_connectlist',
@@ -128,7 +124,7 @@ def ooc_cmd_poslock(client, arg: str) -> None:
 	if len(arg) == 0:
 		if len(client.area.poslock) > 0:
 			msg = 'This area is poslocked to:'
-			pos = ' '.join(str(l) for l in client.area.pos_lock)
+			pos = ' '.join(str(l) for l in client.area.poslock)
 			msg += f' {pos}'
 			msg += '.'
 			client.send_ooc(msg)
@@ -140,6 +136,7 @@ def ooc_cmd_poslock(client, arg: str) -> None:
 	if arg == 'clear':
 		client.area.poslock.clear()
 		client.area.broadcast_ooc('Poslock cleared.')
+		client.area.change_cbackground(area.background)
 	else:
 		client.area.poslock.clear()
 		args = arg.split()
@@ -425,53 +422,6 @@ def ooc_cmd_bg(client, arg: str) -> None:
 	client.area.broadcast_ooc(
 		f'{client.char_name} changed the background to {arg}.')
 	database.log_room('bg', client, client.area, message=arg)
-
-def ooc_cmd_addcustom(client, arg: str) -> None:
-	"""
-	Adds a link to the custom list.
-	Usage: /addcustom <link>
-	"""
-	if len(arg) == 0:
-		raise ArgumentError('You must specify a link. Use /addcustom <link>.')
-	elif client.char_name.startswith("custom"):
-		client.area.custom_list[client.char_name] = arg
-		client.area.broadcast_ooc('{} added a link for their custom.'.format(client.char_name))
-	else:
-		raise ClientError('You must play as a custom character.')
-
-def ooc_cmd_removecustom(client, arg: str) -> None:
-	"""
-	Removes a link from the custom list.
-	Usage: /removecustom
-	"""
-	try:
-		del client.area.custom_list[client.char_name]
-		client.area.broadcast_ooc('{} erased their link from the custom list.'.format(
-			client.char_name))
-	except KeyError:
-		raise ClientError('You do not have a custom set.')
-
-def ooc_cmd_customlist(client, arg: str) -> None:
-	"""
-	Updates the custom list and then shows it.
-	Usage: /customlist
-	"""
-	if len(arg) > 0:
-		raise ArgumentError('This command takes no arguments.')
-	elif len(client.area.custom_list) == 0:
-		raise AreaError('The custom list is empty.')
-	msg = "Custom List:"
-	for customadder, customlink in client.area.custom_list.items():
-		msg += f' \n{customadder}: {customlink}'
-	client.send_ooc(msg)
-
-def ooc_cmd_clearcustomlist(client, arg: str) -> None:
-	"""
-	Updates the custom list and then shows it.
-	Usage: /customlist
-	"""
-	client.area.custom_list.clear()
-	client.area.broadcast_ooc('The custom list was cleared.')
 
 def ooc_cmd_bglock(client, arg: str) -> None:
 	"""
