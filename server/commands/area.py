@@ -225,6 +225,21 @@ def ooc_cmd_addarea(client, arg: str) -> None:
 				raise ClientError('You must be CM to create an area.')
 	if len(arg) > 25:
 		raise ArgumentError('That name is too long!')
+	for character in arg:
+		if not character.isalnum():
+			if not character == ':' and not character == '!' and not character == '-' and not character == '?' and not character == ' ':
+				raise ArgumentError('Try to exclude special characters while renaming.')
+	for a in client.server.area_manager.areas:
+		if arg == a.name:
+			raise ArgumentError('This name is already taken.')
+	if client.area.is_hub:
+		for a in client.area.subareas:
+			if arg == a.name:
+				raise ArgumentError('This name is already taken.')
+	else:
+		for a in client.area.hub.subareas:
+			if arg == a.name:
+				raise ArgumentError('This name is already taken.')
 	client.server.hub_manager.addsub(client, arg)
 	
 def ooc_cmd_addareas(client, arg: str) -> None:
@@ -323,6 +338,17 @@ def ooc_cmd_rename(client, arg: str) -> None:
 		if not character.isalnum():
 			if not character == ':' and not character == '!' and not character == '-' and not character == '?' and not character == ' ':
 				raise ArgumentError('Try to exclude special characters while renaming.')
+	for a in client.server.area_manager.areas:
+		if arg == a.name:
+			raise ArgumentError('This name is already taken.')
+	if client.area.is_hub:
+		for a in client.area.subareas:
+			if arg == a.name:
+				raise ArgumentError('This name is already taken.')
+	else:
+		for a in client.area.hub.subareas:
+			if arg == a.name:
+				raise ArgumentError('This name is already taken.')
 	if client.area.is_hub:
 		if client.area.hubtype == 'default':
 			client.area.name = f'Hub {client.area.hubid}: {arg}'
