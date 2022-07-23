@@ -8,7 +8,7 @@ Requires Python 3.7+ and PyYAML.
 
 ### Changes/additions from tsuserver3
 * Testimony recording/playback system,
-* Greatly extended support for custom content,
+* Extended support for custom content,
 * More options for area management, including:
   - Accessible hub system, hubs with subareas without need for seperate area lists.
   - Storing/loading hubs up to a 100 areas, complete with connections and music lists,
@@ -17,8 +17,9 @@ Requires Python 3.7+ and PyYAML.
   - Ability to connect areas via 'exits,'
   - and playercount hiding.
 * Additional moderation features,
+* Additional features to support roleplay,
 * Add music on the fly, and have it appear on the server's music list, (per area/hub basis)
-* A category-based music shuffle system,
+* A category-based music shuffle system.
 
 ## How to use
 
@@ -107,19 +108,12 @@ Requires Python 3.7+ and PyYAML.
     - Shuffle will continue in original area if client switches areas, but will eventually stop once the client disconnects.
 * **eviswap** <id1> <id2>
     - Swaps <id1> and <id2> evidence.
-* **addcustom** "link"
+* **files**
+    - Shows a list of anyone that's set custom character files.
+* **addfiles** "link"
     - Allows user to set a link for the custom character they are currently using.
-* **customlist**
-    - Shows a list of links and the respective custom.
-* **removecustom**
-    - Removes the link for user's custom from the list.
-* **clearcustomlist**
-    - Clears the custom list.
-* **notepad** "note"
-    - Adds note to user's notepad, or displays the current notepad if no note is given.
-    - Only persists as long as user's client is connected to server.
-* **clearnotepad**
-    - Clears user's notepad.
+* **removefiles**
+    - Removes the link for user's custom character files.
 * **connectlist**
     - Shows all 'exits' for the current area.
 * **autopass**
@@ -162,59 +156,6 @@ Requires Python 3.7+ and PyYAML.
     - Holds your end of the ongoing call so you can speak to people outside the call.
 * **bgslist**
     - Lists all official backgrounds on the server.
-
-### Party Commands
-* **party**
-    - Shows the user's current party.
-    - If the user is not in a party, shows all parties on the server.
-    - If the user is the leader of their party, shows party members' roles.
-* **parties**
-    - Shows all parties on the server.
-* **createparty** "name"
-    - Creates a party and makes user the leader.
-    - Created party will be private/locked by default.
-* **partyinvite** "id"
-    - Invites a user to your party. Party must be locked.
-* **joinparty** "party ID"
-    - Join a party. Party must either be public or the user must be invited.
-* **leaveparty**
-    - Leave the current party.
-* **p** "message"
-    - Same as **g**, but only visible to other members of your party.
-* **partynote** "note"
-    - Add a note to the party notepad.
-    - Show the party notepad instead if no arguments are given.
-* **mgvote** "subject"
-    - Vote on a subject. If user has extra 'voting power,' they may vote more than once.
-    - If used by party leader, show current vote tally.
-
-#### Party Leader-only Commands
-* **addrole "id" "role"**
-    - Adds a role a party member.
-* **rolesvisible**
-    - Toggles whether the roles are visible for everyone in the party.
-* **unlockparty**
-    - Makes current party public.
-* **lockparty**
-    - Makes current party private.
-* **clearpartynote**
-    - Clear the party notepad.
-* **partykick** "id"
-    - Kick the specified user from your party.
-* **destroyparty**
-    - Destroys the current party.
-* **mgroles** "opt. custom roles" 
-    - If there enough members in your party, randomly assign party members, excluding the leader, Main Game roles.
-    - For custom roles, syntax is as above. e.g. `/mgroles Imitator Wildcard Scapegoat`
-* **clearroles**
-    - Clears all party members' roles, and resets their 'voting power'.
-* **startmgvote** "subjects"
-    - Start a party vote on subjects provided, e.g. `/startmgvote Sara Sou Keiji`. Resets everyone's 'voting power'. 
-* **revealmgvote**
-    - Post the tally in current area's OOC and restore 'voting power'.
-* **mgvp** "id" "+/-"
-    - Check a party member's 'voting power' or increase/decrease it.
-    - Default voting power is 0 (one vote) except for the Sacrifice role, which is 1 (two votes).
 
 ### CM Commands
 * **listenall**
