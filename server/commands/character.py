@@ -29,7 +29,7 @@ __all__ = [
 	'ooc_cmd_kickother'
 ]
 
-def ooc_cmd_addfiles(client, arg: str) -> None:
+def ooc_cmd_addfiles(client, arg):
 	"""
 	Add a client's files link.
 	Usage: /addcustom <link>
@@ -41,7 +41,7 @@ def ooc_cmd_addfiles(client, arg: str) -> None:
 	client.files = arg
 	client.area.broadcast_ooc('{} added a link for their files.'.format(client.char_name))
 
-def ooc_cmd_removefiles(client, arg: str) -> None:
+def ooc_cmd_removefiles(client, arg):
 	"""
 	Removes a client's files link.
 	Usage: /removecustom
@@ -51,7 +51,7 @@ def ooc_cmd_removefiles(client, arg: str) -> None:
 	client.files = ''
 	client.area.broadcast_ooc('{} removed link for their files.'.format(client.char_name))
 
-def ooc_cmd_files(client, arg: str) -> None:
+def ooc_cmd_files(client, arg):
 	"""
 	Shows the files list
 	Usage: /files
@@ -63,9 +63,9 @@ def ooc_cmd_files(client, arg: str) -> None:
 	for c in client.area.clients:
 		if c.files != '':
 			if c.showname != '':
-				list += f'\n{c.showname} ({c.charname}): {c.files}'
+				list += f'\n{c.showname} ({c.char_name}): {c.files}'
 			else:
-				list += f'\n{c.charname}: {c.files}'
+				list += f'\n{c.char_name}: {c.files}'
 	if list != '':
 		msg += list
 	else:

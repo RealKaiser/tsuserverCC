@@ -136,7 +136,7 @@ def ooc_cmd_poslock(client, arg: str) -> None:
 	if arg == 'clear':
 		client.area.poslock.clear()
 		client.area.broadcast_ooc('Poslock cleared.')
-		client.area.change_cbackground(area.background)
+		client.area.change_cbackground(client.area.background)
 	else:
 		client.area.poslock.clear()
 		args = arg.split()
@@ -267,7 +267,7 @@ def ooc_cmd_removearea(client, arg: str) -> None:
 		destroyed = client.area
 		if destroyed == lobby:
 			raise ArgumentError('Can\'t destroy lobby!')
-		if destroyed.is_hub != False:
+		if not client.is_mod and destroyed.is_hub != False:
 			raise ArgumentError('Can\'t destroy a hub!')
 		destroyedclients = set()
 		for c in destroyed.clients:

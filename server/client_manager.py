@@ -82,6 +82,7 @@ class ClientManager:
 			self.current_music = ''
 			self.files = ''
 			self.hidden = False
+			self.hubview = False
 			
 			# Mod/Admin stuff
 			self.is_admin = False
@@ -971,7 +972,7 @@ class ClientManager:
 			:param pos: position in area (Default value = '')
 			"""
 			self.pos = pos
-			if not silent =
+			if not silent:
 				self.send_ooc(f'Position set to {pos}.')
 			self.send_command('SP', self.pos) #Send a "Set Position" packet
 			self.area.broadcast_evidence_list()

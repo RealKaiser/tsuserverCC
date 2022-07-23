@@ -569,7 +569,7 @@ class AOProtocol(asyncio.Protocol):
 			elif anim_type == 6:
 				anim_type = 5
 				nonint_pre = 1
-		if not self.client.area.shouts_allowed and not (self.client.is_mod or self.client in self.client.area.owners)::
+		if not self.client.area.shouts_allowed and not (self.client.is_mod or self.client in self.client.area.owners):
 			# Old clients communicate the objecting in anim_type.
 			if anim_type == 2:
 				anim_type = 1
