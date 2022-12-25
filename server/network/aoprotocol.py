@@ -535,6 +535,8 @@ class AOProtocol(asyncio.Protocol):
 			text = ' '.join(part[1:])
 		if msg_type not in ('chat', '0', '1'):
 			return
+		if sfx.startswith('../music'):
+			sfx = ''
 		if anim_type not in (0, 1, 2, 4, 5, 6):
 			return
 		if cid != self.client.char_id:
@@ -567,7 +569,7 @@ class AOProtocol(asyncio.Protocol):
 			elif anim_type == 6:
 				anim_type = 5
 				nonint_pre = 1
-		if not self.client.area.shouts_allowed:
+		if not self.client.area.shouts_allowed and not (self.client.is_mod or self.client in self.client.area.owners):
 			# Old clients communicate the objecting in anim_type.
 			if anim_type == 2:
 				anim_type = 1
@@ -577,15 +579,15 @@ class AOProtocol(asyncio.Protocol):
 			button = 0
 			# Turn off the ding.
 			ding = 0
-		if color == 2 and not (self.client.is_mod
-							   or self.client in self.client.area.owners):
+		if color == 2 and not (self.client.is_mod or self.client in self.client.area.owners):
 			color = 0
 		if pos != self.client.pos:
-			self.client.pos = pos
-		if not len(self.client.area.poslock) == 0:
+			self.client.change_position(pos, True)
+		if not len(self.client.area.poslock) == 0 and not (self.client.is_mod or self.client in self.client.area.owners):
 			if pos not in self.client.area.poslock:
 				pos = self.client.area.poslock[0]
-				self.client.send_ooc(f'Your pos isn\'t in /poslock, falling back on {pos}. Please switch to a pos in /poslock!')
+				self.client.send_ooc(f'Your pos isn\'t in /poslock, falling back on {pos}.')
+				self.client.change_position(pos, True)
 		msg = self.dezalgo(text)[:256]
 		if self.client.shaken:
 			msg = self.client.shake_message(msg)
@@ -749,7 +751,8 @@ class AOProtocol(asyncio.Protocol):
 						self.client.send_ooc(f'Statement {newamend.id} amended.')
 
 			playback = False
-			if msg == '>':
+			fastforward = False
+			if msg == '>' or msg == '>>':
 				if len(self.client.area.recorded_messages) != 0 and not self.client.area.is_recording:
 					self.client.area.statement += 1
 					if self.client.area.statement >= len(self.client.area.recorded_messages):
@@ -762,9 +765,15 @@ class AOProtocol(asyncio.Protocol):
 							statement = s
 							break
 					playback = True
+					if msg == '>>':
+						fastforward = True
 			elif msg.startswith('>'):
 				if len(self.client.area.recorded_messages) != 0 and not self.client.area.is_recording:
-					msg = msg[1:]
+					if msg.startswith('>>'):
+						msg = msg[2:]
+						fastforward = True
+					else:
+						msg = msg[1:]
 					try:
 						statementno = int(msg)
 					except:
@@ -780,7 +789,7 @@ class AOProtocol(asyncio.Protocol):
 					if not playback:
 						self.client.send_ooc('No statement with that number found.')
 						return
-			if msg == '<':
+			if msg == '<' or msg == '<<':
 				if len(self.client.area.recorded_messages) != 0 and not self.client.area.is_recording:
 					self.client.area.statement += -1
 					if self.client.area.statement < 1:
@@ -791,29 +800,42 @@ class AOProtocol(asyncio.Protocol):
 								statement = s
 								break
 						playback = True
+						if msg == '<<':
+							fastforward = True
 					else:
 						for s in self.client.area.recorded_messages:
 							if s.id == self.client.area.statement:
 								statement = s
 								playback = True
+								if msg == '<<':
+									fastforward = True
 								break
 						self.client.area.broadcast_ooc(f'{self.client.char_name} went to the previous statement of the testimony.')
-			if msg == '=':
+			if msg == '=' or msg == '==':
 				if len(self.client.area.recorded_messages) != 0 and not self.client.area.is_recording:
 					if self.client.area.statement <= 0:
 						self.client.area.statement = 1
 					for s in self.client.area.recorded_messages:
 						if s.id == self.client.area.statement:
 							statement = s
-							playback = True
 							break
+						playback = True
+						if msg == '==':
+							fastforward = True
 					self.client.area.broadcast_ooc(f'{self.client.char_name} repeated the current statement.')
 
 			if playback:
 				last = len(self.client.area.recorded_messages) - 1
 				if not self.client.area.statement < 1 and not self.client.area.statement == last:
 					statement.prepce()
+				if fastforward:
+					nargs = statement.args[4]
+					statement.args[4] = '}}}'
+					statement.args[4] += nargs
 				self.client.area.send_command('MS', *statement.args)
+				if fastforward:
+					nargs = statement.args[4]
+					statement.args[4] = nargs[3:]
 
 			if not msg == '///' or not self.client in self.client.area.owners or len(self.client.area.recorded_messages) == 0:
 				if not playback:
@@ -821,9 +843,10 @@ class AOProtocol(asyncio.Protocol):
 						send_args[2] = 'Narrator'
 						send_args[3] = 'normal'
 					elif not self.client.visible:
-						send_args[1] = 0
-						send_args[2] = 'Narrator'
-						send_args[3] = '../../background/AADetentionCenter/defensedesk'
+						if  '/' in send_args[2]:
+							send_args[3] = '../../../background/AADetentionCenter/defensedesk'
+						else:
+							send_args[3] = '../../background/AADetentionCenter/defensedesk'
 
 					self.client.area.send_command('MS', *send_args)
 					self.server.area_manager.send_remote_command(target_area, 'MS', *send_args)

@@ -29,10 +29,6 @@ __all__ = [
 	'ooc_cmd_uninviteall',
 	'ooc_cmd_iclock',
 	'ooc_cmd_areakick',
-	'ooc_cmd_addcustom',
-	'ooc_cmd_removecustom',
-	'ooc_cmd_customlist',
-	'ooc_cmd_clearcustomlist',
 	'ooc_cmd_connect',
 	'ooc_cmd_biconnect',
 	'ooc_cmd_connectlist',
@@ -128,7 +124,7 @@ def ooc_cmd_poslock(client, arg: str) -> None:
 	if len(arg) == 0:
 		if len(client.area.poslock) > 0:
 			msg = 'This area is poslocked to:'
-			pos = ' '.join(str(l) for l in client.area.pos_lock)
+			pos = ' '.join(str(l) for l in client.area.poslock)
 			msg += f' {pos}'
 			msg += '.'
 			client.send_ooc(msg)
@@ -140,6 +136,7 @@ def ooc_cmd_poslock(client, arg: str) -> None:
 	if arg == 'clear':
 		client.area.poslock.clear()
 		client.area.broadcast_ooc('Poslock cleared.')
+		client.area.change_cbackground(client.area.background)
 	else:
 		client.area.poslock.clear()
 		args = arg.split()
@@ -225,6 +222,21 @@ def ooc_cmd_addarea(client, arg: str) -> None:
 				raise ClientError('You must be CM to create an area.')
 	if len(arg) > 25:
 		raise ArgumentError('That name is too long!')
+	for character in arg:
+		if not character.isalnum():
+			if not character == ':' and not character == '!' and not character == '-' and not character == '?' and not character == ' ':
+				raise ArgumentError('Try to exclude special characters while renaming.')
+	for a in client.server.area_manager.areas:
+		if arg == a.name:
+			raise ArgumentError('This name is already taken.')
+	if client.area.is_hub:
+		for a in client.area.subareas:
+			if arg == a.name:
+				raise ArgumentError('This name is already taken.')
+	else:
+		for a in client.area.hub.subareas:
+			if arg == a.name:
+				raise ArgumentError('This name is already taken.')
 	client.server.hub_manager.addsub(client, arg)
 	
 def ooc_cmd_addareas(client, arg: str) -> None:
@@ -244,13 +256,37 @@ def ooc_cmd_addareas(client, arg: str) -> None:
 	client.server.hub_manager.addmoresubs(client, amount)
 
 def ooc_cmd_removearea(client, arg: str) -> None:
-	if not client.area.sub:
-		raise ClientError('Cannot destroy a non-subarea.')
 	if client not in client.area.owners and not client.is_mod:
 		raise ClientError('You must be CM.')
 	if len(arg) > 0:
 		raise ArgumentError('This command takes no arguments.')
-	client.server.hub_manager.removesub(client)
+	if client.area.sub:
+		client.server.hub_manager.removesub(client)
+	else:
+		lobby = client.server.area_manager.default_area()
+		destroyed = client.area
+		if destroyed == lobby:
+			raise ArgumentError('Can\'t destroy lobby!')
+		if not client.is_mod and destroyed.is_hub != False:
+			raise ArgumentError('Can\'t destroy a hub!')
+		destroyedclients = set()
+		for c in destroyed.clients:
+			if c in destroyed.owners:
+				destroyed.owners.remove(c)
+			destroyedclients.add(c)
+		for c in destroyedclients:
+			if c in destroyed.clients:
+				c.change_area(lobby)
+				c.send_ooc(f'You were moved to {lobby.name} from {destroyed.name} because it was destroyed.')
+		client.server.area_manager.areas.remove(client.area)
+		area_list = []
+		for area in client.server.area_manager.areas:
+			area_list.append(area.name)
+		client.server.send_all_cmd_pred('FA', *area_list, pred=lambda x: not x.area.is_hub and not x.area.sub)
+		client.server.area_manager.send_arup_cms()
+		client.server.area_manager.send_arup_players()
+		client.server.area_manager.send_arup_lock()
+		client.server.area_manager.send_arup_status()
 
 def ooc_cmd_clearhub(client, arg: str) -> None:
 	if not client.area.is_hub:
@@ -261,11 +297,10 @@ def ooc_cmd_clearhub(client, arg: str) -> None:
 		raise ArgumentError('This command takes no arguments.')
 	client.server.hub_manager.clearhub(client)
 
-
 def ooc_cmd_rename(client, arg: str) -> None:
 	if client not in client.area.owners and not client.is_mod:
 		raise ClientError('You must be a CM.')
-	if not client.area.is_hub and not client.area.sub:
+	if not client.area.is_hub and not client.area.sub and not client.is_mod:
 		raise ClientError('Area must be hub or in a hub.')
 	if len(arg) == 0:
 		if client.area.is_hub:
@@ -291,6 +326,8 @@ def ooc_cmd_rename(client, arg: str) -> None:
 			client.area.sub_arup_status()
 			client.area.sub_arup_lock()
 			return
+		else:
+			raise ClientError('Area must be hub or in a hub.')
 	if len(arg) > 30:
 		raise ArgumentError('That name is too long!')
 	# hellish check against special characters
@@ -298,6 +335,17 @@ def ooc_cmd_rename(client, arg: str) -> None:
 		if not character.isalnum():
 			if not character == ':' and not character == '!' and not character == '-' and not character == '?' and not character == ' ':
 				raise ArgumentError('Try to exclude special characters while renaming.')
+	for a in client.server.area_manager.areas:
+		if arg == a.name:
+			raise ArgumentError('This name is already taken.')
+	if client.area.is_hub:
+		for a in client.area.subareas:
+			if arg == a.name:
+				raise ArgumentError('This name is already taken.')
+	else:
+		for a in client.area.hub.subareas:
+			if arg == a.name:
+				raise ArgumentError('This name is already taken.')
 	if client.area.is_hub:
 		if client.area.hubtype == 'default':
 			client.area.name = f'Hub {client.area.hubid}: {arg}'
@@ -323,7 +371,7 @@ def ooc_cmd_rename(client, arg: str) -> None:
 		client.area.sub_arup_cms()
 		client.area.sub_arup_status()
 		client.area.sub_arup_lock()
-	else:
+	elif client.area.sub:
 		client.area.name = arg
 		area_list = []
 		lobby = client.server.area_manager.default_area()
@@ -336,6 +384,20 @@ def ooc_cmd_rename(client, arg: str) -> None:
 		client.area.hub.sub_arup_cms()
 		client.area.hub.sub_arup_status()
 		client.area.hub.sub_arup_lock()
+	else:
+		client.area.name = arg
+		for area in client.server.area_manager.areas:
+			area_list.append(area.name)
+		client.area.abbreviation = client.server.area_manager.abbreviate(client.area.name)
+		client.server.send_all_cmd_pred('FA', *area_list, pred=lambda x: not x.area.is_hub and not x.area.sub)
+		client.server.area_manager.send_arup_cms()
+		client.server.area_manager.send_arup_players()
+		client.server.area_manager.send_arup_lock()
+		client.server.area_manager.send_arup_status()
+		client.area.sub_arup_players()
+		client.area.sub_arup_cms()
+		client.area.sub_arup_status()
+		client.area.sub_arup_lock()
 	client.send_ooc('Area renamed!')
 
 def ooc_cmd_bg(client, arg: str) -> None:
@@ -360,53 +422,6 @@ def ooc_cmd_bg(client, arg: str) -> None:
 	client.area.broadcast_ooc(
 		f'{client.char_name} changed the background to {arg}.')
 	database.log_room('bg', client, client.area, message=arg)
-
-def ooc_cmd_addcustom(client, arg: str) -> None:
-	"""
-	Adds a link to the custom list.
-	Usage: /addcustom <link>
-	"""
-	if len(arg) == 0:
-		raise ArgumentError('You must specify a link. Use /addcustom <link>.')
-	elif client.char_name.startswith("custom"):
-		client.area.custom_list[client.char_name] = arg
-		client.area.broadcast_ooc('{} added a link for their custom.'.format(client.char_name))
-	else:
-		raise ClientError('You must play as a custom character.')
-
-def ooc_cmd_removecustom(client, arg: str) -> None:
-	"""
-	Removes a link from the custom list.
-	Usage: /removecustom
-	"""
-	try:
-		del client.area.custom_list[client.char_name]
-		client.area.broadcast_ooc('{} erased their link from the custom list.'.format(
-			client.char_name))
-	except KeyError:
-		raise ClientError('You do not have a custom set.')
-
-def ooc_cmd_customlist(client, arg: str) -> None:
-	"""
-	Updates the custom list and then shows it.
-	Usage: /customlist
-	"""
-	if len(arg) > 0:
-		raise ArgumentError('This command takes no arguments.')
-	elif len(client.area.custom_list) == 0:
-		raise AreaError('The custom list is empty.')
-	msg = "Custom List:"
-	for customadder, customlink in client.area.custom_list.items():
-		msg += f' \n{customadder}: {customlink}'
-	client.send_ooc(msg)
-
-def ooc_cmd_clearcustomlist(client, arg: str) -> None:
-	"""
-	Updates the custom list and then shows it.
-	Usage: /customlist
-	"""
-	client.area.custom_list.clear()
-	client.area.broadcast_ooc('The custom list was cleared.')
 
 def ooc_cmd_bglock(client, arg: str) -> None:
 	"""
@@ -918,13 +933,13 @@ def ooc_cmd_uninviteall(client, arg: str) -> None:
 			client.area.broadcast_ooc("IClock enabled.")
 
 def ooc_cmd_iclock(client, arg: str) -> None:
+	if client not in client.area.owners and not client.is_mod:
+		raise ClientError('You are not a CM.')
 	if len(arg) > 0:
-		raise ArgumentError('This command takes no arguments.')
+		raise ArgumentError('This takes no arguments.')
 	if (client.area.is_locked != client.area.Locked.FREE 
 		and client.area.is_locked != client.area.Locked.LOCKED):
 		return ooc_cmd_uninviteall(client, arg)
-	if client not in client.area.owners and not client.is_mod:
-		raise ClientError('You are not a CM.')
 	else:
 		if client.area.is_locked != client.area.Locked.LOCKED:
 			client.area.spectator()

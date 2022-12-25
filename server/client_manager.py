@@ -64,9 +64,6 @@ class ClientManager:
 			self.can_wtce = True
 			self.pos = ''
 			self.evi_list = []
-			self.disemvowel = False
-			self.shaken = False
-			self.gimp = False
 			self.charcurse = []
 			self.muted_global = False
 			self.muted_adverts = False
@@ -82,6 +79,10 @@ class ClientManager:
 			self.afktime = None
 			self.listen = True
 			self.ambiance = ''
+			self.current_music = ''
+			self.files = ''
+			self.hidden = False
+			self.hubview = False
 			
 			# Mod/Admin stuff
 			self.is_admin = False
@@ -92,10 +93,11 @@ class ClientManager:
 			self.spying = []
 			
 			# Misc. IC stuff
-			self.hidden = False
 			self.visible = True
 			self.narrator = False
-			self.areapair = 'middle'
+			self.disemvowel = False
+			self.shaken = False
+			self.gimp = False
 			
 			# Call stuff
 			self.call = None
@@ -277,7 +279,11 @@ class ClientManager:
 				message={'from': old_char, 'to': new_char})
 			if self.ambiance != self.area.ambiance:
 				self.ambiance = self.area.ambiance
-				self.send_command("MC", self.area.ambiance, -1, "", 1, 1, int(MusicEffect.FADE_OUT | MusicEffect.FADE_IN | MusicEffect.SYNC_POS),)
+				self.send_command("MC", self.area.ambiance, -1, "", 1, 1, int(MusicEffect.FADE_OUT),)
+			if not self.area.loop:
+				if self.current_music != self.area.current_music:
+					self.send_command("MC", self.area.current_music, -1, "", 1, 0, int(MusicEffect.FADE_OUT),)
+					self.current_music = self.area.current_music
 			if self.afk:
 				self.server.client_manager.toggle_afk(self)
 			if self.server.config['afk_delay'] > 0:
@@ -426,19 +432,19 @@ class ClientManager:
 			if self.autopass == True:
 				if self.is_following:
 					for c in self.following:
-						if self.char_name.startswith('custom') and self.showname != 0:
-							if c.char_name.startswith('custom') and c.showname != 0:
-								self.area.broadcast_ooc(f'{self.showname} has followed {c.showname} to {area.name}.')
+						if self.showname != 0:
+							if c.showname != 0:
+								self.area.broadcast_ooc(f'{self.showname}-({self.char_name}) has followed {c.showname}-({c-char_name}) to {area.name}.')
 							else:
-								self.area.broadcast_ooc(f'{self.showname} has followed {c.char_name} to {area.name}.')
+								self.area.broadcast_ooc(f'{self.showname}-({self.char_name}) has followed {c.char_name} to {area.name}.')
 						else:
-							if c.char_name.startswith('custom') and c.showname != 0:
-								self.area.broadcast_ooc(f'{self.char_name} has followed {c.showname} to {area.name}.')
+							if c.showname != 0:
+								self.area.broadcast_ooc(f'{self.char_name} has followed {c.showname}-({c-char_name}) to {area.name}.')
 							else:
 								self.area.broadcast_ooc(f'{self.char_name} has followed {c.char_name} to {area.name}.')
 				else:
-					if self.char_name.startswith('custom') and self.showname != 0:
-						self.area.broadcast_ooc(f'{self.showname} has left to {area.name}.')
+					if self.showname != 0:
+						self.area.broadcast_ooc(f'{self.showname} ({self.char_name}) has left to {area.name}.')
 					else:
 						self.area.broadcast_ooc(f'{self.char_name} has left to {area.name}.')
 			if len(self.followers) > 0:
@@ -571,19 +577,19 @@ class ClientManager:
 			if self.autopass == True:
 				if self.is_following:
 					for c in self.following:
-						if self.char_name.startswith('custom') and self.showname != 0:
-							if c.char_name.startswith('custom') and c.showname != 0:
-								self.area.broadcast_ooc(f'{self.showname} has followed {c.showname} from {old_area.name}.')
+						if self.showname != 0:
+							if c.showname != 0:
+								self.area.broadcast_ooc(f'{self.showname}-({self.char_name}) has followed {c.showname}-({c.char_name}) from {old_area.name}.')
 							else:
-								self.area.broadcast_ooc(f'{self.showname} has followed {c.char_name} from {old_area.name}.')
+								self.area.broadcast_ooc(f'{self.showname}-({self.char_name}) has followed {c.char_name} from {old_area.name}.')
 						else:
-							if c.char_name.startswith('custom') and c.showname != 0:
-								self.area.broadcast_ooc(f'{self.char_name} has followed {c.showname} from {old_area.name}.')
+							if c.showname != 0:
+								self.area.broadcast_ooc(f'{self.char_name} has followed {c.showname}-({c.char_name}) from {old_area.name}.')
 							else:
 								self.area.broadcast_ooc(f'{self.char_name} has followed {c.char_name} from {old_area.name}.')
 				else:
-					if self.char_name.startswith('custom') and self.showname != 0:
-						self.area.broadcast_ooc(f'{self.showname} has entered from {old_area.name}.')
+					if self.showname != 0:
+						self.area.broadcast_ooc(f'{self.showname} ({self.char_name}) has entered from {old_area.name}.')
 					else:
 						self.area.broadcast_ooc(f'{self.char_name} has entered from {old_area.name}.')
 			for c in self.followers:
@@ -931,6 +937,15 @@ class ClientManager:
 					self.mod_profile_name = matches[0]
 					with open(modfile, 'r') as chars:
 						mods = yaml.safe_load(chars)
+					for item in mods:
+						ipid = item['ipid']
+						if self.ipid == ipid:
+							self.mod_profile_name = item['name']
+							self.is_mod = True
+							return self.mod_profile_name
+							if item['status'] == 'admin':
+								self.is_admin = True
+								return self.mod_profile_name
 					mods.append({'name': matches[0], 'status': 'mod', 'ipid': self.ipid})
 					with open(modfile, 'w', encoding='utf-8') as dump:
 						yaml.dump(mods, dump)
@@ -951,14 +966,16 @@ class ClientManager:
 				return None
 			return self.server.char_list[self.char_id]
 
-		def change_position(self, pos: str = '') -> None:
+		def change_position(self, pos, silent=False):
 			"""
 			Change the character's current position in the area.
 			:param pos: position in area (Default value = '')
 			"""
 			self.pos = pos
-			self.send_ooc(f'Position set to {pos}.')
+			if not silent:
+				self.send_ooc(f'Position set to {pos}.')
 			self.send_command('SP', self.pos) #Send a "Set Position" packet
+			self.area.broadcast_evidence_list()
 
 		def set_mod_call_delay(self):
 			"""Begin the mod call cooldown."""

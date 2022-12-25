@@ -2,6 +2,7 @@ import random
 import asyncio
 import shlex
 import re
+import os
 
 from server import database
 from server.constants import TargetType
@@ -35,7 +36,8 @@ __all__ = [
 	'ooc_cmd_clearmusiclist',
 	'ooc_cmd_loop',
 	'ooc_cmd_ambiance',
-	'ooc_cmd_clearambiance'
+	'ooc_cmd_clearambiance',
+	'ooc_cmd_musicsequence',
 ]
 
 def ooc_cmd_ambiance(client, arg):
@@ -48,12 +50,12 @@ def ooc_cmd_ambiance(client, arg):
 	if arg == 'rain':
 		arg = 'https://rainymood.com/audio1112/0.mp3'
 	client.area.ambiance = arg
-	client.area.send_command("MC", arg, -1, "", 1, 1, int(MusicEffect.FADE_OUT | MusicEffect.FADE_IN | MusicEffect.SYNC_POS),)
+	client.area.send_command("MC", arg, -1, "", 1, 1, int(MusicEffect.FADE_OUT),)
 	for c in client.area.clients:
 		c.ambiance = client.area.ambiance
 	if client.area.is_hub:
 		for sub in client.area.subareas:
-			sub.send_command("MC", arg, -1, "", 1, 1, int(MusicEffect.FADE_OUT | MusicEffect.FADE_IN | MusicEffect.SYNC_POS),)
+			sub.send_command("MC", arg, -1, "", 1, 1, int(MusicEffect.FADE_OUT),)
 			sub.ambiance = arg
 		client.send_ooc('Ambiance for this hub set!')
 	else:
@@ -63,13 +65,13 @@ def ooc_cmd_clearambiance(client, arg):
 	if not client.is_mod and client not in client.area.owners:
 		raise ClientError('You must be a CM.')
 	client.area.ambiance = ''
-	client.area.send_command("MC", '', -1, "", 1, 1, int(MusicEffect.FADE_OUT | MusicEffect.FADE_IN | MusicEffect.SYNC_POS),)
+	client.area.send_command("MC", '', -1, "", 1, 1, int(MusicEffect.FADE_OUT),)
 	for c in client.area.clients:
 		c.ambiance = client.area.ambiance
 	if client.area.is_hub:
 		for sub in client.area.subareas:
 			sub.ambiance = ''
-			sub.send_command("MC", '', -1, "", 1, 1, int(MusicEffect.FADE_OUT | MusicEffect.FADE_IN | MusicEffect.SYNC_POS),)
+			sub.send_command("MC", '', -1, "", 1, 1, int(MusicEffect.FADE_OUT),)
 		client.send_ooc('Ambiance for this hub cleared!')
 	else:
 		client.send_ooc('Ambiance for this area cleared!')
@@ -189,6 +191,13 @@ def ooc_cmd_clearmusiclist(client, arg):
 		raise ArgumentError('This command takes no arguments.')
 	client.area.cmusic_list = []
 	client.area.cmusic_listname = ''
+	music = client.area.get_music(client)
+	if client.area.is_hub:
+		for sub in client.area.subareas:
+			sub.cmusic_list = mlist
+		client.server.send_all_cmd_pred('FM', *music, pred=lambda x: x.area == client.area or x.area.hub == client.area)
+	else:
+		client.server.send_all_cmd_pred('FM', *music, pred=lambda x: x.area == client.area)
 	client.send_ooc(f'Area music list cleared.')
 
 def ooc_cmd_play(client, arg):
@@ -241,9 +250,20 @@ def ooc_cmd_play(client, arg):
 			length = 1
 	else:
 		raise ArgumentError('Too many arguments. Use /play "name" "length in seconds".')
-	client.area.play_music(name, client.char_id, length)
+	client.area.play_music(name, client.char_id, length, int(MusicEffect.FADE_OUT))
 	client.area.add_music_playing(client, args[0])
 	database.log_room('play', client, client.area, message=name)
+	
+def ooc_cmd_musicsequence(client, arg):
+	if client not in client.area.owners and not client.is_mod:
+		raise ClientError('You must be a CM.')
+	sequence = f'storage/musicsequence/{arg}.yaml'
+	new = not os.path.exists(sequence)
+	if new:
+		client.send_ooc('No music sequence with that name found.')
+		return
+	else:
+		client.area.play_msequence(sequence)
 	
 def ooc_cmd_hubplay(client, arg):
 	"""

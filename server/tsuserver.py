@@ -412,7 +412,7 @@ class TsuServerCC:
 		"""
 		for item in self.music_list:
 			if item['category'] == music:
-				return item['category'], 0, -1, False
+				return '~stop.mp3', 0, -1, False
 			for song in item['songs']:
 				if song['name'] == music:
 					try:
@@ -425,7 +425,7 @@ class TsuServerCC:
 		if len(area.cmusic_list) != 0:
 			for item in area.cmusic_list:
 				if item['category'] == music:
-					return item['category'], 0, -1, True
+					return '~stop.mp3', 0, -1, True
 				if len(item['songs']) != 0:
 					for song in item['songs']:
 						if song['name'] == music:

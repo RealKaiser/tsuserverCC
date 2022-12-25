@@ -165,9 +165,9 @@ class HubManager:
 			if sub.name == f'Area {oldid}':
 				sub.name = f'Area {sub.id}'
 			if hub.hubtype == 'arcade':
-				sub.abbreviation = f'AHS{sub.id}'
+				sub.abbreviation = f'AR{sub.id}'
 			elif hub.hubtype == 'user':
-				sub.abbreviation = f'UHS{sub.id}'
+				sub.abbreviation = f'USER{sub.id}'
 			elif hub.hubtype == 'courtroom':
 				if sub.name == f'Courtroom {oldid}':
 					sub.name = f'Courtroom {sub.id}'
@@ -257,7 +257,6 @@ class HubManager:
 				if client.area.cur_subid > 16:
 					raise ClientError('Cannot have more than 15 areas in this hub.')
 			new_id = client.area.cur_subid
-			client.area.cur_subid += 1
 		else:
 			if client.area.hub.cur_subid > 101:
 				raise ClientError('You cannot have more than 100 areas in a hub.')
@@ -265,7 +264,6 @@ class HubManager:
 				if client.area.hub.cur_subid > 16:
 					raise ClientError('Cannot have more than 15 areas in this hub.')
 			new_id = client.area.hub.cur_subid
-			client.area.hub.cur_subid += 1
 		if len(arg) == 0:
 			newsub = client.server.area_manager.Area(new_id, client.server, name=f'Area {new_id}', background='', bg_lock=False, evidence_mod='CM', locking_allowed=True, iniswap_allowed=True, showname_changes_allowed=True, shouts_allowed=True, jukebox=False, abbreviation='', non_int_pres_only=False)
 		else:
@@ -274,16 +272,18 @@ class HubManager:
 		if client.area.is_hub:
 			newsub.hub = client.area
 			client.area.subareas.append(newsub)
+			client.area.cur_subid += 1
 		else:
 			newsub.hub = client.area.hub
 			client.area.hub.subareas.append(newsub)
+			client.area.hub.cur_subid += 1
 		newsub.background = newsub.hub.background
 		newsub.cmusic_list = newsub.hub.cmusic_list.copy()
 		newsub.cmusic_listname = newsub.hub.cmusic_listname
 		if newsub.hub.hubtype == 'arcade':
-			newsub.abbreviation = f'AHS{new_id}'
+			newsub.abbreviation = f'AR{new_id}'
 		elif newsub.hub.hubtype == 'user':
-			newsub.abbreviation = f'UHS{new_id}'
+			newsub.abbreviation = f'USER{new_id}'
 		elif newsub.hub.hubtype == 'courtroom':
 			newsub.abbreviation = f'CR{new_id}'
 			if len(arg) == 0:

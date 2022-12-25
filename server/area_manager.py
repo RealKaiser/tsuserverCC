@@ -31,6 +31,7 @@ import random
 import time
 import yaml
 import arrow
+import re
 
 from dataclasses import dataclass
 from enum import Enum
@@ -74,13 +75,6 @@ class AreaManager:
 					 desc=''):
 			self.timetomove = 0
 			self.desc = ''
-			self.is_hub = is_hub
-			self.hubid = hubid
-			self.hubtype = hubtype
-			self.hub = None
-			self.subareas = []
-			self.sub = False
-			self.cur_subid = 1
 			self.iniswap_allowed = iniswap_allowed
 			self.clients = set()
 			self.invite_list = {}
@@ -95,37 +89,48 @@ class AreaManager:
 			self.doc = 'No document.'
 			self.status = 'IDLE'
 			self.judgelog = []
-			self.current_music = ''
-			self.current_music_player = ''
-			self.current_music_player_ipid = -1
 			self.evi_list = EvidenceList()
-			self.is_recording = False
 			self.is_restricted = False
-			self.recorded_messages = []
-			self.statement = 0
 			self.connections = []
 			self.evidence_mod = evidence_mod
 			self.locking_allowed = locking_allowed
 			self.showname_changes_allowed = showname_changes_allowed
 			self.shouts_allowed = shouts_allowed
 			self.abbreviation = abbreviation
-			self.music_looper = None
 			self.cards = dict()
-			self.custom_list = dict()
-			self.cmusic_list = []
-			self.cmusic_listname = ''
 			self.hidden = False
 			self.password = ''
-			self.allowmusic = True
-			self.areapair = dict()
 			self.poslock = []
 			self.last_speaker = None
 			self.last_ooc = ''
 			self.spies = set()
-			self.loop = False
 			self.webblock = False
-			self.ambiance = ''
 			self.timers = [AreaManager.Timer() for _ in range(4)]
+			
+			# Hub stuff
+			self.is_hub = is_hub
+			self.hubid = hubid
+			self.hubtype = hubtype
+			self.hub = None
+			self.subareas = []
+			self.sub = False
+			self.cur_subid = 1
+			
+			# Music stuff
+			self.allowmusic = True
+			self.loop = False
+			self.current_music = ''
+			self.current_music_player = ''
+			self.current_music_player_ipid = -1
+			self.music_looper = None
+			self.ambiance = ''
+			self.cmusic_list = []
+			self.cmusic_listname = ''
+			
+			#Testimony stuff
+			self.is_recording = False
+			self.recorded_messages = []
+			self.statement = 0
 
 			self.is_locked = self.Locked.FREE
 			self.blankposting_allowed = True
@@ -157,7 +162,14 @@ class AreaManager:
 				database.log_room('area.join', client, self)
 				if client.ambiance != self.ambiance:
 					client.ambiance = self.ambiance
-					client.send_command("MC", self.ambiance, -1, "", 1, 1, int(MusicEffect.FADE_OUT | MusicEffect.FADE_IN | MusicEffect.SYNC_POS),)
+					client.send_command("MC", self.ambiance, -1, "", 1, 1, int(MusicEffect.FADE_OUT),)
+				if self.loop:
+					client.send_command("MC", 'None', -1, "", 0, 0, int(MusicEffect.FADE_OUT),)
+					client.current_music = self.current_music
+				else:
+					if client.current_music != self.current_music:
+						client.send_command("MC", self.current_music, -1, "", 1, 0, int(MusicEffect.FADE_OUT),)
+						client.current_music = self.current_music
 				
 			if self.desc != '':
 				client.send_ooc(self.desc)
@@ -376,6 +388,34 @@ class AreaManager:
 					length = 1
 			self.send_command('MC', name, cid, '', length, 0, effects)
 
+		def play_msequence(self, file, index=0):
+			now = 0
+			with open(file, 'r', encoding='utf-8') as chars:
+				sequence = yaml.safe_load(chars)
+			for item in sequence:
+				if index == now:
+					index += 1
+					name = item['name']
+					length = item['length']
+					if self.music_looper:
+						self.music_looper.cancel()
+					self.send_command('MC', name, -1, '', length, 0, int(MusicEffect.FADE_OUT))
+					self.music_looper = asyncio.get_event_loop().call_later(length, lambda: self.play_msequence(file, index))
+					return
+				now += 1
+			index = 0
+			for item in sequence:
+				index += 1
+				if item['type'] != 'intro':
+					name = item['name']
+					length = item['length']
+					if self.music_looper:
+						self.music_looper.cancel()
+					self.send_command('MC', name, -1, '', length, 0, int(MusicEffect.FADE_OUT))
+					self.music_looper = asyncio.get_event_loop().call_later(length, lambda: self.play_msequence(file, index))
+					return
+			return
+
 		def play_music_shownamed(self, name, cid, showname, length=0, effects=0):
 			"""
 			Play a track, but show showname as the player instead of character
@@ -544,6 +584,8 @@ class AreaManager:
 				raise AreaError('Invalid background name.')
 			self.background = bg
 			self.send_command('BN', self.background)
+			if len(self.poslock) > 0:
+				self.send_command('SD', '*'.join(client.area.poslock))
 		
 		def change_cbackground(self, bg):
 			"""
@@ -553,6 +595,8 @@ class AreaManager:
 			"""
 			self.background = bg
 			self.send_command('BN', self.background)
+			if len(self.poslock) > 0:
+				self.send_command('SD', '*'.join(client.area.poslock))
 
 		def change_status(self, value):
 			"""
@@ -661,6 +705,8 @@ class AreaManager:
 			self.current_music_player = client.char_name
 			self.current_music_player_ipid = client.ipid
 			self.current_music = name
+			for c in self.clients:
+				c.current_music = name
 
 		def add_music_playing_shownamed(self, client, showname, name):
 			"""
@@ -672,6 +718,8 @@ class AreaManager:
 			self.current_music_player = f'{showname} ({client.char_name})'
 			self.current_music_player_ipid = client.ipid
 			self.current_music = name
+			for c in self.clients:
+				c.current_music = name
 
 		def get_evidence_list(self, client):
 			"""
