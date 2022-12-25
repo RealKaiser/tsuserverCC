@@ -42,9 +42,6 @@ def ooc_cmd_testimony(client, arg):
 	statements.sort(key=lambda x: x.id, reverse=False)
 
 	for statement in statements:
-		print("Printing Statement Info...")
-		print(statement.id)
-		print(statement.args)
 		if statement.id == 0:
 			testimony += f'\n{statement.args[4]}'
 		elif statement.id == endOfTestimony:

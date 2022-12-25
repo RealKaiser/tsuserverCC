@@ -705,51 +705,55 @@ class AOProtocol(asyncio.Protocol):
 					self.client.area.recorded_messages.append(statement)
 					self.client.send_ooc('No longer recording testimony.')
 			if msg.startswith('+'):
+				#Commenting for clarity -- Cave
 				if self.client in self.client.area.owners and self.client.area.is_recording:
 					if self.client.area.statement >= 30:
 						return self.client.send_ooc('You\'re trying to add too many statements.')
+					#Increase Global Statement Number
 					self.client.area.statement += 1
+					#Make object with message arguments
 					statement = Statement(send_args)
+					#Remove the beginning command of the message
 					statement.args[4] = msg[1:]
+					#Id equal to global statement Number
 					statement.id = self.client.area.statement
+					#Add statement to recorded message list
 					self.client.area.recorded_messages.append(statement)
 					self.client.send_ooc('Statement added!')
 				elif self.client in self.client.area.owners and not self.client.area.is_recording and len(self.client.area.recorded_messages) != 0:
 					if self.client.area.statement >= 30:
 						return self.client.send_ooc('You\'re trying to add too many statements.')
 					oldstatement = self.client.area.statement
+					#This will move to another statement
 					self.client.area.statement += 1
 					statement = Statement(send_args)
 					statement.args[4] = msg[1:]
 					statement.args[14] = 1
 					statement.id = self.client.area.statement
+					#Since there may be statements before, we update everything after (including the old one) to be +1.
 					for s in self.client.area.recorded_messages:
 						if s.id >= statement.id:
 							s.id += 1
+					#NOW we add the statement.
 					self.client.area.recorded_messages.append(statement)
 					self.client.send_ooc(f'Substatement added after statement {oldstatement}!')
 			if msg.startswith('<and>'):
 				if self.client in self.client.area.owners and not self.client.area.is_recording and len(self.client.area.recorded_messages) != 0:
-					"""for s in self.client.area.recorded_messages:
-						if s.id == self.client.area.statement:
-							msg = msg[5:]
-							s = Statement(send_args)
-							s.id = self.client.area.statement
-							s.args[4] = msg[4:]
-							s.args[14] = 1
-							self.client.send_ooc(f'Statement {s.id} amended.')
-					"""
 					amend = None
-					for s in self.client.area.recorded_messages:
-						if s.id == self.client.area.statement:
-							amend = s
+					#Find statement to Ammend
+					index = 0
+					for s in range(0, len(self.client.area.recorded_messages)):
+						if self.client.area.recorded_messages[s].id == self.client.area.statement:
+							amend = self.client.area.recorded_messages[s]
+							index = s
+					#If the statement exists (Which it should, this is just bug checking ig)... ammend.
 					if amend != None:
-						newamend = self.client.area.recorded_messages[amend.id] = Statement(send_args)
+						#Get it by the index found in the array!
+						newamend = self.client.area.recorded_messages[index] = Statement(send_args)
 						newamend.id = self.client.area.statement
 						newamend.args[4] = msg[5:]
 						newamend.args[14] = 1
 						self.client.send_ooc(f'Statement {newamend.id} amended.')
-
 			playback = False
 			fastforward = False
 			if msg == '>' or msg == '>>':
@@ -951,8 +955,9 @@ class AOProtocol(asyncio.Protocol):
 					self.client.send_ooc(commands.help(f'ooc_cmd_{arg}'))
 				else:
 					getattr(commands, called_function)(self.client, arg)
-			except AttributeError:
+			except AttributeError as e:
 				print('Attribute error with ' + called_function)
+				print(e)
 				self.client.send_ooc('Invalid command.')
 			except (ClientError, AreaError, ArgumentError, ServerError) as ex:
 				self.client.send_ooc(ex)
