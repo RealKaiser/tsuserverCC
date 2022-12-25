@@ -34,12 +34,17 @@ def ooc_cmd_testimony(client, arg):
 	testimony = 'Testimony:'
 	#Location of /end
 	endOfTestimony = len(client.area.recorded_messages) - 1
-	index = 0
 	statements = []
 	for statement in client.area.recorded_messages:
 		statements.append(statement)
 
+	#Sorts statement in order by id.
+	statements.sort(key=lambda x: x.id, reverse=False)
+
 	for statement in statements:
+		print("Printing Statement Info...")
+		print(statement.id)
+		print(statement.args)
 		if statement.id == 0:
 			testimony += f'\n{statement.args[4]}'
 		elif statement.id == endOfTestimony:
