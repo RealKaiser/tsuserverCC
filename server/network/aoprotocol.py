@@ -981,7 +981,6 @@ class AOProtocol(asyncio.Protocol):
 		MC#<song_name:int>#<???:int>#%
 
 		"""
-		#Tries playing music and recieves request here. Must find bug.
 		if not self.client.is_checked:
 			return
 		if not self.client.permission:
@@ -1033,7 +1032,6 @@ class AOProtocol(asyncio.Protocol):
 						if args[0] == "~stop.mp3":
 							name, length, mod, custom = args[0], 0, -1, False
 						else:
-							#The problem line occurs right here.
 							name, length, mod, custom = self.server.get_song_data(args[0], self.client.area)
 						if not mod == -1:
 							if not self.client.is_mod:
