@@ -410,6 +410,8 @@ class TsuServerCC:
 		:returns: tuple (name, length or -1)
 		:raises: ServerError if track not found
 		"""
+		#Need to remove <and> and replace with &
+		music = music.replace("<and>", "&")
 		for item in self.music_list:
 			if item['category'] == music:
 				return '~stop.mp3', 0, -1, False

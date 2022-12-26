@@ -1035,7 +1035,6 @@ class AOProtocol(asyncio.Protocol):
 						else:
 							#The problem line occurs right here.
 							name, length, mod, custom = self.server.get_song_data(args[0], self.client.area)
-							print("Made it past problem!")
 						if not mod == -1:
 							if not self.client.is_mod:
 								self.client.send_host_message("This song is reserved for moderators.")
