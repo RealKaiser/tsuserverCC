@@ -981,6 +981,8 @@ class AOProtocol(asyncio.Protocol):
 		MC#<song_name:int>#<???:int>#%
 
 		"""
+		#Tries playing music and recieves request here. Must find bug.
+		print("Trying to play music")
 		if not self.client.is_checked:
 			return
 		if not self.client.permission:
