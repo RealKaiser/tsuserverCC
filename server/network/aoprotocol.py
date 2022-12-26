@@ -982,7 +982,6 @@ class AOProtocol(asyncio.Protocol):
 
 		"""
 		#Tries playing music and recieves request here. Must find bug.
-		print("Trying to play music")
 		if not self.client.is_checked:
 			return
 		if not self.client.permission:
@@ -1034,12 +1033,13 @@ class AOProtocol(asyncio.Protocol):
 						if args[0] == "~stop.mp3":
 							name, length, mod, custom = args[0], 0, -1, False
 						else:
+							#The problem line occurs right here.
 							name, length, mod, custom = self.server.get_song_data(args[0], self.client.area)
+							print("Made it past problem!")
 						if not mod == -1:
 							if not self.client.is_mod:
 								self.client.send_host_message("This song is reserved for moderators.")
 								return
-
 						if self.client.area.jukebox:
 							showname = ''
 							if len(args) > 2:
