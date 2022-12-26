@@ -1037,7 +1037,6 @@ class AOProtocol(asyncio.Protocol):
 							if not self.client.is_mod:
 								self.client.send_host_message("This song is reserved for moderators.")
 								return
-
 						if self.client.area.jukebox:
 							showname = ''
 							if len(args) > 2:
