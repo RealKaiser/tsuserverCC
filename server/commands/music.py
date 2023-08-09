@@ -214,10 +214,13 @@ def ooc_cmd_play(client, arg):
 		if re.match(r"(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?", args[0]):
 			if '.mp3' not in args[0]:
 				if '.opus' not in args[0]:
-					raise ArgumentError("Doesn't seem to be an mp3.")
+					if '.ogg' not in args[0]:
+						raise ArgumentError("Doesn't seem to be mp3, opus or ogg.")
 			if '.mp3/' in args[0]:
 				raise ArgumentError("Couldn't play due to / after file extension.")
 			if '.opus/' in args[0]:
+				raise ArgumentError("Couldn't play due to / after file extension.")
+			if '.ogg/' in args[0]:
 				raise ArgumentError("Couldn't play due to / after file extension.")
 			name = ''
 		else:
