@@ -41,6 +41,9 @@ motd: Welcome to my server!
 use_websockets: true
 websocket_port: 50001
 
+# WebAO Asset URL for hosting files
+asset_url: https://example.com/base/
+
 # Whether or not the server should be advertised on the server list.
 use_masterserver: true
 masterserver_ip: master.aceattorneyonline.com
@@ -83,33 +86,52 @@ webhook_url: example.com
 
 # Settings for the modcall webhook. Leaving a setting blank will use its default behavior.
 modcall_webhook:
-  enabled: true
-  username: Modcall # the username the webhook will use
+  enabled: false
+ # the username the webhook will use
+  username: Modcall
   avatar_url: # url of a custom avatar image, leave blank to use the avatar the webhook was set up with
-  ping_on_no_mods: false # whether or not to ping mods if a modcall is received while no moderators are online
+# whether or not to ping mods if a modcall is received while no moderators are online
+  ping_on_no_mods: true
   mod_role_id: # the role ID of the role you want pinged. leave blank to use @here instead
 
 kick_webhook:
-  enabled: true
+  enabled: false
   username: Kick
   avatar_url:
 
 ban_webhook: # fires on both regular and HDID bans
-  enabled: true
+  enabled: false
   username: Ban
   avatar_url:
 
 unban_webhook:
-  enabled: true
+  enabled: false
   username: Unban
   avatar_url:
   
 warn_webhook:
-  enabled: true
+  enabled: false
   username: Warn
   avatar_url:
 
 unwarn_webhook:
-  enabled: true
+  enabled: false
   username: Unwarn
+  avatar_url:
+
+# The following are handled by webhook2_url, if no url is set, it will default to the main webhook url.
+
+login_webhook:
+  enabled: false
+  username: Login
+  avatar_url:
+  
+unmod_webhook:
+  enabled: false
+  username: Unmod
+  avatar_url:
+  
+modafk_webhook:
+  enabled: false
+  username: AFK
   avatar_url:
