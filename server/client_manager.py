@@ -1056,7 +1056,7 @@ class ClientManager:
 		w = Webhooks(client.server)
 		if client.id not in self.available_ids:
 			self.available_ids.append(client.id)
-		self.clients.remove(client)
+		self.clients.discard(client)
 		if client.area.jukebox:
 			client.area.remove_jukebox_vote(client, True)
 		for a in self.server.area_manager.areas:
