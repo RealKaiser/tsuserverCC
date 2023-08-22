@@ -585,7 +585,7 @@ class AreaManager:
 			self.background = bg
 			self.send_command('BN', self.background)
 			if len(self.poslock) > 0:
-				self.send_command('SD', '*'.join(client.area.poslock))
+				self.send_command('SD', '*'.join(self.poslock))
 		
 		def change_cbackground(self, bg):
 			"""
@@ -596,7 +596,7 @@ class AreaManager:
 			self.background = bg
 			self.send_command('BN', self.background)
 			if len(self.poslock) > 0:
-				self.send_command('SD', '*'.join(client.area.poslock))
+				self.send_command('SD', '*'.join(self.poslock))
 
 		def change_status(self, value):
 			"""
