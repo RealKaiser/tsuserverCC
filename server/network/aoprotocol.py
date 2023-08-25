@@ -583,6 +583,8 @@ class AOProtocol(asyncio.Protocol):
 			color = 0
 		if pos != self.client.pos:
 			self.client.change_position(pos, True)
+			if pos == 'jud':
+				client.send_command("JD", 1)
 		if not len(self.client.area.poslock) == 0 and not (self.client.is_mod or self.client in self.client.area.owners):
 			if pos not in self.client.area.poslock:
 				pos = self.client.area.poslock[0]
