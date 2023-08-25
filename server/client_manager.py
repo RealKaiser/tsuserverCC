@@ -972,7 +972,10 @@ class ClientManager:
 			if not silent:
 				self.send_ooc(f'Position set to {pos}.')
 			self.send_command('SP', self.pos) #Send a "Set Position" packet
-			self.client.send_command("JD", -1)
+			if pos == 'jud':
+				self.send_command("JD", 1)
+			else:
+				self.send_command("JD", -1)
 			self.area.broadcast_evidence_list()
 
 		def set_mod_call_delay(self):
