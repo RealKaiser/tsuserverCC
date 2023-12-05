@@ -72,9 +72,10 @@ class AreaManager:
 					 is_hub=False,
 					 hubid=0,
 					 hubtype='default',
+					 freeplay=False,
 					 desc=''):
 			self.timetomove = 0
-			self.desc = ''
+			self.desc = desc
 			self.iniswap_allowed = iniswap_allowed
 			self.clients = set()
 			self.invite_list = {}
@@ -126,6 +127,7 @@ class AreaManager:
 			self.ambiance = ''
 			self.cmusic_list = []
 			self.cmusic_listname = ''
+			self.freeplay = freeplay
 			
 			#Testimony stuff
 			self.is_recording = False
@@ -971,6 +973,10 @@ class AreaManager:
 				item['hub_id'] = 0
 			if 'hubtype' not in item:
 				item['hubtype'] = 'default'
+			if 'freeplay' not in item:
+				item['freeplay'] = False
+			if 'desc' not in item:
+				item['desc'] = ''
 			self.areas.append(
 				self.Area(self.cur_id, self.server, item['area'],
 						  item['background'], item['bglock'],
@@ -978,7 +984,8 @@ class AreaManager:
 						  item['iniswap_allowed'],
 						  item['showname_changes_allowed'],
 						  item['shouts_allowed'], item['jukebox'],
-						  item['abbreviation'], item['noninterrupting_pres'], item['is_hub'], item['hub_id'], item['hubtype']))
+						  item['abbreviation'], item['noninterrupting_pres'], 
+						  item['is_hub'], item['hub_id'], item['hubtype'], item['freeplay'], item['desc']))
 			self.cur_id += 1
 
 	def default_area(self):

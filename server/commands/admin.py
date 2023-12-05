@@ -696,7 +696,8 @@ def ooc_cmd_mods(client, arg):
 	Show a list of moderators online.
 	Usage: /mods
 	"""
-	if client.is_mod:
+	mods = client.server.area_manager.mods_online()
+	if mods != 0:
 		mods = set()
 		add = ''
 		for area in client.server.area_manager.areas:
@@ -705,23 +706,19 @@ def ooc_cmd_mods(client, arg):
 				add += f'\n=== {area.name} ===\n[{area.abbreviation}]: [{len(area.clients)} Users][{area.status}]'
 				for mod in modshere:
 					mods.add(mod)
-					add += f'\n[{mod.id}] {mod.char_name} ({mod.ipid}): {mod.name}'
+					add += f'\n[{mod.id}] {mod.char_name}'
 			if area.is_hub and len(area.subareas) > 0:
 				for sub in area.subareas:
 					if len(modshere) == 0 and len(sub.get_mods()) > 0:
 						add += f'\n=== {sub.name} ===\n[{sub.abbreviation}]: [{len(sub.clients)} Users][{sub.status}]'
 					for mod in sub.get_mods():
 						mods.add(mod)
-						add += f'\n[{mod.id}] {mod.char_name} ({mod.ipid}): {mod.name}'
+						add += f'\n[{mod.id}] {mod.char_name}'
 		info = f'Mods online: {len(mods)}'
 		info += add
 		client.send_ooc(info)
 	else:
-		mods = client.server.area_manager.mods_online()
-		if mods != 0:
-			client.send_ooc(f'There are currently {mods} moderators online.')
-		else:
-			client.send_ooc('There are no moderators online.')
+		client.send_ooc('There are no moderators online.')
 
 def ooc_cmd_unmod(client, arg):
 	"""

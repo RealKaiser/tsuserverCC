@@ -741,8 +741,11 @@ class ClientManager:
 							info += '[RCM]'
 						else:
 							info += '[CM]'
-					info += f'[{c.id}] {c.char_name}'
+					if c.is_mod:
+						info += '[M]'
 
+					info += f'[{c.id}] {c.char_name}'
+					
 					if self.is_mod:
 						info += f' ({c.ipid}): {c.name}'
 

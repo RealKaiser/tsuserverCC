@@ -25,8 +25,13 @@ __all__ = [
 	'ooc_cmd_woosh',
 	'ooc_cmd_testimony',
 	'ooc_cmd_cleartestimony',
-	'ooc_cmd_afk' 
+	'ooc_cmd_afk',
+	'ooc_cmd_jd'
 ]
+
+def ooc_cmd_jd(client, arg):
+	client.send_command("JD", jd)
+	client.send_ooc('You now have judge buttons')
 
 def ooc_cmd_testimony(client, arg):
 	if len(client.area.recorded_messages) == 0:
@@ -73,7 +78,7 @@ def ooc_cmd_doc(client, arg):
 	if len(arg) == 0:
 		client.send_ooc(f'Document: {client.area.doc}')
 		database.log_room('doc.request', client, client.area)
-	elif client in client.area.owners or client.is_mod:
+	elif client in client.area.owners or client.is_mod or client.area.freeplay:
 		client.area.change_doc(arg)
 		client.area.broadcast_ooc('{} changed the doc link.'.format(
 			client.char_name))
@@ -106,7 +111,7 @@ def ooc_cmd_cleardoc(client, arg):
 def ooc_cmd_afk(client, arg):
 	client.server.client_manager.toggle_afk(client)
 
-@mod_only()
+
 def ooc_cmd_evidence_mod(client, arg):
 	"""
 	Change the evidence privilege mode. Refer to the documentation
@@ -116,18 +121,21 @@ def ooc_cmd_evidence_mod(client, arg):
 	if not arg or arg == client.area.evidence_mod:
 		client.send_ooc(
 			f'current evidence mod: {client.area.evidence_mod}')
-	elif arg in ['FFA', 'Mods', 'CM', 'HiddenCM']:
-		if client.area.evidence_mod == 'HiddenCM':
-			for i in range(len(client.area.evi_list.evidences)):
-				client.area.evi_list.evidences[i].pos = 'all'
-		client.area.evidence_mod = arg
-		client.send_ooc(
-			f'current evidence mod: {client.area.evidence_mod}')
-		database.log_room('evidence_mod', client, client.area, message=arg)
+	elif client in client.area.owners or client.is_mod:
+		if arg in ['FFA', 'Mods', 'CM', 'HiddenCM']:
+			if client.area.evidence_mod == 'HiddenCM':
+				for i in range(len(client.area.evi_list.evidences)):
+					client.area.evi_list.evidences[i].pos = 'all'
+			client.area.evidence_mod = arg
+			client.send_ooc(
+				f'current evidence mod: {client.area.evidence_mod}')
+			database.log_room('evidence_mod', client, client.area, message=arg)
+		else:
+			raise ArgumentError(
+				'Wrong Argument. Use /evidence_mod <MOD>. Possible values: FFA, CM, Mods, HiddenCM'
+			)
 	else:
-		raise ArgumentError(
-			'Wrong Argument. Use /evidence_mod <MOD>. Possible values: FFA, CM, Mods, HiddenCM'
-		)
+		client.send_ooc('You must be CM to change evidence_mod.')
 
 
 def ooc_cmd_evi_swap(client, arg):
