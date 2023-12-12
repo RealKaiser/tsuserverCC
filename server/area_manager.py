@@ -464,7 +464,7 @@ class AreaManager:
 						if item['category'] == arg:
 							for song in item['songs']:
 								if index == trackid:
-									self.play_music_shownamed(song['name'], client.char_id, '{} Shuffle'.format(arg))
+									self.play_music(song['name'], client.char_id)
 									self.music_looper = asyncio.get_event_loop().call_later(song['length'], lambda: self.music_shuffle(arg, client, trackid))
 									self.add_music_playing(client, song['name'])
 									database.log_room('play', client, self, message=song['name'])
@@ -488,7 +488,7 @@ class AreaManager:
 					for item in self.server.music_list:
 						for song in item['songs']:
 							if index == trackid:
-								self.play_music_shownamed(song['name'], client.char_id, 'Random Shuffle')
+								self.play_music(song['name'], client.char_id)
 								self.music_looper = asyncio.get_event_loop().call_later(song['length'], lambda: self.music_shuffle(arg, client, trackid))
 								self.add_music_playing(client, song['name'])
 								database.log_room('play', client, self, message=song['name'])
@@ -521,7 +521,7 @@ class AreaManager:
 								if song['length'] <= 5:
 									client.send_ooc('Track seems to have too little or no length, shuffle canceled.')
 									return
-								self.play_music_shownamed(song['name'], client.char_id, 'Custom Shuffle')
+								self.play_music(song['name'], client.char_id)
 								self.music_looper = asyncio.get_event_loop().call_later(song['length'], lambda: self.musiclist_shuffle(client, trackid))
 								self.add_music_playing(client, song['name'])
 								database.log_room('play', client, self, message=song['name'])
@@ -533,7 +533,7 @@ class AreaManager:
 							if item['length'] <= 5:
 								client.send_ooc('Track seems to have too little or no length, shuffle canceled.')
 								return
-							self.play_music_shownamed(item['name'], client.char_id, 'Custom Shuffle')
+							self.play_music(item['name'], client.char_id)
 							self.music_looper = asyncio.get_event_loop().call_later(item['length'], lambda: self.musiclist_shuffle(client, trackid))
 							self.add_music_playing(client, item['name'])
 							database.log_room('play', client, self, message=item['name'])
