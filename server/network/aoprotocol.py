@@ -613,6 +613,8 @@ class AOProtocol(asyncio.Protocol):
 				self.client.area.send_owner_command('CT', '[' + self.client.area.abbreviation + ']' + name, msg)
 				self.client.area.last_ooc = msg
 			return
+		if self.client.area.last_speaker != self.client:
+			additive = 0
 
 		# Here, we check the pair stuff, and save info about it to the client.
 		# Notably, while we only get a charid_pair and an offset, we send back a chair_pair, an emote, a talker offset
@@ -672,8 +674,6 @@ class AOProtocol(asyncio.Protocol):
                      frame_realization, frame_sfx,
                      additive, effect]
 
-		if self.client.area.last_speaker != self.client:
-			additive = 0
 		if not self.client.incall:
 			if msg == '///':
 				if self.client in self.client.area.owners and not self.client.area.is_recording and len(self.client.area.recorded_messages) != 0:
