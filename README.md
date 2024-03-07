@@ -157,6 +157,26 @@ Requires Python 3.7+ and PyYAML.
 * **bgslist**
     - Lists all official backgrounds on the server.
 
+### Card Deck Commands
+* **loaddecks** "name"
+    - Loads a set of decks specified by the user, will list available ones. CM-only.
+* **deck**
+    - Shows the decks in the area, including the discard pile. CM may see remaining cards in decks.
+* **hand** "card number"
+    - Shows the users current hand, if a card number is specified, the description (if applicable) is shown.
+* **viewhands**
+    - Shows the hands of all users in the area. CM-only.
+* **draw** "deck"
+    - Draws a card from the specified deck into the user's hand.
+* **deal** "deck" "card number" "id"
+    - Deals a specific card to any user in the area. CM-only.
+* **playcard** "card number"
+    - Plays the specified card, broadcasting in OOC and placing the card into the discard pile if applicable.
+* **clearhand**
+    - Clears the user's hand of any cards.
+* **cleardeck**
+    - Clears the area of any card decks. CM-only.
+
 ### CM Commands
 * **listenall**
     - Toggles whether you'll receive messages from remotely CM'd areas. On by default.

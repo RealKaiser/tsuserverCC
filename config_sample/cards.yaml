@@ -1,0 +1,134 @@
+- set: upheaval
+  decks:
+    - name: player
+      draws: infinite
+      amount: 100
+      cards:
+        - name: Alliance
+          amount: 11
+          description: Instantly gain a neutral region, if none gain a rival player's region.Play during PLANNING PHASE, once per turn.
+          discard: true
+        - name: Man of Talent
+          amount: 6
+          description: Gain a Samurai, roll 1d6, Bravery is +2 if 6. May not be played if this would cause you to have more than (regions/2) leaders.Play during PLANNING PHASE, once per turn.
+          discard: true
+        - name: Promotion
+          amount: 6
+          description: Promote a Samurai to Daimyo. May not be played if this would cause you to have more than (regions/3) Daimyo.Play during PLANNING PHASE, once per turn.
+          discard: true
+        - name: Brilliant Maneuver
+          amount: 6
+          description: May take another action with any leader. Cannot take more than 2 actions per leader.Play during PLANNING PHASE.
+          discard: true
+        - name: Fire Attack
+          amount: 6
+          description: Lowers fort level by 1, removes blockade and lowers VP. Must be neighbouring one of your own squares. Can’t use on the same space twice. No effect on Mansion.Play during BATTLE PHASE.
+          discard: true
+        - name: Blockade
+          amount: 6
+          description: Blocks a connection from any of your owned spaces in Kyoto. Space may not be under siege. Must be able to reach from your own mansion.Play during PLANNING PHASE.
+          discard: true
+        - name: Forced March
+          amount: 11
+          description: Gain 2 movement points.Play during BATTLE PHASE.
+          discard: true
+        - name: Ninja in Rival Mansion
+          amount: 6
+          description: Check rival player's current hand.Play during PLANNING PHASE.
+          discard: true
+        - name: Ninja Assassin
+          amount: 6
+          description: Steal random card from rival player. May choose which card to steal if played with Ninja in Rival Mansion.Play during PLANNING PHASE.
+          discard: true
+        - name: Surprise Attack
+          amount: 6
+          description: Skip initiative, enemy may not attack or retreat this round. Can only be played when attacking an enemy space. If played against Ambush nullifies both cards.Play at the start of an OPEN COMBAT round, once per round.
+          discard: true
+        - name: Imperial Truce
+          amount: 1
+          description: Any combat, siege or invasion between non-Ikki factions is disallowed for the turn.Play AFTER Year Start/Peace Conference.
+          discard: true
+        - name: Distract
+          amount: 6
+          description: Up to 2 enemy troops move to another of their owned spaces. Ineffective if there is an enemy leader on the space.Play during BATTLE PHASE.
+          discard: true
+        - name: Ambush
+          amount: 6
+          description: Skip initiative, enemy may not attack or retreat this round. Can only be played when defending a friendly space. If played against Surprise Attack nullifies both cards.Play at the start of an OPEN COMBAT round, once per round.
+          discard: true
+        - name: Inspiring Speech
+          amount: 9
+          description: Gain +2 to your initiative and attack roll for all rounds. Does not stack./nPlay at the start of ANY COMBAT round.
+          discard: true
+        - name: Tactical Master
+          amount: 2
+          description: Take a card from the discard pile. Once per turn.Play AFTER Year Start/Peace Conference.
+          discard: true
+        - name: Artillery
+          amount: 6
+          description: Kills 50% (round up) of troops in a neighbouring space. If used on a space with a fort, (Fort capacity - Leaders on space) troops are excluded from the calculation. Once per turn.Play during BATTLE PHASE.
+          discard: true
+    - name: scheme
+      draws: infinite
+      amount: 2
+      cards:
+        - name: Samurai Betrayal
+          amount: 1
+          description: Samurai will switch to your faction. Nullifies betrayal if played against Samurai betrayal card.Play during PLANNING PHASE or at the start of ANY COMBAT round.
+          discard: true
+        - name: Daimyo Betrayal
+          amount: 1
+          description: Daimyo will switch to your faction, cannot be rival's starting Daimyo. Nullifies betrayal if played against any betrayal card.Play during PLANNING PHASE or at the start of ANY COMBAT round.
+          discard: true
+    - name: event
+      draws: infinite
+      amount: 12
+      cards:
+        - name: Ikki Rising
+          amount: 1
+          description: Spawns the Ikki faction on the region map with 6 troops. If already active Ikki draws free Ikki Riot. Draw new event card during Opening Moves or if Ikki is not in play for campaign.
+          discard: true
+        - name: War Exhaustion
+          amount: 1
+          description: Lowers troops gained by players per turn by 1 for the rest of the game. Will stack. Draw new event card during Opening Moves.
+          discard: true
+        - name: Clan Infighting
+          amount: 1
+          description: Player with the most regions rolls 1d3, result = owned regions that become neutral. If equal amount of regions, both roll. Draw new event card during Opening Moves.
+          discard: true
+        - name: Yamana Declared Rebels
+          amount: 1
+          description: Yamana draws (1 + Number of Palaces owned) fewer cards this turn. Draw new event card during Opening Moves or if drawn twice in a row.
+          discard: true
+        - name: Hosokawa Declared Rebels
+          amount: 1
+          description: Hosokawa draws (1 + Number of Palaces owned) fewer cards this turn. Draw new event card during Opening Moves or if drawn twice in a row.
+          discard: true
+        - name: Great Harvest Yamana
+          amount: 1
+          description: Yamana’s success roll for Conscript is 5 this year and ignore War Exhaustion. Draw new event card if drawn twice in a row.
+          discard: true
+        - name: Great Harvest Hosokawa
+          amount: 1
+          description: Hosokawa’s success roll for Conscript is 5 this year and ignore War Exhaustion. Draw new event card if drawn twice in a row.
+          discard: true
+        - name: Poor Harvest Yamana
+          amount: 1
+          description: Yamana gains only 50% troops this turn. Ignores War Exhaustion, no effect if War Exhaustion effect is higher than 50%. Draw new event card if drawn twice in a row.
+          discard: true
+        - name: Poor Harvest Hosokawa
+          amount: 1
+          description: Hosokawa gains only 50% troops this turn. Ignores War Exhaustion, no effect if War Exhaustion effect is higher than 50%. Draw new event card if drawn twice in a row.
+          discard: true
+        - name: Call to Arms
+          amount: 1
+          description: Player with fewer leaders gains a Samurai. If equal amount, both gain a Samurai.
+          discard: true
+        - name: Samurai Go Home
+          amount: 1
+          description: Player with more leaders loses a Samurai. If equal amount, both lose a Samurai. If no Samurai, lose Daimyo instead. Draw new event card during Opening Moves.
+          discard: true
+        - name: Shogun's Heirs Join
+          amount: 1
+          description: Hosokawa and Yamana both gain a +1 Daimyo. Only once per game.
+          discard: true
