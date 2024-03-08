@@ -194,11 +194,11 @@ def ooc_cmd_deal(client, arg):
                         dupe = True
                 if not dupe:
                     c.hand.append(client.area.Card(card.name, 1, card.description))
+                client.send_ooc(f'Dealt {card.name} to {c.char_name}')
+                c.send_ooc(f'You were dealt {card.name}!')
                 card.amount += -1
                 if card.amount < 1:
                     client.area.discards.remove(card)
-                client.send_ooc(f'Dealt {card.name} to {c.char_name}')
-                c.send_ooc(f'You were dealt {card.name}!')
                 cnt = 1
                 for card in c.hand:
                     card.number = cnt
@@ -211,7 +211,7 @@ def ooc_cmd_deal(client, arg):
     else:
         for deck in client.area.decks:
             if arg[0] == deck.name:
-                for card in deck:
+                for card in deck.cards:
                     if arg[1] == card.number:
                         try:
                             id = int(arg[2])
@@ -227,12 +227,12 @@ def ooc_cmd_deal(client, arg):
                                 dupe = True
                         if not dupe:
                             c.hand.append(client.area.Card(card.name, 1, card.description))
+                        client.send_ooc(f'Dealt {card.name} to {c.char_name}')
+                        c.send_ooc(f'You were dealt {card.name}!')
                         if deck.draws != 'infinite':
                             card.amount += -1
                             if card.amount < 1:
                                 deck.cards.remove(card)
-                        client.send_ooc(f'Dealt {card.name} to {c.char_name}')
-                        c.send_ooc(f'You were dealt {card.name}!')
                         cnt = 1
                         for card in c.hand:
                             card.number = cnt
@@ -286,6 +286,26 @@ def ooc_cmd_playcard(client, arg):
     arg = int(arg)
     for card in client.hand:
         if arg == card.number:
+            if client.showname != '':
+                client.area.broadcast_ooc(f'{client.showname} played {card.name}:\n\n{card.description}')
+            else:
+                client.area.broadcast_ooc(f'{client.char_name} played {card.name}:\n\n{card.description}')
+            if len(client.area.discards) == 0:
+                newdiscard = client.area.Card(card.name, 1, card.description)
+                newdiscard.number = 1
+                client.area.discards.append(newdiscard)
+            else:
+                dupe = False
+                cnt = 1
+                for discard in client.area.discards:
+                    cnt += 1
+                    if card.name == discard.name:
+                        discard.amount += 1
+                        dupe = True
+                if not dupe:
+                    newdiscard = client.area.Card(card.name, 1, card.description)
+                    newdiscard.number = cnt
+                    client.area.discards.append(newdiscard)
             card.amount += -1
             if card.amount < 1:
                 client.hand.remove(card)
@@ -293,23 +313,6 @@ def ooc_cmd_playcard(client, arg):
                 for card in client.hand:
                     card.number = cnt
                     cnt += 1
-            if client.showname != '':
-                client.area.broadcast_ooc(f'{client.showname} played {card.name}:\n\n{card.description}')
-            else:
-                client.area.broadcast_ooc(f'{client.char_name} played {card.name}:\n\n{card.description}')
-            if len(client.area.discards) == 0:
-                client.area.discards.append(client.area.Card(card.name, 1, card.description))
-            else:
-                dupe = False
-                cnt = 1
-                for discard in client.area.discards:
-                    discard.number = cnt
-                    cnt += 1
-                    if card.name == discard.name:
-                        discard.amount += 1
-                        dupe = True
-                if not dupe:
-                    client.area.discards.append(client.area.Card(card.name, 1, card.description))
                 
                     
 
