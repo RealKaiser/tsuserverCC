@@ -135,8 +135,10 @@ class AreaManager:
             self.statement = 0
             
             #Card stuff
+            self.deckset = ''
             self.decks = []
             self.discards = []
+            self.phand = []
 
             self.is_locked = self.Locked.FREE
             self.blankposting_allowed = True
@@ -956,10 +958,11 @@ class AreaManager:
                 self.cards = []
         class Card:
             """Represents a deck of cards."""
-            def __init__(self, name, amount, description):
+            def __init__(self, name, amount, description, ogdeck):
                 self.name = name
                 self.amount = amount
                 self.description = description
+                self.ogdeck = ogdeck
 
 
     def __init__(self, server):

@@ -20,10 +20,14 @@ from . import mod_only
 __all__ = [
     'ooc_cmd_loaddecks',
     'ooc_cmd_deck',
+    'ooc_cmd_refreshdeck',
     'ooc_cmd_hand',
-    'ooc_cmd_viewhands',
+    'ooc_cmd_hands',
     'ooc_cmd_draw',
-    'ooc_cmd_playcard',
+    'ooc_cmd_drawpublic',
+    'ooc_cmd_takepublic',
+    'ooc_cmd_pcard',
+    'ooc_cmd_prcard',
     'ooc_cmd_deal',
     'ooc_cmd_clearhand',
     'ooc_cmd_cleardeck',
@@ -84,17 +88,60 @@ def ooc_cmd_loaddecks(client, arg):
     client.area.decks.clear()
     for item in card_sets:
         if item['set'] == arg:
+            client.area.deckset = item['set']
             for item2 in item['decks']:
                 deck = client.area.CardDeck(item2['name'], item2['draws'], item2['amount'])
                 cnt = 1
                 for item3 in item2['cards']:
-                    card = client.area.Card(item3['name'], item3['amount'], item3['description'])
+                    card = client.area.Card(item3['name'], item3['amount'], item3['description'], item2['name'])
                     card.number = cnt
                     cnt += 1
                     deck.cards.append(card)
                 client.area.decks.append(deck)
     client.area.broadcast_ooc('Deck(s) loaded!')
     
+def ooc_cmd_refreshdeck(client, arg):
+    if len(arg) == 0:
+        if client not in client.area.owners and not client.is_mod:
+            raise ClientError('You must be a CM.')
+    
+    try:
+        import yaml
+        with open('config/cards.yaml', 'r') as cards:
+            card_sets = yaml.safe_load(cards)
+    except:
+        raise ServerError(
+            'There was an error parsing the cards configuration. Check your syntax.'
+        )
+    if len(arg) == 0:
+        raise ClientError(f'You must specify a deck to refresh.')
+    deck_found = False
+    for item in card_sets:
+        if item['set'] == client.area.deckset:
+            for item2 in item['decks']:
+                if item2['name'] == arg:
+                    for ad in client.area.decks:
+                        if ad.name == arg:
+                            fdeck = ad
+                            deck_found = True
+    if not deck_found:
+        raise ArgumentError('Specified deck not found!')
+    client.area.decks.remove(fdeck)
+    for item in card_sets:
+        if item['set'] == client.area.deckset:
+            for item2 in item['decks']:
+                if item2['name'] == arg:
+                    deck = client.area.CardDeck(item2['name'], item2['draws'], item2['amount'])
+                    cnt = 1
+                    for item3 in item2['cards']:
+                        card = client.area.Card(item3['name'], item3['amount'], item3['description'], item2['name'])
+                        card.number = cnt
+                        cnt += 1
+                        deck.cards.append(card)
+                    client.area.decks.append(deck)
+                    client.area.broadcast_ooc(f'Deck {arg} refreshed!')
+        
+
 def ooc_cmd_draw(client, arg):
     if len(client.area.decks) == 0:
         raise ArgumentError('No deck to draw from!')
@@ -112,10 +159,11 @@ def ooc_cmd_draw(client, arg):
                                 mycard.amount += 1
                                 dupe = True
                         if not dupe:
-                            client.hand.append(client.area.Card(card.name, 1, card.description))
+                            client.hand.append(client.area.Card(card.name, 1, card.description, card.ogdeck))
                         inf = 'infinite'
                         if deck.draws != inf:
                             card.amount += -1
+                            deck.amount += -1
                             if card.amount < 1:
                                 deck.cards.remove(card)
                         if client.showname != '':
@@ -131,6 +179,83 @@ def ooc_cmd_draw(client, arg):
                         return            
         else:
             raise ArgumentError('Specify a deck to draw from!')
+    arg = arg.split()
+    if len(arg) > 1:
+        arg[1] = int(arg[1])
+        for deck in client.area.decks:
+            if arg[0] == deck.name:
+                if len(deck.cards) < arg[1]:
+                    raise ArgumentError('This deck does not have that many cards')
+                cycle = 0
+                while cycle < arg[1]:
+                    cnt = 0
+                    chance = (random.randint(1, deck.amount))
+                    for card in deck.cards:
+                        cnt += card.amount
+                        if cnt >= chance:
+                            dupe = False
+                            for mycard in client.hand:
+                                if mycard.name == card.name:
+                                    mycard.amount += 1
+                                    dupe = True
+                            if not dupe:
+                                client.hand.append(client.area.Card(card.name, 1, card.description, card.ogdeck))
+                            inf = 'infinite'
+                            if deck.draws != inf:
+                                card.amount += -1
+                                deck.amount += -1
+                                if card.amount < 1:
+                                    deck.cards.remove(card)
+                            
+                            if client.showname != '':
+                                client.area.broadcast_ooc(f'{client.showname} drew a card from the {deck.name} deck.')
+                            else:
+                                client.area.broadcast_ooc(f'{client.char_name} drew a card from the {deck.name} deck.')
+                            client.send_ooc(f'You drew {card.name}!')
+                            cnt = 1
+                            for card in client.hand:
+                                card.number = cnt
+                                cnt += 1
+                            cycle += 1
+        return
+    if len(arg) == 1:
+        for deck in client.area.decks:
+            if arg[0] == deck.name:
+                cnt = 0
+                chance = (random.randint(1, deck.amount))
+                for card in deck.cards:
+                    cnt += card.amount
+                    if cnt >= chance:
+                        dupe = False
+                        for mycard in client.hand:
+                            if mycard.name == card.name:
+                                mycard.amount += 1
+                                dupe = True
+                        if not dupe:
+                            client.hand.append(client.area.Card(card.name, 1, card.description, card.ogdeck))
+                        inf = 'infinite'
+                        if deck.draws != inf:
+                            card.amount += -1
+                            deck.amount += -1
+                            if card.amount < 1:
+                                deck.cards.remove(card)
+                        
+                        if client.showname != '':
+                            client.area.broadcast_ooc(f'{client.showname} drew a card from the {deck.name} deck.')
+                        else:
+                            client.area.broadcast_ooc(f'{client.char_name} drew a card from the {deck.name} deck.')
+                        client.send_ooc(f'You drew {card.name}!')
+                        cnt = 1
+                        for card in client.hand:
+                            card.number = cnt
+                            cnt += 1
+                        return
+
+def ooc_cmd_drawpublic(client, arg):
+    if len(client.area.decks) == 0:
+        raise ArgumentError('No deck to draw from!')
+    if len(arg) == 0:
+        raise ArgumentError('Please specify a deck to draw from')
     for deck in client.area.decks:
         if arg == deck.name:
             cnt = 0
@@ -139,30 +264,53 @@ def ooc_cmd_draw(client, arg):
                 cnt += card.amount
                 if cnt >= chance:
                     dupe = False
-                    for mycard in client.hand:
-                        if mycard.name == card.name:
-                            mycard.amount += 1
+                    for pubcard in client.area.phand:
+                        if pubcard.name == card.name:
+                            pubcard.amount += 1
                             dupe = True
                     if not dupe:
-                        client.hand.append(client.area.Card(card.name, 1, card.description))
+                        client.area.phand.append(client.area.Card(card.name, 1, card.description, card.ogdeck))
                     inf = 'infinite'
                     if deck.draws != inf:
                         card.amount += -1
+                        deck.amount += -1
                         if card.amount < 1:
                             deck.cards.remove(card)
                     
                     if client.showname != '':
-                        client.area.broadcast_ooc(f'{client.showname} drew a card from the {deck.name} deck.')
+                        client.area.broadcast_ooc(f'{client.showname} drew a {card.name} from the {deck.name} deck into the Public hand.')
                     else:
-                        client.area.broadcast_ooc(f'{client.char_name} drew a card from the {deck.name} deck.')
-                    client.send_ooc(f'You drew {card.name}!')
+                        client.area.broadcast_ooc(f'{client.char_name} drew a {card.name} from the {deck.name} deck into the Public hand.')
                     cnt = 1
-                    for card in client.hand:
+                    for card in client.area.phand:
                         card.number = cnt
                         cnt += 1
-                    
                     return
 
+def ooc_cmd_takepublic(client, arg):
+    if len(client.area.phand) == 0:
+        raise ArgumentError('The public hand is empty!')
+    if len(arg) == 0:
+        raise ArgumentError('Specify a card to take!')
+    arg = int(arg)
+    found = False
+    for card in client.area.phand:
+        if card.number == arg:
+            found = True
+            dupe = False
+            for mycard in client.hand:
+                if mycard.name == card.name:
+                    myard.amount += 1
+                    dupe = True
+            if not dupe:
+                client.hand.append(client.area.Card(card.name, 1, card.description, card.ogdeck))
+            card.amount += -1
+            if card.amount < 1:
+                client.area.phand.remove(card)
+            if client.showname != '':
+                client.area.broadcast_ooc(f'{client.showname} took {card.name} from the public hand.')
+            else:
+                client.area.broadcast_ooc(f'{client.char_name} took {card.name} from the public hand.')
 
 def ooc_cmd_deal(client, arg):
     if client not in client.area.owners and not client.is_mod:
@@ -193,7 +341,7 @@ def ooc_cmd_deal(client, arg):
                         mycard.amount += 1
                         dupe = True
                 if not dupe:
-                    c.hand.append(client.area.Card(card.name, 1, card.description))
+                    c.hand.append(client.area.Card(card.name, 1, card.description, card.ogdeck))
                 client.send_ooc(f'Dealt {card.name} to {c.char_name}')
                 c.send_ooc(f'You were dealt {card.name}!')
                 card.amount += -1
@@ -226,20 +374,19 @@ def ooc_cmd_deal(client, arg):
                                 mycard.amount += 1
                                 dupe = True
                         if not dupe:
-                            c.hand.append(client.area.Card(card.name, 1, card.description))
+                            c.hand.append(client.area.Card(card.name, 1, card.description, card.ogdeck))
                         client.send_ooc(f'Dealt {card.name} to {c.char_name}')
                         c.send_ooc(f'You were dealt {card.name}!')
                         if deck.draws != 'infinite':
                             card.amount += -1
+                            deck.amount += -1
                             if card.amount < 1:
                                 deck.cards.remove(card)
                         cnt = 1
                         for card in c.hand:
                             card.number = cnt
                             cnt += 1
-                        
-                    
-
+    
 def ooc_cmd_hand(client, arg):
     if len(client.hand) == 0:
         client.send_ooc('Your hand is empty.')
@@ -255,30 +402,65 @@ def ooc_cmd_hand(client, arg):
             raise ArgumentError('That doesn\'t seem to be a valid card, to view a card, use the number in front of it.')
     else:
         msg = 'Current hand:'
+        ogdecks = []
         for card in client.hand:
-            msg += f'\n{card.number}. {card.name} X{card.amount}'
+            if card.ogdeck not in ogdecks:
+                ogdecks.append(card.ogdeck)
+        if len(ogdecks) == 1:
+            for card in client.hand:
+                msg += f'\n{card.number}. {card.name} X{card.amount}'
+        if len(ogdecks) > 1:
+            for ogd in ogdecks:
+                first = True
+                for card in client.hand:
+                    if first:
+                        msg += f'\n- {ogd}:'
+                        first = False
+                    if card.ogdeck == ogd:
+                        msg += f'\n{card.number}. {card.name} X{card.amount}'
         client.send_ooc(msg)
             
-def ooc_cmd_viewhands(client, arg):
+def ooc_cmd_hands(client, arg):
     if client not in client.area.owners and not client.is_mod:
         raise ClientError('You must be a CM.')
     msg = '-- Player hands --'
     players = False
+    publichand = False
+    if len(client.area.phand) > 0:
+        publichand = True
     for c in client.area.clients:
         if len(c.hand) != 0:
             players = True
+            ogdecks = []
             if c.showname != '':
                 msg += f'\n- {c.showname}\'s hand -'
             else:
                 msg += f'\n- {c.char_name}\'s hand -'
             for card in c.hand:
-                msg += f'\n{card.number}. {card.name} X{card.amount}'
-    if players:
-        client.send_ooc(msg)
-    else:
+                if card.ogdeck not in ogdecks:
+                    ogdecks.append(card.ogdeck)
+            if len(ogdecks) == 1:
+                for card in c.hand:
+                    msg += f'\n{card.number}. {card.name} X{card.amount}'
+            if len(ogdecks) > 1:
+                for ogd in ogdecks:
+                    first = True
+                    for card in c.hand:
+                        if first:
+                            msg += f'\n- {ogd}:'
+                            first = False
+                        if card.ogdeck == ogd:
+                            msg += f'\n{card.number}. {card.name} X{card.amount}'
+    if publichand:
+        msg += f'\n-- Public hand --'
+        for card in client.area.phand:
+            msg += f'\n{card.number}. {card.name} X{card.amount}'
+    if not players and not publichand:
         client.send_ooc('There are no players with cards here.')
+    else:
+        client.send_ooc(msg)
 
-def ooc_cmd_playcard(client, arg):
+def ooc_cmd_pcard(client, arg):
     if len(client.hand) == 0:
         raise ClientError('You have no cards to play.')
     if len(arg) == 0:
@@ -287,11 +469,11 @@ def ooc_cmd_playcard(client, arg):
     for card in client.hand:
         if arg == card.number:
             if client.showname != '':
-                client.area.broadcast_ooc(f'{client.showname} played {card.name}:\n\n{card.description}')
+                client.area.broadcast_ooc(f'{client.showname} played/discarded {card.name}:\n\n{card.description}')
             else:
-                client.area.broadcast_ooc(f'{client.char_name} played {card.name}:\n\n{card.description}')
+                client.area.broadcast_ooc(f'{client.char_name} played/discarded {card.name}:\n\n{card.description}')
             if len(client.area.discards) == 0:
-                newdiscard = client.area.Card(card.name, 1, card.description)
+                newdiscard = client.area.Card(card.name, 1, card.description, card.ogdeck)
                 newdiscard.number = 1
                 client.area.discards.append(newdiscard)
             else:
@@ -303,25 +485,54 @@ def ooc_cmd_playcard(client, arg):
                         discard.amount += 1
                         dupe = True
                 if not dupe:
-                    newdiscard = client.area.Card(card.name, 1, card.description)
+                    newdiscard = client.area.Card(card.name, 1, card.description, card.ogdeck)
                     newdiscard.number = cnt
                     client.area.discards.append(newdiscard)
             card.amount += -1
             if card.amount < 1:
                 client.hand.remove(card)
-                cnt = 1
-                for card in client.hand:
-                    card.number = cnt
-                    cnt += 1
-                
-                    
 
+def ooc_cmd_prcard(client, arg):
+    if len(client.hand) == 0:
+        raise ClientError('You have no cards to play.')
+    if len(arg) == 0:
+        raise ArgumentError('You must choose a card to play, pick the corresponding number from your hand to play it.')
+    arg = int(arg)
+    for card in client.hand:
+        if arg == card.number:
+            if client.showname != '':
+                client.area.broadcast_ooc(f'{client.showname} played/returned {card.name}:\n\n{card.description}')
+            else:
+                client.area.broadcast_ooc(f'{client.char_name} played/returned {card.name}:\n\n{card.description}')
+            for d in client.area.decks:
+                if d.name == card.ogdeck:
+                    if len(d.cards) == 0:
+                        recard = client.area.Card(card.name, 1, card.description, card.ogdeck)
+                        recard.number = 1
+                        d.cards.append(recard)
+                    else:
+                        dupe = False
+                        cnt = 1
+                        for ogcard in d.cards:
+                            cnt += 1
+                            if card.name == ogcard.name:
+                                ogcard.amount += 1
+                                dupe = True
+                        if not dupe:
+                            recard = client.area.Card(card.name, 1, card.description, card.ogdeck)
+                            recard.number = cnt
+                            d.cards.append(recard)
+                    d.amount += 1
+                    card.amount += -1
+                    if card.amount < 1:
+                        client.hand.remove(card)
+                    
 def ooc_cmd_deck(client, arg):
     if len(client.area.decks) == 0:
         raise ClientError('There is no deck in this area!')
     msg = ''
     for deck in client.area.decks:
-        msg += f'\n- {deck.name} deck -'
+        msg += f'\n- {deck.name} deck: {deck.amount} cards -'
         if client in client.area.owners or client.is_mod:
             for card in deck.cards:
                 msg += f'\n{card.number}. {card.name} X{card.amount}'
