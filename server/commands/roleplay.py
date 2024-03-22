@@ -300,7 +300,7 @@ def ooc_cmd_takepublic(client, arg):
             dupe = False
             for mycard in client.hand:
                 if mycard.name == card.name:
-                    myard.amount += 1
+                    mycard.amount += 1
                     dupe = True
             if not dupe:
                 client.hand.append(client.area.Card(card.name, 1, card.description, card.ogdeck))
@@ -311,6 +311,11 @@ def ooc_cmd_takepublic(client, arg):
                 client.area.broadcast_ooc(f'{client.showname} took {card.name} from the public hand.')
             else:
                 client.area.broadcast_ooc(f'{client.char_name} took {card.name} from the public hand.')
+            cnt = 1
+            for card in client.hand:
+                card.number = cnt
+                cnt += 1
+            return
 
 def ooc_cmd_deal(client, arg):
     if client not in client.area.owners and not client.is_mod:
@@ -421,38 +426,40 @@ def ooc_cmd_hand(client, arg):
         client.send_ooc(msg)
             
 def ooc_cmd_hands(client, arg):
-    if client not in client.area.owners and not client.is_mod:
-        raise ClientError('You must be a CM.')
-    msg = '-- Player hands --'
     players = False
     publichand = False
+    msg = ''
     if len(client.area.phand) > 0:
         publichand = True
-    for c in client.area.clients:
-        if len(c.hand) != 0:
-            players = True
-            ogdecks = []
-            if c.showname != '':
-                msg += f'\n- {c.showname}\'s hand -'
-            else:
-                msg += f'\n- {c.char_name}\'s hand -'
-            for card in c.hand:
-                if card.ogdeck not in ogdecks:
-                    ogdecks.append(card.ogdeck)
-            if len(ogdecks) == 1:
+    if client in client.area.owners or client.is_mod:
+        msg = '-- Player hands --'
+        for c in client.area.clients:
+            if len(c.hand) != 0:
+                players = True
+                ogdecks = []
+                if c.showname != '':
+                    msg += f'\n- {c.showname}\'s hand -'
+                else:
+                    msg += f'\n- {c.char_name}\'s hand -'
                 for card in c.hand:
-                    msg += f'\n{card.number}. {card.name} X{card.amount}'
-            if len(ogdecks) > 1:
-                for ogd in ogdecks:
-                    first = True
+                    if card.ogdeck not in ogdecks:
+                        ogdecks.append(card.ogdeck)
+                if len(ogdecks) == 1:
                     for card in c.hand:
-                        if first:
-                            msg += f'\n- {ogd}:'
-                            first = False
-                        if card.ogdeck == ogd:
-                            msg += f'\n{card.number}. {card.name} X{card.amount}'
+                        msg += f'\n{card.number}. {card.name} X{card.amount}'
+                if len(ogdecks) > 1:
+                    for ogd in ogdecks:
+                        first = True
+                        for card in c.hand:
+                            if first:
+                                msg += f'\n- {ogd}:'
+                                first = False
+                            if card.ogdeck == ogd:
+                                msg += f'\n{card.number}. {card.name} X{card.amount}'
     if publichand:
-        msg += f'\n-- Public hand --'
+        if players and client in client.area.owners or players and client.is_mod:
+            msg += f'\n'
+        msg += f'-- Public hand --'
         for card in client.area.phand:
             msg += f'\n{card.number}. {card.name} X{card.amount}'
     if not players and not publichand:

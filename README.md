@@ -160,18 +160,26 @@ Requires Python 3.7+ and PyYAML.
 ### Card Deck Commands
 * **loaddecks** "name"
     - Loads a set of decks specified by the user, will list available ones. CM-only.
+* **refreshdeck** "name"
+    - Refreshes a deck, reverting it to its original state. CM-only.
 * **deck**
     - Shows the decks in the area, including the discard pile. CM may see remaining cards in decks.
 * **hand** "card number"
     - Shows the users current hand, if a card number is specified, the description (if applicable) is shown.
-* **viewhands**
-    - Shows the hands of all users in the area. CM-only.
-* **draw** "deck"
-    - Draws a card from the specified deck into the user's hand.
+* **hands**
+    - Shows the hands of all users in the area and the public hand. For non-CM users this will only show the area's public hand if one exists.
+* **draw** "deck" "amount to draw (optional)"
+    - Draws a card from the specified deck into the user's hand, optionally specific an amount to draw from it.
+* **drawpublic** "deck"
+    - Draws a card from the specified deck into the area's public hand.
+* **takepublic** "card number"
+    - Takes the card with the specified number into user's hand from the area's public hand.  
 * **deal** "deck" "card number" "id"
     - Deals a specific card to any user in the area. CM-only.
-* **playcard** "card number"
+* **pcard** "card number"
     - Plays the specified card, broadcasting in OOC and placing the card into the discard pile if applicable.
+* **prcard** "card number"
+    - Plays the specified card, broadcasting in OOC and and then returning it into its original deck, not recommended when using a deck with infinite draws.
 * **clearhand**
     - Clears the user's hand of any cards.
 * **cleardeck**
