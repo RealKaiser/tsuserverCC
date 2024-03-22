@@ -169,7 +169,7 @@ Requires Python 3.7+ and PyYAML.
 * **hands**
     - Shows the hands of all users in the area and the public hand. For non-CM users this will only show the area's public hand if one exists.
 * **draw** "deck" "amount to draw (optional)"
-    - Draws a card from the specified deck into the user's hand, optionally specific an amount to draw from it.
+    - Draws a card from the specified deck into the user's hand, optionally specify an amount to draw from it.
 * **drawpublic** "deck"
     - Draws a card from the specified deck into the area's public hand.
 * **takepublic** "card number"
