@@ -249,6 +249,8 @@ class AOProtocol(asyncio.Protocol):
 
 		Sends the FL packet that consists of a list of
 		features supported by the server.
+        
+        Disconnects the client if webAO is not allowed on the server config and the client is a webAO user
 
 		Also sends ASSET packet for WebAO content 
 		if asset_url in config.yaml is defined. 
@@ -257,6 +259,10 @@ class AOProtocol(asyncio.Protocol):
 		"""
 	
 		self.client.send_command(*AOProtocol.flpacket)
+
+		if not self.server.config['allow_webao'] and args[0] == 'webAO':
+			self.client.send_command('BD', 'WebAO is not allowed on this server.')
+			self.client.disconnect()
 
 		if self.server.config['asset_url'] != '':
 			self.client.send_command('ASS', self.server.config['asset_url'])
@@ -359,11 +365,6 @@ class AOProtocol(asyncio.Protocol):
 		self.client.send_done()
 		self.client.send_motd()
 		self.client.send_poll()
-		if len(self.client.hdid) == 32:
-			#if self.client.ipid in self.server.webperms:
-			self.client.permission = True
-		else:
-			self.client.permission = True
 
 	def net_cmd_cc(self, args):
 		"""Character selection.
@@ -405,7 +406,6 @@ class AOProtocol(asyncio.Protocol):
 		is_checked is part of the ban checking process, which is found in net_cmd_hi further up this file.
 		is_muted is kind of obvious.
 		can_send_message is defined in server/area_manager.py, checking to see if you can send a message in an area.
-		'permission' is if you can use Web AO or not, I think. It's granted by ooc_cmd_permit in server/admin.py.
 		"""
 		if not self.client.is_checked:
 			return
@@ -413,9 +413,6 @@ class AOProtocol(asyncio.Protocol):
 			self.client.send_ooc('You are muted by a moderator.')
 			return
 		elif not self.client.area.can_send_message(self.client):
-			return
-		elif not self.client.permission:
-			self.client.send_ooc('You need permission to use a web client, please ask staff.')
 			return
 			
 		statement = None
@@ -882,9 +879,6 @@ class AOProtocol(asyncio.Protocol):
 			self.client.send_ooc("Spectators can't use OOC chat.")
 			return
 
-		if not self.client.permission:
-			self.client.send_ooc('You need permission to use a web client, please ask staff.')
-			return
 		if not self.validate_net_cmd(args, ArgType.STR, ArgType.STR):
 			return
 		if self.client.name != args[0] and self.client.fake_name != args[0]:
@@ -982,9 +976,6 @@ class AOProtocol(asyncio.Protocol):
 
 		"""
 		if not self.client.is_checked:
-			return
-		if not self.client.permission:
-			self.client.send_ooc('You need permission to use a web client, please ask staff.')
 			return
 		try:
 			area = self.server.area_manager.get_area_by_name(args[0], self.client)
@@ -1099,9 +1090,6 @@ class AOProtocol(asyncio.Protocol):
 		"""
 		if not self.client.is_checked:
 			return
-		if not self.client.permission:
-			self.client.send_ooc('You need permission to use a web client, please ask staff.')
-			return
 		if not self.client.area.shouts_allowed:
 			self.client.send_ooc(
 				"You cannot use the testimony buttons here!")
@@ -1212,9 +1200,6 @@ class AOProtocol(asyncio.Protocol):
 		"""
 		if not self.client.is_checked:
 			return
-		if not self.client.permission:
-			self.client.send_ooc('You need permission to use a web client, please ask staff.')
-			return
 		if self.client.is_muted:  # Checks to see if the client has been muted by a mod
 			self.client.send_ooc('You are muted by a moderator.')
 			return
@@ -1288,10 +1273,6 @@ class AOProtocol(asyncio.Protocol):
 		"""
 		from server.webhooks import Webhooks
 		if not self.client.is_checked:
-			return
-		
-		if not self.client.permission:
-			self.client.send_ooc('You need permission to use a web client, please ask staff via our discord.')
 			return
 
 		if self.client.is_muted:  # Checks to see if the client has been muted by a mod

@@ -88,7 +88,6 @@ class ClientManager:
             self.is_admin = False
             self.is_mod = False
             self.mod_profile_name = None
-            self.permission = False
             self.ghost = False
             self.spying = []
             

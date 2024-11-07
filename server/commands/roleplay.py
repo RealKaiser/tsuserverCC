@@ -26,8 +26,10 @@ __all__ = [
     'ooc_cmd_draw',
     'ooc_cmd_drawpublic',
     'ooc_cmd_takepublic',
+    'ooc_cmd_returnpublic',
     'ooc_cmd_pcard',
-    'ooc_cmd_prcard',
+    'ooc_cmd_retcard',
+    'ooc_cmd_srcard',
     'ooc_cmd_deal',
     'ooc_cmd_clearhand',
     'ooc_cmd_cleardeck',
@@ -184,8 +186,6 @@ def ooc_cmd_draw(client, arg):
         arg[1] = int(arg[1])
         for deck in client.area.decks:
             if arg[0] == deck.name:
-                if len(deck.cards) < arg[1]:
-                    raise ArgumentError('This deck does not have that many cards')
                 cycle = 0
                 while cycle < arg[1]:
                     cnt = 0
@@ -217,7 +217,8 @@ def ooc_cmd_draw(client, arg):
                                 card.number = cnt
                                 cnt += 1
                             cycle += 1
-        return
+                            break
+                return
     if len(arg) == 1:
         for deck in client.area.decks:
             if arg[0] == deck.name:
@@ -286,6 +287,34 @@ def ooc_cmd_drawpublic(client, arg):
                         card.number = cnt
                         cnt += 1
                     return
+
+def ooc_cmd_returnpublic(client, arg):
+    if len(client.area.phand) == 0:
+        raise ArgumentError('The public hand is empty!')
+    for card in client.area.phand:
+        for d in client.area.decks:
+            if d.name == card.ogdeck:
+                if len(d.cards) == 0:
+                    recard = client.area.Card(card.name, 1, card.description, card.ogdeck)
+                    recard.number = 1
+                    d.cards.append(recard)
+                else:
+                    dupe = False
+                    cnt = 1
+                    for ogcard in d.cards:
+                        cnt += 1
+                        if card.name == ogcard.name:
+                            ogcard.amount += 1
+                            dupe = True
+                    if not dupe:
+                        recard = client.area.Card(card.name, 1, card.description, card.ogdeck)
+                        recard.number = cnt
+                        d.cards.append(recard)
+                d.amount += 1
+                card.amount += -1
+                if card.amount < 1:
+                    client.area.phand.remove(card)
+    
 
 def ooc_cmd_takepublic(client, arg):
     if len(client.area.phand) == 0:
@@ -499,7 +528,7 @@ def ooc_cmd_pcard(client, arg):
             if card.amount < 1:
                 client.hand.remove(card)
 
-def ooc_cmd_prcard(client, arg):
+def ooc_cmd_retcard(client, arg):
     if len(client.hand) == 0:
         raise ClientError('You have no cards to play.')
     if len(arg) == 0:
@@ -511,6 +540,41 @@ def ooc_cmd_prcard(client, arg):
                 client.area.broadcast_ooc(f'{client.showname} played/returned {card.name}:\n\n{card.description}')
             else:
                 client.area.broadcast_ooc(f'{client.char_name} played/returned {card.name}:\n\n{card.description}')
+            for d in client.area.decks:
+                if d.name == card.ogdeck:
+                    if len(d.cards) == 0:
+                        recard = client.area.Card(card.name, 1, card.description, card.ogdeck)
+                        recard.number = 1
+                        d.cards.append(recard)
+                    else:
+                        dupe = False
+                        cnt = 1
+                        for ogcard in d.cards:
+                            cnt += 1
+                            if card.name == ogcard.name:
+                                ogcard.amount += 1
+                                dupe = True
+                        if not dupe:
+                            recard = client.area.Card(card.name, 1, card.description, card.ogdeck)
+                            recard.number = cnt
+                            d.cards.append(recard)
+                    d.amount += 1
+                    card.amount += -1
+                    if card.amount < 1:
+                        client.hand.remove(card)
+
+def ooc_cmd_srcard(client, arg):
+    if len(client.hand) == 0:
+        raise ClientError('You have no cards to return.')
+    if len(arg) == 0:
+        raise ArgumentError('You must choose a card to secretly return, pick the corresponding number from your hand to play it.')
+    arg = int(arg)
+    for card in client.hand:
+        if arg == card.number:
+            if client.showname != '':
+                client.area.broadcast_ooc(f'{client.showname} secretly returned a card to {card.ogdeck}.')
+            else:
+                client.area.broadcast_ooc(f'{client.char_name} secretly returned a card to {card.ogdeck}.')
             for d in client.area.decks:
                 if d.name == card.ogdeck:
                     if len(d.cards) == 0:
