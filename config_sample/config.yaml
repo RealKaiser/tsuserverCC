@@ -14,7 +14,7 @@ playerlimit: 100
 # Websocket port to listen on, required for both 2.11+ clients and webAO to be able to connect to your server. You should forward this port on your router.
 websocket_port: 27014
 # TCP port to listen on, required for pre-2.11 clients to be able to connect to your server. You should forward this port on your router.
-port: 27016
+port: 27017
 # Whether users can join the server via webAO. If set to false only those with an AO client will be able to join the server.
 allow_webao: false
 # Whether or not the server is open to 2.11+ clients and webAO connections, there should usually be no reason to disable this.

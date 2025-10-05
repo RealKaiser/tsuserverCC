@@ -264,13 +264,13 @@ class ClientManager:
                 if not char_id in self.charcurse:
                     raise ClientError('Character not available.')
                 force = True
-            if not self.area.is_char_available(char_id):
+            """if not self.area.is_char_available(char_id):
                 if force:
                     for client in self.area.clients:
                         if client.char_id == char_id:
                             client.char_select()
                 else:
-                    raise ClientError('Character not available.')
+                    raise ClientError('Character not available.')"""
             old_char = self.char_name
             self.char_id = char_id
             self.pos = ''
@@ -364,8 +364,6 @@ class ClientManager:
             """
             if self.area == area:
                 raise ClientError('User already in specified area.')
-            if self.hdid == 32 and area.weblock == True:
-                raise ClientError('Web clients are disallowed from entering that area.')
             if self.is_hostage == True:
                 for c in self.following:
                     if not c in area.clients:
@@ -419,7 +417,7 @@ class ClientManager:
                 self.area.remove_jukebox_vote(self, True)
 
             old_area = self.area
-            if not area.is_char_available(self.char_id):
+            """if not area.is_char_available(self.char_id):
                 try:
                     new_char_id = area.get_rand_avail_char_id()
                 except AreaError:
@@ -431,7 +429,7 @@ class ClientManager:
                             self.following.remove(c)
                         raise ClientError(f'No available characters in {area.name}, cannot follow {self.char_name}. Unfollowing.')
                     else:
-                        raise ClientError('No available characters in that area.')
+                        raise ClientError('No available characters in that area.')"""
             if self.autopass == True:
                 if self.is_following:
                     for c in self.following:
@@ -467,11 +465,11 @@ class ClientManager:
                             c.following.remove(self)
                             self.followers.remove(c)
                             self.send_ooc(f'No available characters in {area.name} for {c.char_name} so they cannot follow you any longer.')
-            self.old_char_name = self.char_name
+            """self.old_char_name = self.char_name
             if not area.is_char_available(self.char_id):
                 self.change_character(new_char_id)
                 self.send_ooc(
-                    f'Character taken, switched to {self.char_name}.')
+                    f'Character taken, switched to {self.char_name}.')"""
 
             self.area.remove_client(self)
             self.area = area

@@ -20,6 +20,7 @@ from . import mod_only
 __all__ = [
 	'ooc_cmd_motd',
 	'ooc_cmd_help',
+	'ooc_cmd_helpfiles',
 	'ooc_cmd_kick',
 	'ooc_cmd_ban',
 	'ooc_cmd_banhdid',
@@ -309,6 +310,17 @@ def ooc_cmd_help(client, arg):
 		raise ArgumentError('This command has no arguments.')
 	help_url = 'https://github.com/RealKaiser/tsuserverCC'
 	help_msg = f'The commands available on this server can be found here: {help_url}'
+	client.send_ooc(help_msg)
+    
+def ooc_cmd_helpfiles(client, arg):
+	"""
+	Show help for a command, or show general help.
+	Usage: /help
+	"""
+	if len(arg) != 0:
+		raise ArgumentError('This command has no arguments.')
+	pack_url = 'https://bit.ly/2zCVzXp'
+	help_msg = f'You may be missing files, this can be due to an update or simply not having all the content packs downloaded, find those here: {pack_url} If you have everything downloaded, you should ask the person if they are using custom content.'
 	client.send_ooc(help_msg)
 
 def ooc_cmd_about(client, arg):
