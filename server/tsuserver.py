@@ -46,6 +46,7 @@ from server.client_manager import ClientManager
 from server.musiclist_manager import MusicListManager
 from server.hub_manager import HubManager
 from server.emotes import Emotes
+from server.discordbot import Commandbot
 from server.exceptions import ClientError,ServerError
 from server.network.aoprotocol import AOProtocol
 from server.network.aoprotocol_ws import new_websocket_client
@@ -84,6 +85,8 @@ class TsuServerCC:
 		self.geoIpReader = None
 		self.useGeoIp = False
 		self.webperms = []
+		self.ipstore = []
+		self.namestore = []
 
 		try:
 			self.geoIpReader = geoip2.database.Reader('./storage/GeoLite2-ASN.mmdb')
@@ -103,6 +106,7 @@ class TsuServerCC:
 		self.rp_mode = False
 		self.runner = False
 		self.runtime = 0
+		self.commandbot = None
 
 		try:
 			self.load_config()
@@ -148,6 +152,14 @@ class TsuServerCC:
 		if self.config['zalgo_tolerance']:
 			self.zalgo_tolerance = self.config['zalgo_tolerance']
 
+		if "commandbot" in self.config and self.config["commandbot"]["enabled"]:
+			try:
+				self.commandbot = Commandbot(self)
+				asyncio.ensure_future(self.commandbot.init(self.config["commandbot"]["token"]), loop=loop)
+				self.commandbot.add_commands()
+			except Exception as ex:
+				print(ex)
+				
 		asyncio.ensure_future(self.schedule_unbans())
 
 		database.log_misc('start')
@@ -215,6 +227,8 @@ class TsuServerCC:
 		c.server = self
 		c.area = self.area_manager.default_area()
 		c.area.new_client(c)
+		if not (c.server.config["commandbot"]["whitelist"]):
+			c.is_wlisted = True
 		return c
 
 	def remove_client(self, client):

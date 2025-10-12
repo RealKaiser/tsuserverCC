@@ -4,7 +4,8 @@ import arrow
 import pytimeparse
 import yaml
 import importlib
-
+import threading
+from random import randrange, seed
 from heapq import heappop, heappush
 from server import database
 from server.webhooks import Webhooks
@@ -20,7 +21,9 @@ from . import mod_only
 __all__ = [
 	'ooc_cmd_motd',
 	'ooc_cmd_help',
-	'ooc_cmd_helpfiles',
+	'ooc_cmd_whitelist',
+	'ooc_cmd_wl',
+	'ooc_cmd_wlself',
 	'ooc_cmd_kick',
 	'ooc_cmd_ban',
 	'ooc_cmd_banhdid',
@@ -52,6 +55,69 @@ __all__ = [
 	'ooc_cmd_spy',
 	'ooc_cmd_about'
 ]
+
+def ooc_cmd_wlself(client, arg):
+	"""
+	Send a request to whitelist your other multiclients that are not already whitelisted.
+	Usage: /wlself
+	"""
+	if not (client.server.config["commandbot"]["whitelist"]):
+		raise ArgumentError("Whitelist is not enabled on this server!")
+	if client.is_wlisted == False:
+		raise ArgumentError("Whitelist yourself first.")
+	
+	wl_clients = list()
+	for _c in client.server.client_manager.clients:
+		if _c.ipid == client.ipid:
+			if not _c.is_wlisted:
+				wl_clients.append(_c)
+	
+	wl_id_str = "Client ID " + ", ".join([str(wlc.id) for wlc in wl_clients]) if wl_clients else "Zero Multiclients"
+	for c in wl_clients:
+		c.discord_name = client.discord_name
+		c.wlrequest = True
+		c.is_wlisted = True
+		c.send_ooc(f"Whitelisted as {c.discord_name}.")
+
+	client.send_ooc(f"Whitelisted {wl_id_str}.")
+
+def ooc_cmd_whitelist(client, arg):
+	"""
+	Send a request to activate whitelist
+	Usage: /whitelist <name>
+	"""
+	if not (client.server.config["commandbot"]["whitelist"]):
+		raise ArgumentError("Whitelist is not enabled on this server!")
+	if client.is_wlisted == True:
+		raise ArgumentError("You have already been whitelisted!")
+	if client.wlrequest == True:
+		raise ArgumentError("You cannot ask to whitelist again. Rejoin!")
+	if len(arg) == 0:
+		raise ArgumentError("You must specify a discord username.")
+	disc_name = arg.strip().lower()
+	client.discord_name = disc_name
+	client.wlrequest = True
+	client.server.commandbot.queue_whitelist_requests.append([client, disc_name])
+	client.send_ooc(f"Whitelist request sent! Please wait for a moment.")
+
+def ooc_cmd_wl(client, arg):
+	"""
+	Send a request to activate whitelist
+	Usage: /wl <name>
+	"""
+	if not (client.server.config["commandbot"]["whitelist"]):
+		raise ArgumentError("Whitelist is not enabled on this server!")
+	if client.is_wlisted == True:
+		raise ArgumentError("You have already been whitelisted!")
+	if client.wlrequest == True:
+		raise ArgumentError("You cannot ask to whitelist again. Rejoin!")
+	if len(arg) == 0:
+		raise ArgumentError("You must specify a discord username.")
+	disc_name = arg.strip().lower()
+	client.discord_name = disc_name
+	client.wlrequest = True
+	client.server.commandbot.queue_whitelist_requests.append([client, disc_name])
+	client.send_ooc(f"Whitelist request sent! Please wait for a moment.")
 
 """
 Command: /spy
@@ -310,17 +376,6 @@ def ooc_cmd_help(client, arg):
 		raise ArgumentError('This command has no arguments.')
 	help_url = 'https://github.com/RealKaiser/tsuserverCC'
 	help_msg = f'The commands available on this server can be found here: {help_url}'
-	client.send_ooc(help_msg)
-    
-def ooc_cmd_helpfiles(client, arg):
-	"""
-	Show help for a command, or show general help.
-	Usage: /help
-	"""
-	if len(arg) != 0:
-		raise ArgumentError('This command has no arguments.')
-	pack_url = 'https://bit.ly/2zCVzXp'
-	help_msg = f'You may be missing files, this can be due to an update or simply not having all the content packs downloaded, find those here: {pack_url} If you have everything downloaded, you should ask the person if they are using custom content.'
 	client.send_ooc(help_msg)
 
 def ooc_cmd_about(client, arg):
@@ -708,8 +763,7 @@ def ooc_cmd_mods(client, arg):
 	Show a list of moderators online.
 	Usage: /mods
 	"""
-	mods = client.server.area_manager.mods_online()
-	if mods != 0:
+	if client.is_mod:
 		mods = set()
 		add = ''
 		for area in client.server.area_manager.areas:
@@ -718,19 +772,23 @@ def ooc_cmd_mods(client, arg):
 				add += f'\n=== {area.name} ===\n[{area.abbreviation}]: [{len(area.clients)} Users][{area.status}]'
 				for mod in modshere:
 					mods.add(mod)
-					add += f'\n[{mod.id}] {mod.char_name}'
+					add += f'\n[{mod.id}] {mod.char_name} ({mod.ipid}): {mod.name}'
 			if area.is_hub and len(area.subareas) > 0:
 				for sub in area.subareas:
 					if len(modshere) == 0 and len(sub.get_mods()) > 0:
 						add += f'\n=== {sub.name} ===\n[{sub.abbreviation}]: [{len(sub.clients)} Users][{sub.status}]'
 					for mod in sub.get_mods():
 						mods.add(mod)
-						add += f'\n[{mod.id}] {mod.char_name}'
+						add += f'\n[{mod.id}] {mod.char_name} ({mod.ipid}): {mod.name}'
 		info = f'Mods online: {len(mods)}'
 		info += add
 		client.send_ooc(info)
 	else:
-		client.send_ooc('There are no moderators online.')
+		mods = client.server.area_manager.mods_online()
+		if mods != 0:
+			client.send_ooc(f'There are currently {mods} moderators online.')
+		else:
+			client.send_ooc('There are no moderators online.')
 
 def ooc_cmd_unmod(client, arg):
 	"""
@@ -979,3 +1037,4 @@ def ooc_cmd_warninfo(client, arg: str) -> None:
 			warn_date = arrow.get(warn.warn_date)
 			msg += f'Warned on: {warn_date.format()} ({warn_date.humanize()})'
 			client.send_ooc(msg)
+

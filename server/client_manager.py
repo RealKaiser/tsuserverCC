@@ -31,6 +31,7 @@ import re
 import time
 import random
 import asyncio
+from datetime import datetime
 
 from heapq import heappop, heappush
 from yaml.loader import FullLoader
@@ -83,6 +84,10 @@ class ClientManager:
             self.files = ''
             self.hidden = False
             self.hubview = False
+            self.pid = -1
+            self.is_wlisted = False
+            self.discord_name = ''
+            self.wlrequest = False
             
             # Mod/Admin stuff
             self.is_admin = False
@@ -417,7 +422,7 @@ class ClientManager:
                 self.area.remove_jukebox_vote(self, True)
 
             old_area = self.area
-            """if not area.is_char_available(self.char_id):
+            if not area.is_char_available(self.char_id):
                 try:
                     new_char_id = area.get_rand_avail_char_id()
                 except AreaError:
@@ -429,18 +434,18 @@ class ClientManager:
                             self.following.remove(c)
                         raise ClientError(f'No available characters in {area.name}, cannot follow {self.char_name}. Unfollowing.')
                     else:
-                        raise ClientError('No available characters in that area.')"""
+                        raise ClientError('No available characters in that area.')
             if self.autopass == True:
                 if self.is_following:
                     for c in self.following:
                         if self.showname != 0:
                             if c.showname != 0:
-                                self.area.broadcast_ooc(f'{self.showname}-({self.char_name}) has followed {c.showname}-({c-char_name}) to {area.name}.')
+                                self.area.broadcast_ooc(f'{self.showname}-({self.char_name}) has followed {c.showname}-({c.char_name}) to {area.name}.')
                             else:
                                 self.area.broadcast_ooc(f'{self.showname}-({self.char_name}) has followed {c.char_name} to {area.name}.')
                         else:
                             if c.showname != 0:
-                                self.area.broadcast_ooc(f'{self.char_name} has followed {c.showname}-({c-char_name}) to {area.name}.')
+                                self.area.broadcast_ooc(f'{self.char_name} has followed {c.showname}-({c.char_name}) to {area.name}.')
                             else:
                                 self.area.broadcast_ooc(f'{self.char_name} has followed {c.char_name} to {area.name}.')
                 else:
@@ -465,11 +470,11 @@ class ClientManager:
                             c.following.remove(self)
                             self.followers.remove(c)
                             self.send_ooc(f'No available characters in {area.name} for {c.char_name} so they cannot follow you any longer.')
-            """self.old_char_name = self.char_name
+            self.old_char_name = self.char_name
             if not area.is_char_available(self.char_id):
                 self.change_character(new_char_id)
                 self.send_ooc(
-                    f'Character taken, switched to {self.char_name}.')"""
+                    f'Character taken, switched to {self.char_name}.')
 
             self.area.remove_client(self)
             self.area = area
@@ -746,7 +751,9 @@ class ClientManager:
                         info += '[M]'
 
                     info += f'[{c.id}] {c.char_name}'
-                    
+                    if c.is_wlisted:
+                        info += f" [Disc: {c.discord_name}]"
+                     
                     if self.is_mod:
                         info += f' ({c.ipid}): {c.name}'
 
@@ -1017,6 +1024,8 @@ class ClientManager:
     def __init__(self, server):
         self.clients = set()
         self.server = server
+        self.lastjoin = datetime.now()
+        self.previd = -1
         self.available_ids = [i for i in range(self.server.config['playerlimit'])]
         self.all_ids = [i for i in range(self.server.config['playerlimit'])]
 
@@ -1034,6 +1043,13 @@ class ClientManager:
         :param transport: asyncio transport
         """
         user_id = None
+        check_time = datetime.now()
+        grab_id = database.ipid(transport.get_extra_info('peername')[0])
+        res = int((check_time - self.lastjoin).total_seconds())
+        print(f"It has been {res} seconds since the last join! {grab_id} attempted a connection!")
+        if res < 5 and grab_id == self.previd:
+            transport.write(b'BD#Please wait before connecting another client. Try again!#%')
+            raise ClientError
         if len(self.available_ids) < 1:
             transport.write(b'BD#This server is full.#%')
             raise ClientError
@@ -1054,6 +1070,8 @@ class ClientManager:
         for client in self.clients:
             if client.ipid == temp_ipid:
                 client.clientscon += 1
+        self.lastjoin = datetime.now()
+        self.previd = grab_id
         return c
 
     def remove_client(self, client):

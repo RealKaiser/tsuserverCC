@@ -64,14 +64,50 @@ class Webhooks:
 		try:
 			result.raise_for_status()
 		except requests.exceptions.HTTPError as err:
-			database.log_misc('webhook.err', data=err)
+			pass
+			# database.log_misc('webhook.err', data=err)
 		else:
-			database.log_misc('webhook.ok', data="successfully delivered payload, code {}".format(result.status_code))
+			pass
+			# database.log_misc('webhook.ok', data="successfully delivered payload, code {}".format(result.status_code))
 	def send_webhook2(self, username=None, avatar_url=None, message=None, embed=False, title=None, description=None):
 		if self.server.config['webhook2_url'] != None:
 			self.send_webhook(username=username, avatar_url=avatar_url, message=message, embed=False, title=None, description=None, altwebhook=True)
 		else:
 			self.send_webhook(username=username, avatar_url=avatar_url, message=message)
+
+	# Altwebhook is so retarded bro why not allow custom URL specification
+	def send_webhook_wl(self, username=None, avatar_url=None, message=None, embed=False, title=None, description=None):
+		is_enabled = self.server.config['webhooks_enabled']
+		url = self.server.config['wl_webhook_url']
+
+
+		if not is_enabled:
+			return
+		
+		data = {}
+		data["content"] = message
+		data["username"] = username if username is not None else "tsuserver webhook"
+		if embed == True:
+			data["embeds"] = []
+			embed = {}
+			embed["description"] = description
+			embed["title"] = title
+			data["embeds"].append(embed)
+		result = requests.post(url, data=json.dumps(data), headers={"Content-Type": "application/json"})
+		try:
+			result.raise_for_status()
+		except requests.exceptions.HTTPError as err:
+			pass
+			# database.log_misc('webhook.err', data=err)
+		else:
+			pass
+			# database.log_misc('webhook.ok', data="successfully delivered payload, code {}".format(result.status_code))
+
+	def whitelistrequest(self, username, client=None):
+		avatar_url = self.server.config["modcall_webhook"]["avatar_url"]
+		if(client not in self.server.client_manager.clients):
+			return
+		self.send_webhook_wl(username="CC Whitelist", avatar_url=avatar_url, message="", embed=True, title="A whitelist request has been received", description=f"{client.char_name} (PID: {client.pid}) has requested a whitelist.")
 
 	def modcall(self, char, ipid, area, reason=None):
 		is_enabled = self.server.config['modcall_webhook']['enabled']
