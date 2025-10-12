@@ -1,6 +1,5 @@
 import asyncio
 import discord
-import os
 import yaml
 from discord.ext import commands, tasks
 from discord.utils import escape_markdown, find
@@ -14,7 +13,7 @@ class Commandbot(commands.Bot):
         super().__init__(command_prefix="!", intents = intents)
         self.server = server
         self.queue_whitelist_requests = []
-        self.server_name = self.server.masterserver_name
+        self.server_name = self.server.config['masterserver_name']
         self.is_wl_prompting_user = False
 
     async def init(self, token):
@@ -82,33 +81,11 @@ class Commandbot(commands.Bot):
 
         async def notify_ao_client(self):
             clients = await self.get_ao_clients()
-            trustedfile = 'config/trustedusers.yaml'
             for client in clients:
                 client.is_wlisted = True
                 client.discord_name = self.requested_user.name
                 client.send_ooc(f"Whitelisted as {client.discord_name}.")
-                if (self.server.config['commandbot']['whitelist_trustlevel'] == 'high'):
-                    trustedIPIDs = []
-                    if not os.path.exists(trustedfile):
-                        trusted = []
-                        trusted.append({'DiscordName': client.discord_name})
-                        trusted[-1]['IPIDs'] = trustedIPIDs
-                        trusted[-1]['IPIDs'].append({'IPID': client.ipid})
-                    else:
-                        with open(trustedfile, 'r') as chars:
-                            trusted = yaml.safe_load(chars)
-                        match = False
-                        for tu in trusted:
-                            if tu['DiscordName'] == client.discord_name:
-                                tu['IPIDs'].append({'IPID': client.ipid})
-                                match = True
-                                break
-                        if not match:
-                            trusted.append({'DiscordName': client.discord_name})
-                            trusted[-1]['IPIDs'].append({'IPID': client.ipid})
-            if (self.server.config['commandbot']['whitelist_trustlevel'] == 'high'): 
-                with open(trustedfile, 'w', encoding='utf-8') as newfile:
-                    yaml.dump(trusted, newfile)
+                client.whitelist_trust()
 
 
     async def whitelist_prompt(self, client, requested_user: str) -> None:

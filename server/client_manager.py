@@ -900,7 +900,34 @@ class ClientManager:
             for x in avail_char_ids:
                 char_list[x] = 0
             return char_list
-
+        def whitelist_trust(self):
+            """
+            If whitelist trust level is high, adds client to trusted users file.
+            """
+            
+            if (self.server.config['commandbot']['whitelist_trustlevel'] == 'high'):
+                trustedfile = 'config/trustedusers.yaml'
+                trustedIPIDs = []
+                if not os.path.exists(trustedfile):
+                    trusted = []
+                    trusted.append({'DiscordName': self.discord_name})
+                    trusted[-1]['IPIDs'] = trustedIPIDs
+                    trusted[-1]['IPIDs'].append({'IPID': self.ipid})
+                else:
+                    with open(trustedfile, 'r') as chars:
+                        trusted = yaml.safe_load(chars)
+                    match = False
+                    for tu in trusted:
+                        if tu['DiscordName'] == self.discord_name:
+                            tu['IPIDs'].append({'IPID': self.ipid})
+                            match = True
+                            break
+                    if not match:
+                        trusted.append({'DiscordName': self.discord_name})
+                        trusted[-1]['IPIDs'].append({'IPID': client.ipid})
+                with open(trustedfile, 'w', encoding='utf-8') as newfile:
+                    yaml.dump(trusted, newfile)
+            
         def auth_mod(self, password: str) -> None:
             """
             Attempt to log in as a moderator.
@@ -1067,21 +1094,21 @@ class ClientManager:
             database.ipid(peername))
         self.clients.add(c)
         for client in self.clients:
-            if client.ipid == c_ipid:
+            if client.ipid == c.ipid:
                 client.clientscon += 1
         self.lastjoin = datetime.now()
         self.previd = grab_id
         
         trustedfile = 'config/trustedusers.yaml'
         if not (self.server.config['webhooks_enabled']) or not (self.server.config['commandbot']['enabled']) or not (self.server.config['commandbot']['whitelist']):
-			c.is_wlisted = True
+            c.is_wlisted = True
         elif (self.server.config['commandbot']['whitelist_trustlevel'] == 'high'):
             if os.path.exists(trustedfile):
                 with open(trustedfile, 'r') as chars:
                     trusted = yaml.safe_load(chars)
                     for tu in trusted:
                         for tu_ipid in tu['IPIDs']:
-                            if client.ipid == tu_ipid:
+                            if client.ipid == tu_ipid['IPID']:
                                 client.is_wlisted = True
                                 client.discord_name = tu['DiscordName']
                                 break
@@ -1089,7 +1116,7 @@ class ClientManager:
                             break
         elif (self.server.config['commandbot']['whitelist_trustlevel'] == 'medium'):
             for client in self.clients:
-                if client.ipid == c_ipid and client.is_wlisted:
+                if client.ipid == c.ipid and client.is_wlisted:
                     c.is_wlisted = True
                     c.discord_name = client.discord_name
         return c
