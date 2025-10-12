@@ -13,8 +13,10 @@ class Commandbot(commands.Bot):
         super().__init__(command_prefix="!", intents = intents)
         self.server = server
         self.queue_whitelist_requests = []
+        self.queue_trusted_whitelists = []
         self.server_name = self.server.config['masterserver_name']
         self.is_wl_prompting_user = False
+        self.message: discord.Message | None = None
 
     async def init(self, token):
         # starts bot
@@ -36,7 +38,7 @@ class Commandbot(commands.Bot):
         async def button_callback(self, interaction: discord.Interaction, _button):
             await self.notify_ao_client()  # This notifies the AO Client and make the necessary adjustments to whitelist the player.
             embed = discord.Embed(color=discord.Color.random(),
-                                  title="[Whitelist Success!]",
+                                  title="Succesfully whitelisted!",
                                   description=f"Welcome to {self.bot_details.server_name}, {interaction.user.mention}!")
             try:
                 await interaction.response.edit_message(content=None, view=None, embed=embed)
@@ -65,7 +67,7 @@ class Commandbot(commands.Bot):
         async def on_timeout(self) -> None:
             if not self.has_whitelisted:
                 embed = discord.Embed(color=discord.Color.random(),
-                                    title="[Whitelist Timed Out!]",
+                                    title="Whitelist Timed Out!",
                                     description=f"Retry the Whitelist Procedure through {self.bot_details.server_name}.")
                 await self.message.edit(content=None, view=None, embed=embed, delete_after=120)
         
@@ -87,6 +89,21 @@ class Commandbot(commands.Bot):
                 client.send_ooc(f"Whitelisted as {client.discord_name}.")
                 client.whitelist_trust()
 
+    async def trusted_whitelist(self, client):
+        if self.server.config['commandbot']['whitelist_channel'] == '':
+            return
+
+        # This entire process is to check if channel and member exists. And once validated, things go through normally.
+        requested_user = client.discord_name.strip().lower()
+        get_channel = self.get_channel(self.server.config['commandbot']['whitelist_channel'])
+        if get_channel:
+            get_guild = get_channel.guild
+            member = find(lambda m: m.name.lower() == requested_user, get_guild.members)
+            if member:
+                embed = discord.Embed(color=discord.Color.random(), 
+                                      title="Returning User!", 
+                                      description=f"Welcome back to {self.server_name}, {member.mention}!")
+                self.message = await get_channel.send(embed=embed)
 
     async def whitelist_prompt(self, client, requested_user: str) -> None:
         if self.server.config['commandbot']['whitelist_channel'] == '':
@@ -103,7 +120,7 @@ class Commandbot(commands.Bot):
                 seconds_before_timeout = round(time.time()) + wl_button.timeout
                 timeout_left_string = f"<t:{seconds_before_timeout}:R>"
                 embed = discord.Embed(color=discord.Color.random(),
-                                      title="[Whitelist Prompt]",
+                                      title="Waiting to whitelist...",
                                       description=f"{client.char_name} ({member.mention}) has requested to be whitelisted!\n"
                                                   f"Please press the button to confirm this action.")
 
@@ -135,6 +152,7 @@ class Commandbot(commands.Bot):
         await self.wait_until_ready()
     
         self.auto_check_whitelist_prompt.start()
+        self.auto_check_trusted_whitelist.start()
             
     @tasks.loop(seconds=1)
     async def auto_check_whitelist_prompt(self):
@@ -142,5 +160,14 @@ class Commandbot(commands.Bot):
             if len(self.queue_whitelist_requests) > 0:  # Ensures there's something here...
                 self.is_wl_prompting_user = True
                 await self.whitelist_prompt(*self.queue_whitelist_requests.pop())
+                await asyncio.sleep(0.25)
+                self.is_wl_prompting_user = False
+
+    @tasks.loop(seconds=1)
+    async def auto_check_trusted_whitelist(self):
+        if not self.is_wl_prompting_user:  # This ensures the task is not running when this function is called.
+            if len(self.queue_trusted_whitelists) > 0:  # Ensures there's something here...
+                self.is_wl_prompting_user = True
+                await self.trusted_whitelist(self.queue_trusted_whitelists.pop())
                 await asyncio.sleep(0.25)
                 self.is_wl_prompting_user = False

@@ -1102,23 +1102,24 @@ class ClientManager:
         trustedfile = 'config/trustedusers.yaml'
         if not (self.server.config['webhooks_enabled']) or not (self.server.config['commandbot']['enabled']) or not (self.server.config['commandbot']['whitelist']):
             c.is_wlisted = True
-        elif (self.server.config['commandbot']['whitelist_trustlevel'] == 'high'):
+        elif (self.server.config['commandbot']['whitelist_trustlevel'] == 'medium') or (self.server.config['commandbot']['whitelist_trustlevel'] == 'high'):
+            for client in self.clients:
+                if client.ipid == c.ipid and client.is_wlisted:
+                    c.is_wlisted = True
+                    c.discord_name = client.discord_name
+        if (self.server.config['commandbot']['whitelist_trustlevel'] == 'high') and not c.is_wlisted:
             if os.path.exists(trustedfile):
                 with open(trustedfile, 'r') as chars:
                     trusted = yaml.safe_load(chars)
                     for tu in trusted:
                         for tu_ipid in tu['IPIDs']:
-                            if client.ipid == tu_ipid['IPID']:
-                                client.is_wlisted = True
-                                client.discord_name = tu['DiscordName']
+                            if c.ipid == tu_ipid['IPID']:
+                                c.is_wlisted = True
+                                c.discord_name = tu['DiscordName']
+                                self.server.commandbot.queue_trusted_whitelists.append(c)
                                 break
-                        if client.is_wlisted:
+                        if c.is_wlisted:
                             break
-        elif (self.server.config['commandbot']['whitelist_trustlevel'] == 'medium'):
-            for client in self.clients:
-                if client.ipid == c.ipid and client.is_wlisted:
-                    c.is_wlisted = True
-                    c.discord_name = client.discord_name
         return c
 
     def remove_client(self, client):
