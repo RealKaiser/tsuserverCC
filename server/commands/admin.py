@@ -467,8 +467,8 @@ def kickban(client, arg, ban_hdid):
 	except ValueError:
 		raise ClientError(f'{raw_ipid} does not look like a valid IPID.')
 	modfile = 'config/moderation.yaml'
-	new = not os.path.exists(modfile)
-	if not new:
+    trustedfile = 'config/trustedusers.yaml'
+	if os.path.exists(modfile):
 		with open(modfile, 'r') as chars:
 			mods = yaml.safe_load(chars)
 		for item in mods:
@@ -480,6 +480,20 @@ def kickban(client, arg, ban_hdid):
 			if ipid in ipids:
 				if item['status'] == 'admin':
 					return client.send_ooc('Can\'t ban an admin.')
+    if os.path.exists(trustedfile):
+        newtrusted = []
+        with open(trustedfile, 'r') as chars:
+			trusted = yaml.safe_load(chars)
+        for tu in trusted:
+            banned = False
+            for tu_ipid in tu['IPIDs']:
+                if tu_ipid == ipid:
+                    banned = True
+                    break
+            if not banned:
+                newtrusted.append(tu)
+        with open(trustedfile, 'w', encoding='utf-8') as newfile:
+            yaml.dump(newtrusted, newfile)
 
 	ban_id = database.ban(ipid, reason, ban_type='ipid', banned_by=client,
 		ban_id=ban_id, unban_date=unban_date)
