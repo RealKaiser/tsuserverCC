@@ -227,8 +227,6 @@ class TsuServerCC:
 		c.server = self
 		c.area = self.area_manager.default_area()
 		c.area.new_client(c)
-		if not (c.server.config['webhooks_enabled']) or not (c.server.config['commandbot']['enabled']) or not (c.server.config['commandbot']['whitelist']):
-			c.is_wlisted = True
 		return c
 
 	def remove_client(self, client):

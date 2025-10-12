@@ -1066,12 +1066,32 @@ class ClientManager:
             self.server, transport, user_id,
             database.ipid(peername))
         self.clients.add(c)
-        temp_ipid = c.ipid
         for client in self.clients:
-            if client.ipid == temp_ipid:
+            if client.ipid == c_ipid:
                 client.clientscon += 1
         self.lastjoin = datetime.now()
         self.previd = grab_id
+        
+        trustedfile = 'config/trustedusers.yaml'
+        if not (self.server.config['webhooks_enabled']) or not (self.server.config['commandbot']['enabled']) or not (self.server.config['commandbot']['whitelist']):
+			c.is_wlisted = True
+        elif (self.server.config['commandbot']['whitelist_trustlevel'] == 'high'):
+            if os.path.exists(trustedfile):
+                with open(trustedfile, 'r') as chars:
+                    trusted = yaml.safe_load(chars)
+                    for tu in trusted:
+                        for tu_ipid in tu['IPIDs']:
+                            if client.ipid == tu_ipid:
+                                client.is_wlisted = True
+                                client.discord_name = tu['DiscordName']
+                                break
+                        if client.is_wlisted:
+                            break
+        elif (self.server.config['commandbot']['whitelist_trustlevel'] == 'medium'):
+            for client in self.clients:
+                if client.ipid == c_ipid and client.is_wlisted:
+                    c.is_wlisted = True
+                    c.discord_name = client.discord_name
         return c
 
     def remove_client(self, client):

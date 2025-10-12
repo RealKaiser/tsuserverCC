@@ -92,6 +92,10 @@ commandbot:
   enabled: false # Whether this is enabled at all, if no webhook and/or channel are set up for this, set this to 'false'.
   token: 
   whitelist: false # If 'true' require users to whitelist via the set discord channel.
+  whitelist_trustlevel: low # If whitelisting is enabled, this determines how convenient it is to whitelist clients.
+  #'low' requires every client to whitelist no matter what. 
+  #'medium' bypasses whitelisting only if the user already has another whitelisted client currently on the server. 
+  #'high' saves previously whitelisted discord names and their IPIDs, automatically whitelisting clients if their IPID matches with a saved one.
 
 # Settings for the modcall webhook. Leaving a setting blank will use its default behavior.
 modcall_webhook:
