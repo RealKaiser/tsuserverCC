@@ -76,13 +76,22 @@ zalgo_tolerance: 3
 # How many simultaneous connections an IP address can make to the server. (Default: 16)
 multiclient_limit: 16
 
-# Maximum number of characters can a message contain
+# Maximum number of characters a message can contain.
 max_chars: 256
 
 # Whether or not Discord webhooks are enabled, and if they are, the webhook URL to use.
 # If webhooks_enabled is set to false, no webhooks will function regardless of whether they are enabled or not.
 webhooks_enabled: false
-webhook_url: example.com
+webhook_url:
+webhook2_url:
+wl_webhook_url:
+
+# Settings for the "commandbot" which primarily handles whitelisting clients through discord.
+commandbot:
+  whitelist_channel: 
+  enabled: false # Whether this is enabled at all, if no webhook and/or channel are set up for this, set this to 'false'.
+  token: 
+  whitelist: false # If 'true' require users to whitelist via the set discord channel.
 
 # Settings for the modcall webhook. Leaving a setting blank will use its default behavior.
 modcall_webhook:

@@ -23,7 +23,6 @@ __all__ = [
 	'ooc_cmd_help',
 	'ooc_cmd_whitelist',
 	'ooc_cmd_wl',
-	'ooc_cmd_wlself',
 	'ooc_cmd_kick',
 	'ooc_cmd_ban',
 	'ooc_cmd_banhdid',
@@ -55,31 +54,6 @@ __all__ = [
 	'ooc_cmd_spy',
 	'ooc_cmd_about'
 ]
-
-def ooc_cmd_wlself(client, arg):
-	"""
-	Send a request to whitelist your other multiclients that are not already whitelisted.
-	Usage: /wlself
-	"""
-	if not (client.server.config["commandbot"]["whitelist"]):
-		raise ArgumentError("Whitelist is not enabled on this server!")
-	if client.is_wlisted == False:
-		raise ArgumentError("Whitelist yourself first.")
-	
-	wl_clients = list()
-	for _c in client.server.client_manager.clients:
-		if _c.ipid == client.ipid:
-			if not _c.is_wlisted:
-				wl_clients.append(_c)
-	
-	wl_id_str = "Client ID " + ", ".join([str(wlc.id) for wlc in wl_clients]) if wl_clients else "Zero Multiclients"
-	for c in wl_clients:
-		c.discord_name = client.discord_name
-		c.wlrequest = True
-		c.is_wlisted = True
-		c.send_ooc(f"Whitelisted as {c.discord_name}.")
-
-	client.send_ooc(f"Whitelisted {wl_id_str}.")
 
 def ooc_cmd_whitelist(client, arg):
 	"""

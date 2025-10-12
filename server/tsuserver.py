@@ -152,7 +152,7 @@ class TsuServerCC:
 		if self.config['zalgo_tolerance']:
 			self.zalgo_tolerance = self.config['zalgo_tolerance']
 
-		if "commandbot" in self.config and self.config["commandbot"]["enabled"]:
+		if "commandbot" in self.config and self.config['webhooks_enabled'] and self.config["commandbot"]["enabled"]:
 			try:
 				self.commandbot = Commandbot(self)
 				asyncio.ensure_future(self.commandbot.init(self.config["commandbot"]["token"]), loop=loop)
