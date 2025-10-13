@@ -924,6 +924,7 @@ class ClientManager:
                             break
                     if not match:
                         trusted.append({'DiscordName': self.discord_name})
+                        trusted[-1]['IPIDs'] = trustedIPIDs
                         trusted[-1]['IPIDs'].append({'IPID': client.ipid})
                 with open(trustedfile, 'w', encoding='utf-8') as newfile:
                     yaml.dump(trusted, newfile)
