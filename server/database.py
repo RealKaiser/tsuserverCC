@@ -536,3 +536,27 @@ class Database:
                 SELECT type_id FROM {event_type}_event_types
                 WHERE type_name = ?
                 '''), (event_subtype,)).fetchone()['type_id']
+                
+    def clear_logs(self):
+        """
+        Clears out all stored logging, used when the database has gotten "too big".
+        """
+        if os.path.exists('logs/server.log'):
+            os.remove('logs/server.log')
+        with self.db as conn:
+            conn.execute(dedent('''
+                DELETE FROM connect_events
+                '''))
+            conn.execute(dedent('''
+                DELETE FROM ic_events
+                '''))
+            conn.execute(dedent('''
+                DELETE FROM misc_events
+                '''))
+            conn.execute(dedent('''
+                DELETE FROM room_events
+                '''))
+        self.db.execute(dedent('''
+                VACUUM
+                '''))
+        return 'Logs successfully cleared!'

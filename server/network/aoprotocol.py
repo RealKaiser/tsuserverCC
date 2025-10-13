@@ -857,14 +857,12 @@ class AOProtocol(asyncio.Protocol):
 					self.client.area.set_next_msg_delay(len(msg))
 					self.client.area.last_speaker = self.client
 					if msg != '' and msg != ' ':
-							msg = msg+f" [Sent by Disc:{self.client.discord_name} | PID:{self.client.pid} | WL:{self.client.is_wlisted}]"
 							database.log_ic(self.client, self.client.area, showname, msg)
 		else:
 			self.client.call.send_owner_command('MS', *owner_args)
 			self.client.call.set_next_msg_delay(len(msg))
 			self.client.call.last_speaker = self.client
 			if msg != '' and msg != ' ':
-				msg = msg+f" [Sent by Disc:{self.client.discord_name} | PID:{self.client.pid} | WL:{self.client.is_wlisted}]"
 				database.log_ic(self.client, self.client.area, showname, msg)
 
 	def net_cmd_ct(self, args):
@@ -976,7 +974,7 @@ class AOProtocol(asyncio.Protocol):
 			self.client.ooc_delay = (time.perf_counter() + self.server.config['ooc_delay'])
 			self.client.area.send_command('CT', self.client.name, args[1])
 			self.client.area.send_owner_command('CT', '[' + self.client.area.abbreviation + ']' + self.client.name, args[1])
-			database.log_room('ooc', self.client, self.client.area, message=args[1]+f" [Sent by Disc:{self.client.discord_name} | PID:{self.client.pid} | WL:{self.client.is_wlisted}]")
+			database.log_room('ooc', self.client, self.client.area, message=args[1])
 
 	def net_cmd_mc(self, args):
 		"""Play music.
