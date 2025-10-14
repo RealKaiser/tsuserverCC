@@ -578,8 +578,6 @@ class AOProtocol(asyncio.Protocol):
 			button = 0
 			# Turn off the ding.
 			ding = 0
-		if color == 2 and not (self.client.is_mod or self.client in self.client.area.owners):
-			color = 0
 		if pos != self.client.pos:
 			self.client.change_position(pos, True)
 		if not len(self.client.area.poslock) == 0 and not (self.client.is_mod or self.client in self.client.area.owners):
