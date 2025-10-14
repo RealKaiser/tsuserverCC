@@ -360,7 +360,7 @@ def ooc_cmd_helpfiles(client, arg):
     """
     if len(arg) != 0:
         raise ArgumentError('This command has no arguments.')
-    help_msg = f"You may be missing official content which you can find here: {client.server.config['server_doc']}\nAlternatively someone may be using custom content which you may be able to see through /files or by asking them directly."
+    help_msg = f"You may be missing official content which you can find here: {client.server.config['server_doc']} \nAlternatively someone may be using custom content which you may be able to see through /files or by asking them directly."
     client.send_ooc(help_msg)
 
 def ooc_cmd_about(client, arg):
