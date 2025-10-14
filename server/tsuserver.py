@@ -290,6 +290,9 @@ class TsuServerCC:
             
         if 'max_dbsize' not in self.config:
             self.config['max_dbsize'] = 0
+            
+        if 'server_doc' not in self.config:
+            self.config['server_doc'] = 'No server doc set!'
 
         #if isinstance(self.config['modpass'], str):
         #    self.config['modpass'] = {'default': {'password': self.config['modpass']}}
