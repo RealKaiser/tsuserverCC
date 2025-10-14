@@ -749,19 +749,20 @@ class ClientManager:
                             info += '[CM]'
                     if c.is_mod:
                         info += '[M]'
-
+                    
+                    if c.afk:
+                        info += '[AFK]'
+                    
                     info += f'[{c.id}] {c.char_name}'
-                    if c.is_wlisted:
-                        info += f" [Disc: {c.discord_name}]"
-                     
-                    if self.is_mod:
-                        info += f' ({c.ipid}): {c.name}'
-
+                    
                     if c.showname != '':
                         info += f' ({c.showname})'
                     
-                    if c.afk:
-                        info += ' [AFK]'
+                    if self.is_mod:
+                        info += f' ({c.ipid}): {c.name}'
+                        
+                    if c.discord_name != '':
+                        info += f" [{c.discord_name}]"
 
             return info
             
