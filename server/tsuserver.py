@@ -68,7 +68,7 @@ class TsuServerCC:
         self.software = 'tsuservercc'
 
         self.release = 1
-        self.major_version = 5
+        self.major_version = 6
         self.minor_version = 0
 
         self.config = None

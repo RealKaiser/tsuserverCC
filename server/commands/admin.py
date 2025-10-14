@@ -21,6 +21,7 @@ from . import mod_only
 __all__ = [
     'ooc_cmd_motd',
     'ooc_cmd_help',
+    'ooc_cmd_helpfiles',
     'ooc_cmd_whitelist',
     'ooc_cmd_wl',
     'ooc_cmd_kick',
@@ -343,13 +344,23 @@ def ooc_cmd_motd(client, arg):
 
 def ooc_cmd_help(client, arg):
     """
-    Show help for a command, or show general help.
+    Show general help.
     Usage: /help
     """
     if len(arg) != 0:
         raise ArgumentError('This command has no arguments.')
-    help_url = 'https://github.com/RealKaiser/tsuserverCC'
+    help_url = 'https://github.com/RealKaiser/tsuserverCC/blob/master/README.md'
     help_msg = f'The commands available on this server can be found here: {help_url}'
+    client.send_ooc(help_msg)
+    
+def ooc_cmd_helpfiles(client, arg):
+    """
+    Shows reasons for lacking files and where to possibly get said files.
+    Usage: /helpfiles
+    """
+    if len(arg) != 0:
+        raise ArgumentError('This command has no arguments.')
+    help_msg = f"You may be missing official content which you can find here: {client.server.config['server_doc']}\nAlternatively someone may be using custom content which you may be able to see through /files or by asking them directly."
     client.send_ooc(help_msg)
 
 def ooc_cmd_about(client, arg):
@@ -358,10 +369,7 @@ def ooc_cmd_about(client, arg):
     of the server's content and its maintainers.
     Usage: /about
     """
-
-    release_url = "https://docs.google.com/document/d/1FlV3UsJJNA-tMCUpvKgWKp49wI9KrUzVUsT_XmX7ANo/edit?usp=sharing"
-    
-    client.send_ooc(f"You can download CC's files from here: {release_url}")
+    client.send_ooc(f"This server runs on TsuserverCC {client.server.get_version_string()}, which is maintained by Kais. (@realkais/kaiserkaisie@gmail.com)\nFor more information about this server please visit this link: {client.server.config['server_doc']}")
 
 @mod_only()
 def ooc_cmd_kick(client, arg: str) -> None:

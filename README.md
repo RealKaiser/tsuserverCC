@@ -47,6 +47,10 @@ Requires Python 3.7+ and PyYAML.
 
 * **help**
     - Links to this readme
+* **helpfiles**
+    - Explains why a client may be missing files and links to the server's set doc.
+* **about**
+    - Returns the server software's current version, its maintainer and links to the server's set doc.
 * **g** "message" 
     - Sends a serverwide message
 * **toggleglobal** 

@@ -82,6 +82,9 @@ max_chars: 256
 # Maximum database size in bytes before the server prompts to clear logs upon starting. If 0 then the server will never prompt for this.
 max_dbsize: 250000000
 
+# Link to your server's doc, discord or website
+server_doc: https://docs.google.com/document/d/1FlV3UsJJNA-tMCUpvKgWKp49wI9KrUzVUsT_XmX7ANo/edit?usp=sharing
+
 # Whether or not Discord webhooks are enabled, and if they are, the webhook URL to use.
 # If webhooks_enabled is set to false, no webhooks will function regardless of whether they are enabled or not.
 webhooks_enabled: false
