@@ -69,7 +69,7 @@ class TsuServerCC:
 
         self.release = 1
         self.major_version = 6
-        self.minor_version = 0
+        self.minor_version = 1
 
         self.config = None
         self.allowed_iniswaps = []
