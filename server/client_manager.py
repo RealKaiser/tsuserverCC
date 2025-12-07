@@ -298,6 +298,19 @@ class ClientManager:
                 if self.afktime:
                     self.afktime.cancel()
                 self.afktime = asyncio.get_event_loop().call_later(self.server.config['afk_delay'], lambda: self.server.client_manager.toggle_afk(self))
+            if (self.server.config['commandbot']['whitelist_trustlevel'] == 'high') and not c.is_wlisted:
+                if os.path.exists(trustedfile):
+                    with open(trustedfile, 'r') as chars:
+                        trusted = yaml.safe_load(chars)
+                        for tu in trusted:
+                            for tu_ipid in tu['IPIDs']:
+                                if c.ipid == tu_ipid['IPID']:
+                                    c.is_wlisted = True
+                                    c.discord_name = tu['DiscordName']
+                                    self.server.commandbot.queue_trusted_whitelists.append(c)
+                                    break
+                            if c.is_wlisted:
+                                break
 
         def change_music_cd(self):
             """
@@ -1109,19 +1122,6 @@ class ClientManager:
                 if client.ipid == c.ipid and client.is_wlisted:
                     c.is_wlisted = True
                     c.discord_name = client.discord_name
-        if (self.server.config['commandbot']['whitelist_trustlevel'] == 'high') and not c.is_wlisted:
-            if os.path.exists(trustedfile):
-                with open(trustedfile, 'r') as chars:
-                    trusted = yaml.safe_load(chars)
-                    for tu in trusted:
-                        for tu_ipid in tu['IPIDs']:
-                            if c.ipid == tu_ipid['IPID']:
-                                c.is_wlisted = True
-                                c.discord_name = tu['DiscordName']
-                                self.server.commandbot.queue_trusted_whitelists.append(c)
-                                break
-                        if c.is_wlisted:
-                            break
         return c
 
     def remove_client(self, client):
