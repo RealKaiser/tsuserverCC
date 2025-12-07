@@ -269,13 +269,13 @@ class ClientManager:
                 if not char_id in self.charcurse:
                     raise ClientError('Character not available.')
                 force = True
-            """if not self.area.is_char_available(char_id):
+            if not self.area.is_char_available(char_id):
                 if force:
                     for client in self.area.clients:
                         if client.char_id == char_id:
                             client.char_select()
                 else:
-                    raise ClientError('Character not available.')"""
+                    raise ClientError('Character not available.')
             old_char = self.char_name
             self.char_id = char_id
             self.pos = ''
