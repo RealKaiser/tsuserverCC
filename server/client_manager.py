@@ -102,6 +102,8 @@ class ClientManager:
             self.disemvowel = False
             self.shaken = False
             self.gimp = False
+            self.firstperson =  False
+            self.firstpersonfallback = None
             
             # Call stuff
             self.call = None

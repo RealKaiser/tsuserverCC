@@ -628,7 +628,40 @@ class AOProtocol(asyncio.Protocol):
 		other_folder = ''
 
 		confirmed = False
-		if charid_pair > -1 and not confirmed:
+        if self.client.firstperson and not confirmed:
+            if self.client.area.last_speaker != None:
+                lastspeaker = self.client.area.last_speaker
+                if lastspeaker != self.client:
+                    self.client.firstpersonfallback = lastspeaker
+                    self.client.charid_pair = lastspeaker.char_id
+                    other_offset = lastspeaker.offset_pair
+                    other_emote = lastspeaker.last_sprite
+                    other_flip = lastspeaker.flip
+                    other_folder = lastspeaker.claimed_folder
+                    if (pair_order != 0):
+                        charid_pair = "{}^{}".format(charid_pair, pair_order)
+                    confirmed = True
+                else:
+                    if self.client.firstpersonfallback != None:
+                        fallback = self.client.firstpersonfallback
+                        fpchecked = False
+                        for target in self.client.area.clients:
+                            if target == fallback:
+                                fpcheck = True
+                                break
+                        if fpcheck:
+                            confirmed = True
+                            self.client.charid_pair = fallback.char_id
+                            other_offset = fallback.offset_pair
+                            other_emote = fallback.last_sprite
+                            other_flip = fallback.flip
+                            other_folder = fallback.claimed_folder
+                            if (pair_order != 0):
+                                charid_pair = "{}^{}".format(charid_pair, pair_order)
+                        else:
+                            self.client.firstpersonfallback = None
+            
+		if charid_pair > -1 and not confirmed and not self.client.firstperson:
 			for target in self.client.area.clients:
 				if target.char_id == self.client.charid_pair and target.charid_pair == self.client.char_id and target != self.client and target.pos == self.client.pos:
 					confirmed = True

@@ -26,8 +26,23 @@ __all__ = [
     'ooc_cmd_addfiles',
     'ooc_cmd_removefiles',
     'ooc_cmd_files',
-    'ooc_cmd_kickother'
+    'ooc_cmd_kickother',
+    'ooc_cmd_firstperson'
 ]
+
+def ooc_cmd_firstperson(client, arg):
+    """
+    Enables first person mode, essentially pairing with the last speaker in the area to create the illusion
+    Usage: /firstperson
+    """
+    if len(arg) > 0:
+        raise ArgumentError('This command takes no arguments.')
+    if client.firstperson:
+        client.firstperson = False
+        client.send_ooc('You are now talking in first person, pairing with the last speaker in the area, use in conjunction with /visible if you don\'t have applicable sprites.')
+    else:
+        client.firstperson = True
+        client.send_ooc('You will no longer be in first person mode.')
 
 def ooc_cmd_addfiles(client, arg):
     """

@@ -222,6 +222,8 @@ class AreaManager:
         def remove_client(self, client):
             """Remove a disconnected client from the area."""
             self.clients.remove(client)
+            if self.last_speaker == client:
+                self.last_speaker = None
             if self.sub:
                 for othersub in self.hub.subareas:
                     if othersub.is_restricted:
