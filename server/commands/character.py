@@ -63,9 +63,9 @@ def ooc_cmd_files(client, arg):
 	for c in client.area.clients:
 		if c.files != '':
 			if c.showname != '':
-				list += f'\n{c.showname} ({c.char_name}): {c.files}'
+				list += f'\n{c.showname} ({c.char_name}): {c.files} '
 			else:
-				list += f'\n{c.char_name}: {c.files}'
+				list += f'\n{c.char_name}: {c.files} '
 	if list != '':
 		msg += list
 	else:
