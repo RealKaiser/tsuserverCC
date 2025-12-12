@@ -639,6 +639,7 @@ class AOProtocol(asyncio.Protocol):
                     other_emote = lastspeaker.last_sprite
                     other_flip = lastspeaker.flip
                     other_folder = lastspeaker.claimed_folder
+                    pos = lastspeaker.pos
                     if (pair_order != 0):
                         charid_pair = "{}^{}".format(charid_pair, pair_order)
                 else:
@@ -656,6 +657,7 @@ class AOProtocol(asyncio.Protocol):
                             other_emote = fallback.last_sprite
                             other_flip = fallback.flip
                             other_folder = fallback.claimed_folder
+                            pos = fallback.pos
                             if (pair_order != 0):
                                 charid_pair = "{}^{}".format(charid_pair, pair_order)
                         else:
