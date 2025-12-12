@@ -39,10 +39,10 @@ def ooc_cmd_firstperson(client, arg):
         raise ArgumentError('This command takes no arguments.')
     if client.firstperson:
         client.firstperson = False
-        client.send_ooc('You are now talking in first person, pairing with the last speaker in the area, use in conjunction with /visible if you don\'t have applicable sprites.')
+        client.send_ooc('First person mode disabled.')
     else:
         client.firstperson = True
-        client.send_ooc('You will no longer be in first person mode.')
+        client.send_ooc('You are now talking in first person, pairing with the last speaker in the area, use in conjunction with /visible if you don\'t have applicable sprites.')
 
 def ooc_cmd_addfiles(client, arg):
     """

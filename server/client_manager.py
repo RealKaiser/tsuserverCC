@@ -299,19 +299,20 @@ class ClientManager:
             if self.server.config['afk_delay'] > 0:
                 if self.afktime:
                     self.afktime.cancel()
-                self.afktime = asyncio.get_event_loop().call_later(self.server.config['afk_delay'], lambda: self.server.client_manager.toggle_afk(self))
-            if (self.server.config['commandbot']['whitelist_trustlevel'] == 'high') and not c.is_wlisted:
+                self.afktime = asyncio.get_event_loop().call_later(self.server.config['afk_delay'], lambda: self.server.client_manager.toggle_afk(self))   
+            if self.server.config['commandbot']['whitelist_trustlevel'] == 'high' and not self.is_wlisted:
+                trustedfile = 'config/trustedusers.yaml'
                 if os.path.exists(trustedfile):
                     with open(trustedfile, 'r') as chars:
                         trusted = yaml.safe_load(chars)
                         for tu in trusted:
                             for tu_ipid in tu['IPIDs']:
-                                if c.ipid == tu_ipid['IPID']:
-                                    c.is_wlisted = True
-                                    c.discord_name = tu['DiscordName']
-                                    self.server.commandbot.queue_trusted_whitelists.append(c)
+                                if self.ipid == tu_ipid['IPID']:
+                                    self.is_wlisted = True
+                                    self.discord_name = tu['DiscordName']
+                                    self.server.commandbot.queue_trusted_whitelists.append(self)
                                     break
-                            if c.is_wlisted:
+                            if self.is_wlisted:
                                 break
 
         def change_music_cd(self):
