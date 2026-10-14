@@ -906,21 +906,24 @@ class AOProtocol(asyncio.Protocol):
         """
         if not self.client.is_checked:
             return
+
+        if not self.validate_net_cmd(args, ArgType.STR, ArgType.STR):
+            return
+            
         if not self.client.is_wlisted:
             if args[1].startswith("/whitelist") or args[1].startswith("/wl"):
                 pass
             else:
                 self.client.send_ooc("You cannot send OOC messages without being whitelisted.")
                 return
-        if self.client.is_ooc_muted:  # Checks to see if the client has been muted by a mod
+
+        if self.client.is_ooc_muted and not self.client.is_mod:  # Checks to see if the client has been muted by a mod
             self.client.send_ooc('You are muted by a moderator.')
-            
+        
         if self.client.char_id == -1:  #Checks if the user is a spectator
             self.client.send_ooc("Spectators can't use OOC chat.")
             return
 
-        if not self.validate_net_cmd(args, ArgType.STR, ArgType.STR):
-            return
         if self.client.name != args[0] and self.client.fake_name != args[0]:
             if self.client.is_valid_name(args[0]):
                 self.client.name = args[0]

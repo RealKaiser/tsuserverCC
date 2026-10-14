@@ -72,7 +72,6 @@ def ooc_cmd_files(client, arg):
     Usage: /files
     """
     if len(arg) == 0:
-        raise ArgumentError('This command takes no arguments.')
         msg = 'Files List:'
         list = ''
         for c in client.area.clients:

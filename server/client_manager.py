@@ -88,6 +88,7 @@ class ClientManager:
             self.is_wlisted = False
             self.discord_name = ''
             self.wlrequest = False
+            self.showdiscord = False
             
             # Mod/Admin stuff
             self.is_admin = False
@@ -917,6 +918,7 @@ class ClientManager:
             for x in avail_char_ids:
                 char_list[x] = 0
             return char_list
+
         def whitelist_trust(self):
             """
             If whitelist trust level is high, adds client to trusted users file.
@@ -924,24 +926,30 @@ class ClientManager:
             
             if (self.server.config['commandbot']['whitelist_trustlevel'] == 'high'):
                 trustedfile = 'config/trustedusers.yaml'
-                trustedIPIDs = []
+                trusted_ipid = []
                 if not os.path.exists(trustedfile):
                     trusted = []
                     trusted.append({'DiscordName': self.discord_name})
-                    trusted[-1]['IPIDs'] = trustedIPIDs
+                    trusted[-1]['IPIDs'] = trusted_ipid
                     trusted[-1]['IPIDs'].append({'IPID': self.ipid})
                 else:
                     with open(trustedfile, 'r') as chars:
                         trusted = yaml.safe_load(chars)
-                    match = False
+                    newipid = True
+                    newdiscord = True
                     for tu in trusted:
                         if tu['DiscordName'] == self.discord_name:
-                            tu['IPIDs'].append({'IPID': self.ipid})
-                            match = True
+                            newdiscord = False
+                            for mipid in tu['IPIDs']:
+                                if mipid['IPID'] == self.ipid:
+                                    newipid = False
+                                    break
+                            if newipid:
+                                tu['IPIDs'].append({'IPID': self.ipid})
                             break
-                    if not match:
+                    if newdiscord:
                         trusted.append({'DiscordName': self.discord_name})
-                        trusted[-1]['IPIDs'] = trustedIPIDs
+                        trusted[-1]['IPIDs'] = trusted_ipid
                         trusted[-1]['IPIDs'].append({'IPID': self.ipid})
                 with open(trustedfile, 'w', encoding='utf-8') as newfile:
                     yaml.dump(trusted, newfile)
@@ -958,20 +966,23 @@ class ClientManager:
             """
             modfile = 'config/moderation.yaml'
             new = not os.path.exists(modfile)
-            if new:
-                raise ClientError('There is no moderation file!')
             if self.is_mod:
                 raise ClientError('Already logged in.') 
             if len(password) == 0:
+                if new:
+                    raise ClientError('There is no moderation file! Please log in via password.')
                 with open(modfile, 'r') as chars:
                     mods = yaml.safe_load(chars)
                 for item in mods:
-                    ipid = item['ipid']
-                    if self.ipid == ipid:
-                        self.mod_profile_name = item['name']
-                        self.is_mod = True
-                        if item['status'] == 'admin':
-                            self.is_admin = True
+                    for ipid in item['IPIDs']:
+                        if self.ipid == ipid:
+                            self.mod_profile_name = item['name']
+                            self.is_mod = True
+                            if item['status'] == 'admin':
+                                self.is_admin = True
+                            break
+                    if self.is_mod:
+                        break
                 if not self.is_mod:
                     self.send_command("FAILEDLOGIN");
                     raise ClientError('Login failed.')
@@ -979,27 +990,53 @@ class ClientManager:
             else:
                 modpasses = self.server.config['modpass']
                 if isinstance(modpasses, dict):
-                    matches = [k for k in modpasses
-                        if modpasses[k]['password'] == password]
-                elif modpasses == password:
-                    matches = ['default']
-                else:
-                    matches = []
-                if len(matches) > 0:
-                    self.is_mod = True
-                    self.mod_profile_name = matches[0]
-                    with open(modfile, 'r') as chars:
-                        mods = yaml.safe_load(chars)
-                    for item in mods:
-                        ipid = item['ipid']
-                        if self.ipid == ipid:
-                            self.mod_profile_name = item['name']
+                    for item in modpasses:
+                        if modpasses[item]['password'] == password:
+                            match = True
                             self.is_mod = True
-                            return self.mod_profile_name
-                            if item['status'] == 'admin':
-                                self.is_admin = True
-                                return self.mod_profile_name
-                    mods.append({'name': matches[0], 'status': 'mod', 'ipid': self.ipid})
+                            if 'status' in modpasses[item]:
+                                if modpasses[item]['status'] == 'admin':
+                                    self.is_admin = True
+                            modname = item
+                            break
+                elif modpasses == password:
+                    match = True
+                    self.is_mod = True
+                    modname = ['default']
+                else:
+                    match = False
+                if match:
+                    self.mod_profile_name = modname
+                    ipid_match = False
+                    if not new:
+                        with open(modfile, 'r') as chars:
+                            mods = yaml.safe_load(chars)
+                        for item in mods:
+                            if item['name'] == modname:
+                                for ipid in item['IPIDs']:
+                                    if self.ipid == ipid:
+                                        ipid_match = True
+                                        break
+                                if not ipid_match:
+                                    item['IPIDs'].append({'IPID': self.ipid})
+                                break
+                            mod_ipid = []
+                            if self.is_admin:
+                                mods.append({'name': modname, 'status': 'admin'})
+                            else:
+                                mods.append({'name': modname, 'status': 'mod'})
+                            mods[-1]['IPIDs'] = mod_ipid
+                            mods[-1]['IPIDs'].append({'IPID': self.ipid})
+                            
+                    else:
+                        mods = []
+                        mod_ipid = []
+                        if self.is_admin:
+                            mods.append({'name': modname, 'status': 'admin'})
+                        else:
+                            mods.append({'name': modname, 'status': 'mod'})
+                        mods[-1]['IPIDs'] = mod_ipid
+                        mods[-1]['IPIDs'].append({'IPID': self.ipid})
                     with open(modfile, 'w', encoding='utf-8') as dump:
                         yaml.dump(mods, dump)
                     return self.mod_profile_name
@@ -1116,8 +1153,7 @@ class ClientManager:
                 client.clientscon += 1
         self.lastjoin = datetime.now()
         self.previd = grab_id
-        
-        trustedfile = 'config/trustedusers.yaml'
+
         if not (self.server.config['webhooks_enabled']) or not (self.server.config['commandbot']['enabled']) or not (self.server.config['commandbot']['whitelist']):
             c.is_wlisted = True
         elif (self.server.config['commandbot']['whitelist_trustlevel'] == 'medium') or (self.server.config['commandbot']['whitelist_trustlevel'] == 'high'):

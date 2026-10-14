@@ -656,39 +656,38 @@ class TsuServerCC:
             # credential changes or removals
         modfile = 'config/moderation.yaml'
         new = not os.path.exists(modfile)
-        if not new:
-            with open(modfile, 'r') as chars:
-                mods = yaml.safe_load(chars)
-            for client in self.client_manager.clients:
-                if client.is_mod:
-                    check = False
-                    for item in mods:
-                        if item['name'] == client.mod_profile_name:
-                            check = True
-                    if check == False:
-                        client.is_mod = False
-                        client.mod_profile_name = None
-                        database.log_misc('unmod.modpass', client)
-                        client.send_ooc('Your moderator credentials have been revoked.')
-                        client.send_command('AUTH', '-1')
-            if isinstance(self.config['modpass'], str):
-                self.config['modpass'] = {'default': {'password': self.config['modpass']}}
-            if isinstance(cfg_yaml['modpass'], str):
-                cfg_yaml['modpass'] = {'default': {'password': cfg_yaml['modpass']}}
 
-            for profile in self.config['modpass']:
-                if profile not in cfg_yaml['modpass'] or \
-                   self.config['modpass'][profile] != cfg_yaml['modpass'][profile]:
-                    for client in filter(
-                            lambda c: c.mod_profile_name == profile,
-                            self.client_manager.clients):
-                        client.is_mod = False
-                        client.mod_profile_name = None
-                        database.log_misc('unmod.modpass', client)
-                        client.send_ooc(
-                            'Your moderator credentials have been revoked.')
-                        client.send_command('AUTH', '-1')
-            self.config['modpass'] = cfg_yaml['modpass']
+        if isinstance(self.config['modpass'], str):
+            self.config['modpass'] = {'default': {'password': self.config['modpass']}}
+        if isinstance(cfg_yaml['modpass'], str):
+            cfg_yaml['modpass'] = {'default': {'password': cfg_yaml['modpass']}}
+
+        for profile in self.config['modpass']:
+            if profile not in cfg_yaml['modpass'] or self.config['modpass'][profile] != cfg_yaml['modpass'][profile]:
+                for client in filter(
+                        lambda c: c.mod_profile_name == profile,
+                        self.client_manager.clients):
+                    client.is_mod = False
+                    client.is_admin = False
+                    if not new:
+                        check = False
+                        with open(modfile, 'r') as chars:
+                            mods = yaml.safe_load(chars)
+                        for item in mods:
+                            if item['name'] == client.mod_profile_name:
+                                check = True
+                                break
+                        if check:
+                            mods.remove(item)
+                            with open(modfile, 'w', encoding='utf-8') as dump:
+                                yaml.dump(mods, dump)
+                    client.mod_profile_name = None
+                    database.log_misc('unmod.modpass', client)
+                    client.send_ooc(
+                        'Your moderator credentials have been revoked.')
+                    client.send_command('AUTH', '-1')
+                    
+        self.config['modpass'] = cfg_yaml['modpass']
 
         self.load_characters()
         self.load_iniswaps()
