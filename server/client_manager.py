@@ -85,10 +85,13 @@ class ClientManager:
             self.hidden = False
             self.hubview = False
             self.pid = -1
+            self.folder = ''
+            
+            # Discord/Whitelist stuff
             self.is_wlisted = False
             self.discord_name = ''
             self.wlrequest = False
-            self.showdiscord = False
+            self.showdiscord = True
             
             # Mod/Admin stuff
             self.is_admin = False
@@ -286,6 +289,7 @@ class ClientManager:
             self.send_command('SP', self.pos) #Send a "Set Position" packet
             self.area.send_command('CharsCheck', *self.get_available_char_list())
             new_char = self.char_name
+            self.folder = self.char_name
             database.log_room('char.change', self, self.area,
                 message={'from': old_char, 'to': new_char})
             if self.ambiance != self.area.ambiance:
@@ -770,16 +774,28 @@ class ClientManager:
                     if c.afk:
                         info += '[AFK]'
                     
-                    info += f'[{c.id}] {c.char_name}'
-                    
-                    if c.showname != '':
-                        info += f' ({c.showname})'
-                    
-                    if self.is_mod:
-                        info += f' ({c.ipid}): {c.name}'
+                    if c.char_name != c.folder:
+                        if c.showname != '':
+                            info += f'[{c.id}] {c.showname} as {c.folder}'
+                            info += f'\n - Slot: {c.char_name}'
+                        else:
+                            info += f'[{c.id}] {c.folder}'
+                            info += f'\n - Slot: {c.char_name}'
+                    else:
+                        if c.showname != '':
+                            info += f'[{c.id}] {c.showname} as {c.char_name}'
+                        else:
+                            info += f'[{c.id}] {c.char_name}'
+
+                    if c.discord_name != '' and c.showdiscord:
+                        info += f"\n - Discord: {c.discord_name}"
                         
-                    if c.discord_name != '':
-                        info += f" [{c.discord_name}]"
+                    if self.is_mod:
+                        if c.discord_name != '' and not c.showdiscord:
+                            info += f"\n - Discord: {c.discord_name}"
+                        info += f"\n - OOC: {c.name}"
+                        info += f"\n - IPID: {c.ipid}"
+                        
 
             return info
             
@@ -974,8 +990,8 @@ class ClientManager:
                 with open(modfile, 'r') as chars:
                     mods = yaml.safe_load(chars)
                 for item in mods:
-                    for ipid in item['IPIDs']:
-                        if self.ipid == ipid:
+                    for mipid in item['IPIDs']:
+                        if self.ipid == mipid['IPID']:
                             self.mod_profile_name = item['name']
                             self.is_mod = True
                             if item['status'] == 'admin':
@@ -1008,25 +1024,30 @@ class ClientManager:
                 if match:
                     self.mod_profile_name = modname
                     ipid_match = False
+                    modfile_match = False
                     if not new:
                         with open(modfile, 'r') as chars:
                             mods = yaml.safe_load(chars)
                         for item in mods:
                             if item['name'] == modname:
-                                for ipid in item['IPIDs']:
-                                    if self.ipid == ipid:
+                                modfile_match = True
+                                for mipid in item['IPIDs']:
+                                    if mipid['IPID'] == self.ipid:
                                         ipid_match = True
                                         break
                                 if not ipid_match:
                                     item['IPIDs'].append({'IPID': self.ipid})
                                 break
+                        if not modfile_match:
                             mod_ipid = []
+                            mods.append({'name': modname})
                             if self.is_admin:
-                                mods.append({'name': modname, 'status': 'admin'})
+                                mods[-1].append({'status': 'admin'})
                             else:
-                                mods.append({'name': modname, 'status': 'mod'})
+                                mods[-1].append({'status': 'mod'})
                             mods[-1]['IPIDs'] = mod_ipid
                             mods[-1]['IPIDs'].append({'IPID': self.ipid})
+                            
                             
                     else:
                         mods = []

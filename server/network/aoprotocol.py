@@ -477,7 +477,15 @@ class AOProtocol(asyncio.Protocol):
         #Considering the context, I think it's checking to see if you are iniswapped?
         #You can find is_iniswap in server/network/area_manager.py
         
-        self.client.showname = showname
+        self.client.folder = folder
+        
+        if showname == folder:
+            self.client.showname = ''
+        elif showname == self.client.char_name:
+            self.client.showname = ''
+        else:
+            self.client.showname = showname
+        
         if self.client.area.is_iniswap(self.client, pre, anim,
                 folder, sfx):
             self.client.send_ooc("Iniswap/custom emotes are blocked in this area")
@@ -598,18 +606,22 @@ class AOProtocol(asyncio.Protocol):
                 self.client.area.evi_list.evidences[
                     self.client.evi_list[evidence] - 1].pos = 'all'
                 self.client.area.broadcast_evidence_list()
-        if msg.lstrip().startswith('(('):
-            msg = msg.lstrip()
-            msg = msg.replace('((', '')
-            msg = msg.replace('))', '')
-            name = self.client.name
-            if name == '':
-                name = self.client.char_name
-            if not msg == self.client.area.last_ooc:
-                self.client.area.send_command('CT', name, msg)
-                self.client.area.send_owner_command('CT', '[' + self.client.area.abbreviation + ']' + name, msg)
-                self.client.area.last_ooc = msg
-            return
+
+        # unnecessary anti-"ooc in ic" measure.
+        #
+        #if msg.lstrip().startswith('(('):
+        #    msg = msg.lstrip()
+        #    msg = msg.replace('((', '')
+        #    msg = msg.replace('))', '')
+        #    name = self.client.name
+        #    if name == '':
+        #        name = self.client.char_name
+        #    if not msg == self.client.area.last_ooc:
+        #        self.client.area.send_command('CT', name, msg)
+        #        self.client.area.send_owner_command('CT', '[' + self.client.area.abbreviation + ']' + name, msg)
+        #        self.client.area.last_ooc = msg
+        #    return
+
         if self.client.area.last_speaker != self.client:
             additive = 0
 

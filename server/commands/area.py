@@ -156,7 +156,10 @@ def ooc_cmd_allclients(client, arg: str) -> None:
 		raise ArgumentError('You must be authorized to do that.')
 	msg = 'Connected clients:'
 	for c in client.server.client_manager.clients:
-		msg += f'\n{c.name}'
+        if c.showname != '':
+            msg += f'\n[{c.id}] {c.showname} as {c.char_name} ({c.ipid})
+        else:
+            msg += f'\n[{c.id}] {c.char_name} ({c.ipid})
 	client.send_ooc(msg)
 
 def ooc_cmd_shouts(client, arg: str) -> None:
