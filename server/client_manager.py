@@ -777,10 +777,10 @@ class ClientManager:
                     if c.char_name != c.folder:
                         if c.showname != '':
                             info += f'[{c.id}] {c.showname} as {c.folder}'
-                            info += f'\n - Slot: {c.char_name}'
+                            info += f'\n- Slot: {c.char_name}'
                         else:
                             info += f'[{c.id}] {c.folder}'
-                            info += f'\n - Slot: {c.char_name}'
+                            info += f'\n- Slot: {c.char_name}'
                     else:
                         if c.showname != '':
                             info += f'[{c.id}] {c.showname} as {c.char_name}'
@@ -788,13 +788,13 @@ class ClientManager:
                             info += f'[{c.id}] {c.char_name}'
 
                     if c.discord_name != '' and c.showdiscord:
-                        info += f"\n - Discord: {c.discord_name}"
+                        info += f"\n- Discord: {c.discord_name}"
                         
                     if self.is_mod:
                         if c.discord_name != '' and not c.showdiscord:
-                            info += f"\n - Discord: {c.discord_name}"
-                        info += f"\n - OOC: {c.name}"
-                        info += f"\n - IPID: {c.ipid}"
+                            info += f"\n- Discord: {c.discord_name}"
+                        info += f"\n- OOC: {c.name}"
+                        info += f"\n- IPID: {c.ipid}"
                         
 
             return info
