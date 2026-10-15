@@ -774,15 +774,18 @@ class ClientManager:
                     if c.afk:
                         info += '[AFK]'
                     
-                    if c.char_name != c.folder:
-                        if c.showname != '':
+                    if c.char_name == None and c.folder == '':
+                        info += f'[{c.id}] On Character Select'
+                    
+                    elif c.char_name != c.folder:
+                        if c.showname != '' and c.showname != c.folder:
                             info += f'[{c.id}] {c.showname} as {c.folder}'
                             info += f'\n- Slot: {c.char_name}'
                         else:
                             info += f'[{c.id}] {c.folder}'
                             info += f'\n- Slot: {c.char_name}'
                     else:
-                        if c.showname != '':
+                        if c.showname != '' and c.showname != c.char_name:
                             info += f'[{c.id}] {c.showname} as {c.char_name}'
                         else:
                             info += f'[{c.id}] {c.char_name}'
@@ -1040,11 +1043,10 @@ class ClientManager:
                                 break
                         if not modfile_match:
                             mod_ipid = []
-                            mods.append({'name': modname})
                             if self.is_admin:
-                                mods[-1].append({'status': 'admin'})
+                                mods.append({'name': modname, 'status': 'admin'})
                             else:
-                                mods[-1].append({'status': 'mod'})
+                                mods.append({'name': modname, 'status': 'mod'})
                             mods[-1]['IPIDs'] = mod_ipid
                             mods[-1]['IPIDs'].append({'IPID': self.ipid})
                             
