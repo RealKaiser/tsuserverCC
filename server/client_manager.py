@@ -313,7 +313,6 @@ class ClientManager:
                         for tu in trusted:
                             for tu_ipid in tu['IPIDs']:
                                 if self.ipid == tu_ipid['IPID']:
-                                    self.is_wlisted = True
                                     self.discord_name = tu['DiscordName']
                                     self.server.commandbot.queue_trusted_whitelists.append(self)
                                     break

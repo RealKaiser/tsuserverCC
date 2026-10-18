@@ -104,6 +104,11 @@ class Commandbot(commands.Bot):
                                       title="Returning User!", 
                                       description=f"Welcome back to {self.server_name}, {member.mention}!")
                 self.message = await get_channel.send(embed=embed)
+                client.is_wlisted = True
+            else:
+                client.send_ooc("Could not find you in Discord server, automatic whitelist failed.")
+        else:
+            Client.send_ooc("Could not find discord channel, please notify staff!")
 
     async def whitelist_prompt(self, client, requested_user: str) -> None:
         if self.server.config['commandbot']['whitelist_channel'] == '':
