@@ -1137,7 +1137,9 @@ class ClientManager:
         maxclients = self.server.config['multiclient_limit']
         for c in self.server.client_manager.clients:
             if c.ipid == client.ipid:
-                if c.clientscon > maxclients:
+                if not c.is_wlisted:
+                    return False
+                elif c.clientscon > maxclients:
                     return False
         return True
 
