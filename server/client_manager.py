@@ -282,6 +282,8 @@ class ClientManager:
                             client.char_select()
                 else:
                     raise ClientError('Character not available.')
+            if self.char_name != None and not self.is_wlisted:
+                raise ClientError('You must whitelist first before changing character.')
             old_char = self.char_name
             self.char_id = char_id
             self.pos = ''
@@ -1137,7 +1139,7 @@ class ClientManager:
         maxclients = self.server.config['multiclient_limit']
         for c in self.server.client_manager.clients:
             if c.ipid == client.ipid:
-                if not c.is_wlisted:
+                if c.clientscon > 1 and not c.is_wlisted:
                     return False
                 elif c.clientscon > maxclients:
                     return False
