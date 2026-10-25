@@ -70,7 +70,6 @@ def ooc_cmd_whitelist(client, arg):
     if len(arg) == 0:
         raise ArgumentError("You must specify a discord username.")
     disc_name = arg.strip().lower()
-    client.discord_name = disc_name
     client.wlrequest = True
     client.server.commandbot.queue_whitelist_requests.append([client, disc_name])
     client.send_ooc(f"Whitelist request sent! Please wait for a moment.")
@@ -89,7 +88,6 @@ def ooc_cmd_wl(client, arg):
     if len(arg) == 0:
         raise ArgumentError("You must specify a discord username.")
     disc_name = arg.strip().lower()
-    client.discord_name = disc_name
     client.wlrequest = True
     client.server.commandbot.queue_whitelist_requests.append([client, disc_name])
     client.send_ooc(f"Whitelist request sent! Please wait for a moment.")
